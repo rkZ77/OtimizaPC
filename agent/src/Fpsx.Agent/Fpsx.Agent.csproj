@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RootNamespace>Fpsx.Agent</RootNamespace>
+    <AssemblyName>fpsx</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fpsx.Core\Fpsx.Core.csproj" />
+    <ProjectReference Include="..\Fpsx.Windows\Fpsx.Windows.csproj" />
+  </ItemGroup>
+  <!-- O catalogo de otimizacoes e os perfis de jogo vivem fora do Agent, na
+       raiz do monorepo, porque o admin vai publicar versoes deles sem
+       recompilar o executavel. Aqui eles so' sao copiados pro lado do .exe. -->
+  <ItemGroup>
+    <Content Include="..\..\..\optimization-engine\catalog\*.json" LinkBase="catalog" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\game-profiles\*.json" LinkBase="game-profiles" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

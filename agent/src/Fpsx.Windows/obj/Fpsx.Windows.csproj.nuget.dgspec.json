@@ -1,0 +1,145 @@
+{
+  "format": 1,
+  "restore": {
+    "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Windows\\Fpsx.Windows.csproj": {}
+  },
+  "projects": {
+    "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Core\\Fpsx.Core.csproj": {
+      "version": "0.1.0",
+      "restore": {
+        "projectUniqueName": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Core\\Fpsx.Core.csproj",
+        "projectName": "Fpsx.Core",
+        "projectPath": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Core\\Fpsx.Core.csproj",
+        "packagesPath": "C:\\Users\\rkZ\\.nuget\\packages\\",
+        "outputPath": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Core\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\rkZ\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "allWarningsAsErrors": true,
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.425/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Windows\\Fpsx.Windows.csproj": {
+      "version": "0.1.0",
+      "restore": {
+        "projectUniqueName": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Windows\\Fpsx.Windows.csproj",
+        "projectName": "Fpsx.Windows",
+        "projectPath": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Windows\\Fpsx.Windows.csproj",
+        "packagesPath": "C:\\Users\\rkZ\\.nuget\\packages\\",
+        "outputPath": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Windows\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\rkZ\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0-windows10.0.19041.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0-windows10.0.19041": {
+            "targetAlias": "net8.0-windows10.0.19041.0",
+            "projectReferences": {
+              "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Core\\Fpsx.Core.csproj": {
+                "projectPath": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Core\\Fpsx.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "allWarningsAsErrors": true,
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0-windows10.0.19041": {
+          "targetAlias": "net8.0-windows10.0.19041.0",
+          "dependencies": {
+            "System.Management": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.Windows.SDK.NET.Ref",
+              "version": "[10.0.19041.56, 10.0.19041.56]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            },
+            "Microsoft.Windows.SDK.NET.Ref": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.425/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
