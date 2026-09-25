@@ -2,14 +2,17 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Fpsx.Core.Engine;
+using Fpsx.Core.Games;
 using Fpsx.Core.Model;
 using Microsoft.Win32;
 
 namespace Fpsx.Windows;
 
 /// <summary>Implementação real das primitivas. Toda escrita passa antes pela SafetyPolicy no ChangeExecutor.</summary>
-public sealed class WindowsSystemAccess : ISystemAccess
+public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles = null) : ISystemAccess
 {
+    private readonly IReadOnlyList<GameProfile> _games = gameProfiles ?? [];
+
     private static RegistryKey Hive(RegistryRoot root) => root == RegistryRoot.CurrentUser ? Registry.CurrentUser : Registry.LocalMachine;
 
     public RegValue? ReadRegistry(RegistryRoot root, string path, string name)
@@ -26,6 +29,7 @@ public sealed class WindowsSystemAccess : ISystemAccess
             RegistryValueKind.QWord => new RegValue(RegistryKind.QWord, Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture)),
             RegistryValueKind.Binary => new RegValue(RegistryKind.Binary, Convert.ToHexString((byte[])value!)),
             RegistryValueKind.String or RegistryValueKind.ExpandString => new RegValue(RegistryKind.String, value?.ToString() ?? ""),
+            RegistryValueKind.MultiString => new RegValue(RegistryKind.MultiString, string.Join('\n', (string[])value!)),
             // Tipo que o FPSX não sabe restaurar fielmente: tratar como
             // não-lido faz o motor recusar, em vez de sobrescrever às cegas.
             _ => throw new NotSupportedException($"Tipo de registro não suportado em {path}\\{name}: {kind}"),
@@ -49,7 +53,92 @@ public sealed class WindowsSystemAccess : ISystemAccess
             case RegistryKind.String:
                 key.SetValue(name, value.Data, RegistryValueKind.String);
                 break;
+            case RegistryKind.MultiString:
+                key.SetValue(name, value.Data.Split('\n', StringSplitOptions.RemoveEmptyEntries), RegistryValueKind.MultiString);
+                break;
         }
+    }
+
+    // ---- processos ----
+
+    public string? ProcessName(int pid)
+    {
+        try
+        {
+            using var p = Process.GetProcessById(pid);
+            return p.HasExited ? null : p.ProcessName;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    public bool CloseProcess(int pid, TimeSpan timeout)
+    {
+        try
+        {
+            using var p = Process.GetProcessById(pid);
+            // Só o pedido educado (WM_CLOSE na janela principal). Processo sem
+            // janela não recebe pedido nenhum e o FPSX informa que não fechou:
+            // matar à força pode corromper arquivo ou perder trabalho.
+            if (!p.CloseMainWindow())
+                return p.HasExited;
+            return p.WaitForExit((int)timeout.TotalMilliseconds);
+        }
+        catch (ArgumentException)
+        {
+            return true;
+        }
+        catch (InvalidOperationException)
+        {
+            return true;
+        }
+    }
+
+    // ---- configuração de jogo ----
+
+    public bool IsGameRunning(string gameId) =>
+        Profile(gameId).Detect.Processes
+            .Select(p => p.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? p[..^4] : p)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Any(name => Process.GetProcessesByName(name).Length > 0);
+
+    public string? ReadGameConfig(string gameId, string key)
+    {
+        var path = GameConfigPath(gameId);
+        return path is null ? null : Fpsx.Core.Games.ValveFiles.ParseFlatKeyValues(File.ReadAllText(path)).GetValueOrDefault(key);
+    }
+
+    public void WriteGameConfig(string gameId, string key, string value)
+    {
+        var path = GameConfigPath(gameId) ?? throw new InvalidOperationException("Arquivo de configuração do jogo não encontrado.");
+        var text = File.ReadAllText(path);
+        var updated = Fpsx.Core.Games.ValveFiles.ReplaceValue(text, key, value)
+                      ?? throw new InvalidOperationException($"A chave {key} não existe no arquivo do jogo.");
+
+        // Cópia do arquivo original, uma vez só, além do inverso por chave
+        // que o motor já guarda: se algo sair errado, o usuário tem o arquivo inteiro.
+        var backup = path + ".fpsx-original";
+        if (!File.Exists(backup))
+            File.Copy(path, backup);
+
+        var tmp = path + ".fpsx-tmp";
+        File.WriteAllText(tmp, updated);
+        File.Move(tmp, path, overwrite: true);
+    }
+
+    private GameProfile Profile(string gameId) =>
+        _games.FirstOrDefault(g => g.Id == gameId) ?? throw new InvalidOperationException($"Perfil de jogo desconhecido: {gameId}");
+
+    private string? GameConfigPath(string gameId)
+    {
+        var source = Profile(gameId).Config;
+        return source is { Source: "steam_userdata", Format: "valve_kv" } ? SteamLocator.FindUserdataFile(source.RelativePath) : null;
     }
 
     public void DeleteRegistryValue(RegistryRoot root, string path, string name)
@@ -77,8 +166,10 @@ public sealed class WindowsSystemAccess : ISystemAccess
         var dirs = CacheDirectories(target).Where(Directory.Exists).ToList();
         int deleted = 0, skipped = 0;
         long bytes = 0;
+        // Temporário recente pode ser de um instalador ou programa rodando agora.
+        var cutoff = target == CacheTarget.UserTemp ? DateTime.UtcNow.AddHours(-24) : DateTime.MaxValue;
         foreach (var dir in dirs)
-            ClearDirectory(new DirectoryInfo(dir), ref deleted, ref skipped, ref bytes);
+            ClearDirectory(new DirectoryInfo(dir), cutoff, ref deleted, ref skipped, ref bytes);
         return new CacheClearResult(deleted, bytes, skipped, dirs.Count == 0 ? "(nenhuma pasta de cache encontrada)" : string.Join("; ", dirs));
     }
 
@@ -104,13 +195,18 @@ public sealed class WindowsSystemAccess : ISystemAccess
                 if (SteamLocator.FindApp(730) is { } cs2)
                     yield return Path.Combine(cs2.Library, "steamapps", "shadercache", "730");
                 break;
+            case CacheTarget.UserTemp:
+                yield return Path.GetTempPath();
+                break;
         }
     }
 
-    private static void ClearDirectory(DirectoryInfo dir, ref int deleted, ref int skipped, ref long bytes)
+    private static void ClearDirectory(DirectoryInfo dir, DateTime cutoffUtc, ref int deleted, ref int skipped, ref long bytes)
     {
         foreach (var file in dir.EnumerateFiles())
         {
+            if (file.LastWriteTimeUtc > cutoffUtc)
+                continue;
             try
             {
                 var size = file.Length;
@@ -138,7 +234,7 @@ public sealed class WindowsSystemAccess : ISystemAccess
                 continue;
             }
 
-            ClearDirectory(sub, ref deleted, ref skipped, ref bytes);
+            ClearDirectory(sub, cutoffUtc, ref deleted, ref skipped, ref bytes);
             try
             {
                 sub.Delete(recursive: false);

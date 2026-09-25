@@ -40,7 +40,7 @@
       "id": "low-end",
       "name": "Low-End",
       "description": "Reduzir processos e overhead. Programas de inicialização aparecem para escolha item a item.",
-      "include": ["game-mode-enable", "power-plan-leave-power-saver", "display-refresh-rate-max", "game-capture-background-recording-disable"],
+      "include": ["game-mode-enable", "power-plan-leave-power-saver", "display-refresh-rate-max", "game-capture-background-recording-disable", "pagefile-restore-automatic"],
       "auto_classifications": ["PROVEN", "CONDITIONAL"],
       "max_risk": "LOW"
     },

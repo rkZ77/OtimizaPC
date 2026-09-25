@@ -16,4 +16,5 @@ public static class RegistryPaths
     public const string GameDvr = @"Software\Microsoft\Windows\CurrentVersion\GameDVR";
     public const string GraphicsDrivers = @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers";
     public const string StartupApproved = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved";
+    public const string MemoryManagement = @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management";
 }

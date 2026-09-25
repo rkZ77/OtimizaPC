@@ -31,4 +31,16 @@ public interface ISystemAccess
     CacheClearResult ClearCache(CacheTarget target);
 
     CommandResult RunNetworkRepair(NetworkRepairKind kind);
+
+    /// <summary>Nome do processo com esse PID agora, ou null se ele já terminou.</summary>
+    string? ProcessName(int pid);
+
+    /// <summary>Pede o fechamento gracioso. Retorna true se o processo terminou dentro do prazo.</summary>
+    bool CloseProcess(int pid, TimeSpan timeout);
+
+    bool IsGameRunning(string gameId);
+
+    string? ReadGameConfig(string gameId, string key);
+
+    void WriteGameConfig(string gameId, string key, string value);
 }

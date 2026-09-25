@@ -66,6 +66,37 @@ public sealed class FakeSystem : ISystemAccess
         Log.Add($"net {kind}");
         return new CommandResult(0, "ok");
     }
+
+    /// <summary>PID -> nome dos processos "abertos".</summary>
+    public Dictionary<int, string> Processes { get; } = new();
+
+    /// <summary>Processos que ignoram o pedido de fechar (sem janela, travados).</summary>
+    public HashSet<int> Stubborn { get; } = new();
+
+    public string? ProcessName(int pid) => Processes.GetValueOrDefault(pid);
+
+    public bool CloseProcess(int pid, TimeSpan timeout)
+    {
+        Log.Add($"close {pid}");
+        if (Stubborn.Contains(pid))
+            return false;
+        Processes.Remove(pid);
+        return true;
+    }
+
+    public bool GameRunning { get; set; }
+
+    public Dictionary<string, string> GameConfig { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool IsGameRunning(string gameId) => GameRunning;
+
+    public string? ReadGameConfig(string gameId, string key) => GameConfig.GetValueOrDefault(key);
+
+    public void WriteGameConfig(string gameId, string key, string value)
+    {
+        Log.Add($"game {key}={value}");
+        GameConfig[key] = value;
+    }
 }
 
 public static class Pc

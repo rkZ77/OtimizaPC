@@ -36,6 +36,9 @@ public sealed record SettingCheck
 
     /// <summary>Só avalia quando o PC tem GPU deste fabricante (ex.: Reflex só existe em NVIDIA).</summary>
     public GpuVendor? GpuVendor { get; init; }
+
+    /// <summary>Valor que o FPSX grava ao corrigir. Sem ele, o item é só recomendação.</summary>
+    public string? FixValue { get; init; }
 }
 
 public sealed record RefreshRateCheck

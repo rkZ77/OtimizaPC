@@ -145,6 +145,7 @@ public sealed class BackgroundLoadDiagnostic : IDiagnostic
         {
             DiagnosticId = Id, Area = Areas.Cpu, Status = HealthStatus.Attention, ImpactArea = "STUTTER",
             Title = "Processos consumindo CPU em segundo plano",
+            FixOptimizationId = "background-process-close",
             Detail = heavy.Count > 0
                 ? $"{string.Join(", ", heavy.Select(p => $"{p.Name} ({Fmt.Pct(p.CpuPercent)})"))} consumiram CPU durante a amostra. Carga de fundo disputa núcleos com o jogo e aparece como queda no 1% low."
                 : $"Uso total de CPU em repouso de {Fmt.Pct(usage)}, alto para um PC sem jogo aberto.",
@@ -187,6 +188,7 @@ public sealed class MemoryDiagnostic : IDiagnostic
             {
                 DiagnosticId = Id, Area = Areas.Ram, Status = HealthStatus.Problem, ImpactArea = "STUTTER",
                 Title = "Pressão de memória",
+                FixOptimizationId = "background-process-close",
                 Detail = $"{Fmt.Pct(m.UsedPercent)} da RAM em uso no momento do scan, antes de abrir o jogo. Isso causa paginação em disco, stutter e carregamento lento.",
                 Recommendation = $"Feche aplicações antes de jogar. Maiores consumidores agora: {topNames}.",
                 Evidence = evidence,
@@ -198,6 +200,7 @@ public sealed class MemoryDiagnostic : IDiagnostic
             {
                 DiagnosticId = Id, Area = Areas.Ram, Status = HealthStatus.Attention, ImpactArea = "STUTTER",
                 Title = "Uso de memória alto",
+                FixOptimizationId = "background-process-close",
                 Detail = $"{Fmt.Pct(m.UsedPercent)} da RAM em uso sem o jogo aberto. Sobra pouco para o jogo.",
                 Recommendation = $"Feche aplicações antes de jogar. Maiores consumidores agora: {topNames}.",
                 Evidence = evidence,
@@ -231,6 +234,7 @@ public sealed class MemoryDiagnostic : IDiagnostic
             {
                 DiagnosticId = Id, Area = Areas.Ram, Status = HealthStatus.Attention, ImpactArea = "SYSTEM",
                 Title = "Arquivo de paginação desativado",
+                FixOptimizationId = "pagefile-restore-automatic",
                 Detail = "Sem arquivo de paginação, quando a memória acaba o jogo fecha em vez de ficar lento. Desativar paginação é um tweak popular que não aumenta FPS.",
                 Recommendation = "Reative em Sistema > Sobre > Configurações avançadas > Desempenho > Memória virtual: \"Gerenciar automaticamente\".",
                 Evidence = evidence,
@@ -293,6 +297,7 @@ public sealed class StorageDiagnostic : IDiagnostic
                 {
                     DiagnosticId = Id, Area = Areas.Storage, Status = d.IsSystemDrive ? HealthStatus.Problem : HealthStatus.Attention, ImpactArea = "SYSTEM",
                     Title = $"Pouco espaço livre em {d.DriveLetter}",
+                    FixOptimizationId = d.IsSystemDrive ? "temp-files-cleanup" : null,
                     Detail = d.IsSystemDrive
                         ? "Com o disco do sistema quase cheio, o Windows perde espaço para paginação, atualizações e cache de shaders."
                         : $"Pouco espaço no disco dos jogos ({string.Join(", ", games)}). Atualizações podem falhar.",
@@ -379,6 +384,7 @@ public sealed class GpuDriverDiagnostic : IDiagnostic
             {
                 DiagnosticId = Id, Area = Areas.Driver, Status = HealthStatus.Attention, ImpactArea = "FPS",
                 Title = "Driver da GPU potencialmente desatualizado",
+                ActionUrl = main.Vendor == GpuVendor.Unknown ? null : VendorUrl(main.Vendor),
                 Detail = $"O driver instalado é de {date:dd/MM/yyyy}, há mais de um ano. Drivers novos costumam trazer correções e perfis para jogos recentes.",
                 Recommendation = $"Atualize pelo site oficial: {VendorUrl(main.Vendor)}. O FPSX não baixa drivers.",
                 Evidence = evidence,

@@ -16,8 +16,11 @@ public sealed class ChangeExecutor(ISystemAccess system)
         RegistryValueChange r => r with { Value = system.ReadRegistry(r.Root, r.Path, r.Name) },
         PowerSchemeChange => system.GetActivePowerScheme() is { } guid ? new PowerSchemeChange(guid, "plano anterior") : null,
         DisplayRefreshChange d => system.GetDisplayMode(d.DeviceName) is { } m ? new DisplayRefreshChange(d.DeviceName, m.Width, m.Height, m.RefreshHz) : null,
+        GameConfigChange g => system.ReadGameConfig(g.GameId, g.Key) is { } prev ? g with { Value = prev } : null,
         _ => null,
     };
+
+    public static readonly TimeSpan CloseTimeout = TimeSpan.FromSeconds(10);
 
     public string Apply(Change change)
     {
@@ -44,6 +47,24 @@ public sealed class ChangeExecutor(ISystemAccess system)
                 if (result.ExitCode != 0)
                     throw new InvalidOperationException($"Comando terminou com código {result.ExitCode}: {result.Output.Trim()}");
                 return result.Output.Trim();
+            case ProcessCloseChange p:
+                var current = system.ProcessName(p.Pid);
+                if (current is null)
+                    return "o programa já tinha fechado";
+                // PID é reciclado pelo Windows: se o nome mudou desde o scan, é
+                // outro programa, e ele não é tocado.
+                if (!string.Equals(current, p.Name, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException($"O PID {p.Pid} agora pertence a {current}. Nada foi fechado.");
+                if (!system.CloseProcess(p.Pid, CloseTimeout))
+                    throw new InvalidOperationException($"{p.Name} não fechou. Feche manualmente para não perder trabalho não salvo.");
+                return "programa fechado";
+            case GameConfigChange g:
+                // O jogo reescreve o arquivo ao fechar: editar com ele aberto
+                // seria desfeito sem ninguém saber.
+                if (system.IsGameRunning(g.GameId))
+                    throw new InvalidOperationException("Feche o jogo antes de aplicar esta correção.");
+                system.WriteGameConfig(g.GameId, g.Key, g.Value);
+                return "configuração do jogo gravada";
             default:
                 throw new SafetyViolationException($"Tipo de alteração sem executor: {change.GetType().Name}");
         }
@@ -58,6 +79,12 @@ public sealed class ChangeExecutor(ISystemAccess system)
         DisplayRefreshChange d => system.GetDisplayMode(d.DeviceName) is { } m && Math.Abs(m.RefreshHz - d.RefreshHz) <= 1
             ? new Verification(true, $"monitor em {d.RefreshHz} Hz")
             : new Verification(false, "o monitor não ficou na taxa pedida"),
+        GameConfigChange g => string.Equals(system.ReadGameConfig(g.GameId, g.Key), g.Value, StringComparison.Ordinal)
+            ? new Verification(true, $"{g.Key} = {g.Value} confirmado no arquivo")
+            : new Verification(false, $"{g.Key} não ficou com o valor {g.Value}"),
+        ProcessCloseChange p => !string.Equals(system.ProcessName(p.Pid), p.Name, StringComparison.OrdinalIgnoreCase)
+            ? new Verification(true, "processo encerrado")
+            : new Verification(false, "o processo continua aberto"),
         // Cache e rede não têm estado para reler: o sucesso é o próprio resultado da execução.
         _ => new Verification(true, "execução concluída"),
     };
@@ -68,6 +95,7 @@ public sealed class ChangeExecutor(ISystemAccess system)
         RegistryValueChange r => Equal(system.ReadRegistry(r.Root, r.Path, r.Name), r.Value),
         PowerSchemeChange p => string.Equals(system.GetActivePowerScheme(), p.SchemeGuid, StringComparison.OrdinalIgnoreCase),
         DisplayRefreshChange d => system.GetDisplayMode(d.DeviceName) is { } m && Math.Abs(m.RefreshHz - d.RefreshHz) <= 1,
+        GameConfigChange g => string.Equals(system.ReadGameConfig(g.GameId, g.Key), g.Value, StringComparison.Ordinal),
         _ => true,
     };
 

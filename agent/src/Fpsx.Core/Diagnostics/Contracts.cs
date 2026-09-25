@@ -35,6 +35,12 @@ public sealed record Finding
     public string ImpactArea { get; init; } = "SYSTEM";
 
     public IReadOnlyDictionary<string, string> Evidence { get; init; } = new Dictionary<string, string>();
+
+    /// <summary>Otimização que resolve este problema, quando existe uma. É o botão "Resolver" do app.</summary>
+    public string? FixOptimizationId { get; init; }
+
+    /// <summary>Link oficial quando a solução é externa (ex.: driver no site do fabricante).</summary>
+    public string? ActionUrl { get; init; }
 }
 
 public interface IDiagnostic

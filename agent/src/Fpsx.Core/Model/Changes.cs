@@ -13,6 +13,8 @@ namespace Fpsx.Core.Model;
 [JsonDerivedType(typeof(DisplayRefreshChange), "display_refresh")]
 [JsonDerivedType(typeof(CacheClearChange), "cache_clear")]
 [JsonDerivedType(typeof(NetworkRepairChange), "network_repair")]
+[JsonDerivedType(typeof(ProcessCloseChange), "process_close")]
+[JsonDerivedType(typeof(GameConfigChange), "game_config")]
 public abstract record Change
 {
     /// <summary>Texto curto em pt-BR para o usuário ver antes de confirmar.</summary>
@@ -70,8 +72,26 @@ public sealed record CacheClearChange(CacheTarget Target) : Change
         CacheTarget.NvidiaDxCache => "Limpar o cache de shaders da NVIDIA",
         CacheTarget.AmdDxCache => "Limpar o cache de shaders da AMD",
         CacheTarget.SteamShaderCacheCs2 => "Limpar o cache de shaders do CS2 na Steam",
+        CacheTarget.UserTemp => "Apagar arquivos temporários com mais de 24 horas",
         _ => "Limpar cache",
     };
+}
+
+/// <summary>
+/// Pede para um programa fechar, como o botão X da janela. Nunca força o
+/// encerramento: forçar pode perder trabalho não salvo do usuário.
+/// </summary>
+public sealed record ProcessCloseChange(int Pid, string Name) : Change
+{
+    public override bool Reversible => false;
+
+    public override string Describe() => $"Fechar {Name} (PID {Pid})";
+}
+
+/// <summary>Altera uma chave do arquivo de configuração de vídeo do jogo. O jogo precisa estar fechado.</summary>
+public sealed record GameConfigChange(string GameId, string Key, string Value) : Change
+{
+    public override string Describe() => $"Definir {Key} = {Value} na configuração de {GameId}";
 }
 
 public sealed record NetworkRepairChange(NetworkRepairKind Repair) : Change

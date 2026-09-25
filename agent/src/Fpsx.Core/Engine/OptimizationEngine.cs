@@ -51,7 +51,7 @@ public sealed class OptimizationEngine(ISystemAccess system, SessionStore store)
         // Valida a lista inteira antes de tocar em qualquer coisa: violação de
         // segurança aborta a sessão sem aplicar nem a primeira alteração.
         var work = new List<(OptimizationResult Result, Optimizations.Proposal Proposal)>();
-        foreach (var id in proposalIds.Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var id in Expand(scan, proposalIds).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             if (scan.FindProposal(id) is not { } found)
             {
@@ -161,6 +161,26 @@ public sealed class OptimizationEngine(ISystemAccess system, SessionStore store)
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Id de otimização (sem ":") vale por todas as propostas dela: é o botão
+    /// "Resolver tudo" do app. Id de proposta passa direto.
+    /// </summary>
+    public static IEnumerable<string> Expand(ScanResult scan, IEnumerable<string> ids)
+    {
+        foreach (var id in ids)
+        {
+            var opt = scan.Optimizations.FirstOrDefault(o => o.Definition.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+            if (opt is null || opt.Evaluation.Proposals.Any(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return id;
+                continue;
+            }
+
+            foreach (var p in opt.Evaluation.Proposals)
+                yield return p.Id;
+        }
     }
 
     internal static void Replace(List<ChangeRecord> list, ChangeRecord record)

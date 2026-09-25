@@ -228,7 +228,7 @@ public static class Commands
             return 0;
         }
 
-        var engine = new OptimizationEngine(new WindowsSystemAccess(), ctx.Store);
+        var engine = new OptimizationEngine(new WindowsSystemAccess(ctx.GameProfiles), ctx.Store);
         var session = engine.Apply(scan, valid, new ApplyOptions
         {
             AllowExperimental = args.Flag("experimental"),
@@ -284,7 +284,7 @@ public static class Commands
     public static int Rollback(AgentContext ctx, Args args)
     {
         var force = args.Flag("force");
-        var manager = new RollbackManager(new WindowsSystemAccess(), ctx.Store);
+        var manager = new RollbackManager(new WindowsSystemAccess(ctx.GameProfiles), ctx.Store);
         Ui.Title("FPSX Rollback");
 
         if (args.Get("change") is { } change)
@@ -316,6 +316,8 @@ public static class Commands
 
     public static int History(AgentContext ctx, Args args)
     {
+        if (!Gate(ctx, Feature.History))
+            return 3;
         var sessions = ctx.Store.All();
         if (args.Flag("json"))
         {
@@ -351,8 +353,20 @@ public static class Commands
 
     // ---------------------------------------------------------------- benchmark
 
+    /// <summary>Recurso fora do plano: explica qual plano libera, sem erro técnico.</summary>
+    private static bool Gate(AgentContext ctx, Feature feature)
+    {
+        var plan = ctx.License().Plan;
+        if (PlanFeatures.Allows(plan, feature))
+            return true;
+        Ui.Warn($"{PlanFeatures.Label(feature)} está disponível a partir do plano {PlanFeatures.RequiredPlan(feature)}. Seu plano: {plan}.");
+        return false;
+    }
+
     public static int Benchmark(AgentContext ctx, Args args)
     {
+        if (!Gate(ctx, Feature.Benchmark))
+            return 3;
         var sub = args.Positional.Skip(1).FirstOrDefault()?.ToLowerInvariant();
         Directory.CreateDirectory(ctx.BenchmarksDir);
         switch (sub)

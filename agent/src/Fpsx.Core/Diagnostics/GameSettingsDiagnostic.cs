@@ -75,6 +75,7 @@ public sealed class GameSettingsDiagnostic : IDiagnostic
             yield return new Finding
             {
                 DiagnosticId = Id, Area = Areas.Game, Status = check.Severity, ImpactArea = "LATENCY",
+                FixOptimizationId = check.FixValue is null ? null : "game-settings-fix",
                 Title = $"{profile.Name}: {check.Title}",
                 Detail = check.Why,
                 Recommendation = check.Recommendation,
@@ -100,6 +101,7 @@ public sealed class GameSettingsDiagnostic : IDiagnostic
         return new Finding
         {
             DiagnosticId = Id, Area = Areas.Game, Status = HealthStatus.Attention, ImpactArea = "DISPLAY",
+            FixOptimizationId = "game-settings-fix",
             Title = $"{profile.Name}: taxa de atualização do jogo abaixo do monitor",
             Detail = $"O jogo está configurado para {gameHz} Hz e o monitor suporta {primary.MaxHzAtCurrentResolution} Hz. Em tela cheia o jogo usa a taxa dele, e a tela mostra menos quadros do que poderia.",
             Recommendation = $"No jogo: Configurações > Vídeo > Taxa de atualização: {primary.MaxHzAtCurrentResolution} Hz.",

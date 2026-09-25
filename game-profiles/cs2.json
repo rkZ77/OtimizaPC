@@ -21,6 +21,8 @@
     "power-plan-high-performance",
     "display-refresh-rate-max",
     "startup-entry-disable",
+    "background-process-close",
+    "game-settings-fix",
     "shader-cache-clear-cs2"
   ],
   "setting_checks": [
@@ -28,6 +30,7 @@
       "key": "setting.mat_vsync",
       "expect_any": ["0"],
       "severity": "ATTENTION",
+      "fix_value": "0",
       "title": "V-Sync ligado",
       "why": "V-Sync segura cada quadro até a próxima atualização da tela, o que adiciona atraso de entrada. Em jogo competitivo isso pesa mais que o tearing.",
       "recommendation": "No CS2: Configurações > Vídeo > Avançado > Esperar pela sincronização vertical: Desativado. Se o tearing incomodar, use G-Sync/FreeSync com limite de FPS abaixo da taxa do monitor."
@@ -37,6 +40,7 @@
       "expect_any": ["1", "2"],
       "severity": "INFO",
       "gpu_vendor": "NVIDIA",
+      "fix_value": "1",
       "title": "NVIDIA Reflex desligado",
       "why": "O CS2 suporta NVIDIA Reflex, que reduz a fila de renderização e a latência do sistema quando a GPU é o gargalo.",
       "recommendation": "No CS2: Configurações > Vídeo > Avançado > NVIDIA Reflex Low Latency: Ativado."

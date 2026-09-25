@@ -19,6 +19,10 @@ public static class OptimizationRegistry
         new Cs2ShaderCacheClear(),
         new DnsFlush(),
         new WinsockReset(),
+        new PagefileRestoreOptimization(),
+        new BackgroundProcessCloseOptimization(),
+        new TempCleanupOptimization(),
+        new GameSettingsFixOptimization(),
     ];
 }
 

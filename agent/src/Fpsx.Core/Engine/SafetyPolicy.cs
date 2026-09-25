@@ -25,7 +25,25 @@ public static partial class SafetyPolicy
         new(RegistryRoot.LocalMachine, RegistryPaths.StartupApproved + @"\Run", false, null),
         new(RegistryRoot.LocalMachine, RegistryPaths.StartupApproved + @"\Run32", false, null),
         new(RegistryRoot.LocalMachine, RegistryPaths.StartupApproved + @"\StartupFolder", false, null),
+        new(RegistryRoot.LocalMachine, RegistryPaths.MemoryManagement, false, ["PagingFiles"]),
     ];
+
+    // Chaves de configuração de jogo que o FPSX pode escrever, com o formato
+    // aceito. Fica compilado aqui, e não no perfil JSON: um perfil adulterado
+    // não pode transformar o FPSX num editor de config arbitrário.
+    private static readonly Dictionary<string, Dictionary<string, Regex>> AllowedGameKeys = new()
+    {
+        ["cs2"] = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["setting.mat_vsync"] = new("^[01]$"),
+            ["setting.r_low_latency"] = new("^[012]$"),
+            ["setting.refreshrate_numerator"] = new("^[1-9][0-9]{1,6}$"),
+            ["setting.refreshrate_denominator"] = new("^[1-9][0-9]{0,3}$"),
+        },
+    };
+
+    [GeneratedRegex(@"^[A-Za-z?]:\\pagefile\.sys( \d+ \d+)?$", RegexOptions.IgnoreCase)]
+    private static partial Regex PagingFileLine();
 
     // Defesa em profundidade: mesmo que alguém amplie a whitelist por engano,
     // nada que toque segurança, atualização ou políticas passa.
@@ -51,7 +69,34 @@ public static partial class SafetyPolicy
             case CacheClearChange c when !Enum.IsDefined(c.Target):
             case NetworkRepairChange n when !Enum.IsDefined(n.Repair):
                 throw new SafetyViolationException("Operação desconhecida.");
+            case ProcessCloseChange p:
+                ValidateProcessClose(p);
+                break;
+            case GameConfigChange g:
+                if (!AllowedGameKeys.TryGetValue(g.GameId, out var keys) || !keys.TryGetValue(g.Key, out var format))
+                    throw new SafetyViolationException($"Chave de configuração fora da whitelist: {g.GameId}/{g.Key}");
+                if (!format.IsMatch(g.Value))
+                    throw new SafetyViolationException($"Valor fora do formato permitido para {g.Key}: {g.Value}");
+                break;
         }
+    }
+
+    /// <summary>
+    /// Nunca fecha processo do Windows, de segurança, de anti-cheat, launcher
+    /// (o CS2 depende da Steam aberta), jogo ou o próprio FPSX.
+    /// </summary>
+    private static void ValidateProcessClose(ProcessCloseChange p)
+    {
+        if (p.Pid <= 4 || string.IsNullOrWhiteSpace(p.Name))
+            throw new SafetyViolationException("Processo inválido.");
+        var category = Diagnostics.ProcessClassifier.Classify(p.Name);
+        if (category is not Diagnostics.ProcessCategory.User)
+            throw new SafetyViolationException($"{p.Name} é {Diagnostics.ProcessClassifier.Label(category).ToLowerInvariant()} e não pode ser fechado pelo FPSX.");
+        var startup = StartupClassifier.Classify(new StartupEntry { Name = p.Name });
+        if (StartupClassifier.IsProtected(startup))
+            throw new SafetyViolationException($"{p.Name} é protegido e não pode ser fechado pelo FPSX.");
+        if (p.Name.StartsWith("fpsx", StringComparison.OrdinalIgnoreCase))
+            throw new SafetyViolationException("O FPSX não fecha a si mesmo.");
     }
 
     private static void ValidateRegistry(RegistryValueChange r)
@@ -78,6 +123,18 @@ public static partial class SafetyPolicy
                 throw new SafetyViolationException($"Item de inicialização protegido: {r.Name}");
             if (r.Value.Kind != RegistryKind.Binary)
                 throw new SafetyViolationException("StartupApproved só aceita valor binário.");
+        }
+
+        // PagingFiles só aceita linhas no formato do próprio Windows
+        // ("?:\pagefile.sys" = gerenciado pelo sistema). Vazio é permitido só
+        // para o rollback devolver o estado "sem pagefile" que o usuário tinha.
+        if (string.Equals(path, RegistryPaths.MemoryManagement, StringComparison.OrdinalIgnoreCase))
+        {
+            if (r.Value is null || r.Value.Kind != RegistryKind.MultiString)
+                throw new SafetyViolationException("PagingFiles precisa ser REG_MULTI_SZ e não pode ser apagado.");
+            var lines = r.Value.Data.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Any(l => !PagingFileLine().IsMatch(l.Trim())))
+                throw new SafetyViolationException($"Valor de PagingFiles fora do formato permitido: {r.Value.Data}");
         }
     }
 }

@@ -71,6 +71,9 @@ public enum RegistryKind
     QWord,
     String,
     Binary,
+
+    /// <summary>REG_MULTI_SZ. Data guarda as linhas separadas por \n.</summary>
+    MultiString,
 }
 
 public enum CacheTarget
@@ -79,6 +82,9 @@ public enum CacheTarget
     NvidiaDxCache,
     AmdDxCache,
     SteamShaderCacheCs2,
+
+    /// <summary>Arquivos temporários do usuário com mais de 24 h.</summary>
+    UserTemp,
 }
 
 public enum NetworkRepairKind

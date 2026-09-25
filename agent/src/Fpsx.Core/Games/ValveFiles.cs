@@ -25,6 +25,23 @@ public static partial class ValveFiles
         return result;
     }
 
+    /// <summary>
+    /// Troca o valor de uma chave existente preservando o resto do arquivo
+    /// (tabulação, ordem, outras chaves). Retorna null se a chave não existe:
+    /// o FPSX não inventa chave nova no arquivo do jogo.
+    /// </summary>
+    public static string? ReplaceValue(string text, string key, string value)
+    {
+        var pattern = new Regex("^(\\s*\"" + Regex.Escape(key) + "\"\\s+\")((?:[^\"\\\\]|\\\\.)*)(\")", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        var replaced = false;
+        var result = pattern.Replace(text, m =>
+        {
+            replaced = true;
+            return m.Groups[1].Value + value + m.Groups[3].Value;
+        });
+        return replaced ? result : null;
+    }
+
     public static IReadOnlyList<string> ParseLibraryFolders(string text) =>
         LibraryPath().Matches(text).Select(m => Unescape(m.Groups[1].Value)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 

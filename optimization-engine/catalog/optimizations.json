@@ -265,6 +265,103 @@
       }
     },
 
+    // ---- Correções de problemas encontrados pelo diagnóstico (plano Starter+).
+    {
+      "id": "pagefile-restore-automatic",
+      "name": "Reativar arquivo de paginação",
+      "category": "memory",
+      "classification": "PROVEN",
+      "risk": "LOW",
+      "impact_area": "STUTTER",
+      "description": "Volta o arquivo de paginação para 'gerenciado pelo Windows' quando ele foi desativado.",
+      "min_plan": "starter",
+      "measurement": false,
+      "justification": {
+        "problem": "Pagefile desativado (tweak popular) reduz o limite de memória comprometida: quando a RAM acaba, o jogo fecha.",
+        "works_on": "PCs sem nenhum arquivo de paginação configurado.",
+        "does_not_work_on": "PCs com pagefile ativo, automático ou manual: nada é alterado.",
+        "expected_benefit": "Moderado em estabilidade: elimina fechamentos por falta de memória. Não aumenta FPS.",
+        "how_to_measure": "Scan após o reinício mostra o pagefile ativo; fim dos fechamentos por memória.",
+        "risk": "Baixo. É o padrão do Windows. Exige reinício.",
+        "rollback": "Restaura o valor anterior de PagingFiles (inclusive o estado desativado).",
+        "evidence": "Documentação da Microsoft 'How to determine the appropriate page file size' recomenda manter o pagefile gerenciado pelo sistema.",
+        "safer_alternative": "Reativar manualmente em Sistema > Configurações avançadas > Memória virtual.",
+        "user_need": "Quem desativou o pagefile seguindo tweak da internet."
+      }
+    },
+    {
+      "id": "background-process-close",
+      "name": "Fechar programas pesando em segundo plano",
+      "category": "processes",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "STUTTER",
+      "description": "Pede, programa por programa, para fechar o que está consumindo CPU ou memória antes de jogar.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": true,
+      "justification": {
+        "problem": "Programas do usuário em segundo plano disputam núcleos e memória com o jogo, o que aparece como queda no 1% low.",
+        "works_on": "PCs com programa do usuário acima de 5% de CPU, ou acima de 1,5 GB com a memória já apertada, no momento do scan.",
+        "does_not_work_on": "Processos do Windows, segurança, anti-cheat, launchers e jogos: nunca são oferecidos.",
+        "expected_benefit": "Moderado quando há carga real de fundo; nenhum quando não há.",
+        "how_to_measure": "FPSX Benchmark antes e depois (1% low e stutter).",
+        "risk": "Baixo. O fechamento é gracioso, como o botão X; nada é forçado.",
+        "rollback": "Não há estado a restaurar: o usuário abre o programa de novo quando quiser.",
+        "evidence": "Contadores de CPU e memória por processo medidos pelo próprio scan.",
+        "safer_alternative": "Fechar manualmente pelo Gerenciador de Tarefas.",
+        "user_need": "O usuário escolhe item a item; nada é fechado sem confirmação."
+      }
+    },
+    {
+      "id": "temp-files-cleanup",
+      "name": "Liberar espaço (temporários antigos)",
+      "category": "storage",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "SYSTEM",
+      "description": "Apaga arquivos temporários do usuário com mais de 24 horas quando o disco do sistema está quase cheio.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Disco do sistema quase cheio deixa o Windows sem espaço para paginação, atualizações e cache de shaders.",
+        "works_on": "PCs com menos de 10% ou 15 GB livres no disco do sistema.",
+        "does_not_work_on": "PCs com espaço suficiente: a otimização nem aparece. Não aumenta FPS.",
+        "expected_benefit": "Baixo a moderado, conforme o volume de temporários acumulados.",
+        "how_to_measure": "Espaço livre informado após a limpeza e no scan seguinte.",
+        "risk": "Baixo. Só arquivos de %TEMP% com mais de 24 h e que não estão em uso.",
+        "rollback": "Não há: temporários apagados não voltam (por definição são descartáveis).",
+        "evidence": "%TEMP% é área de arquivos descartáveis; a própria Limpeza de Disco do Windows remove o mesmo conteúdo.",
+        "safer_alternative": "Configurações > Sistema > Armazenamento > Recomendações de limpeza.",
+        "user_need": "Quem está com o disco do sistema quase cheio."
+      }
+    },
+    {
+      "id": "game-settings-fix",
+      "name": "Corrigir configurações de vídeo do jogo",
+      "category": "game",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "LATENCY",
+      "description": "Aplica no arquivo do jogo as correções que o diagnóstico apontou (V-Sync, Reflex, taxa de atualização).",
+      "min_plan": "pro",
+      "requires_user_confirmation": true,
+      "measurement": true,
+      "justification": {
+        "problem": "Opções de vídeo como V-Sync ligado ou taxa de atualização abaixo do monitor aumentam latência ou limitam os quadros exibidos.",
+        "works_on": "Jogos com perfil no FPSX (CS2) cujo arquivo de vídeo tem essas opções fora do recomendado.",
+        "does_not_work_on": "Jogos sem perfil, ou já configurados: nada é alterado. Exige o jogo fechado.",
+        "expected_benefit": "Moderado em latência; alto quando o jogo estava limitado a uma taxa abaixo do monitor.",
+        "how_to_measure": "FPSX Benchmark antes e depois; leitura do arquivo confirma o valor gravado.",
+        "risk": "Baixo. Só chaves de uma whitelist compilada, com formato validado.",
+        "rollback": "Restaura o valor anterior de cada chave no arquivo do jogo.",
+        "evidence": "V-Sync adiciona espera pelo refresh (documentação NVIDIA Reflex / Valve); taxa do jogo abaixo do monitor descarta quadros.",
+        "safer_alternative": "Ajustar pelo menu de vídeo do próprio jogo.",
+        "user_need": "Jogadores do CS2 com o diagnóstico apontando essas opções."
+      }
+    },
+
     // ---- NOT_RECOMMENDED: ficam aqui para o produto explicar POR QUE não aplica.
     // Não têm handler: o Agent não sabe executá-las, por construção.
     {
