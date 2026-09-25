@@ -1,0 +1,16 @@
+fastapi==0.141.1
+uvicorn[standard]==0.54.0
+psycopg2-binary==2.9.13
+PyJWT==2.15.0
+bcrypt==5.0.0
+# Assinatura ECDSA das licencas e do catalogo que o Agent baixa. O Agent
+# verifica com a chave publica embutida: servidor comprometido no caminho nao
+# consegue fabricar licenca nem liberar otimizacao desativada.
+cryptography==50.0.1
+python-dotenv==1.2.3
+httpx==0.28.1
+mercadopago==3.6.0
+email-validator==2.3.0
+pydantic==2.13.5
+# zoneinfo nao traz banco de fusos no Windows (licao do Pickia).
+tzdata==2026.2

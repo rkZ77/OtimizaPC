@@ -1,0 +1,162 @@
+"""Fluxos completos contra um PostgreSQL DESCARTAVEL.
+
+So' roda com FPSX_TEST_DATABASE_URL definida, e recusa qualquer URL que nao
+seja localhost: a trava do conftest continua valendo para o resto da suite, e
+este arquivo nunca consegue apontar para o Supabase por engano.
+
+    FPSX_TEST_DATABASE_URL=postgresql://fpsx@localhost:54329/fpsx_test pytest tests/test_integration_db.py
+"""
+import logging
+import os
+from urllib.parse import urlparse
+
+import pytest
+from fastapi.testclient import TestClient
+
+URL = os.getenv("FPSX_TEST_DATABASE_URL", "")
+pytestmark = pytest.mark.skipif(not URL, reason="FPSX_TEST_DATABASE_URL não definida")
+
+H1, H2, H3 = "1" * 64, "2" * 64, "3" * 64
+
+
+@pytest.fixture
+def db(monkeypatch):
+    host = urlparse(URL).hostname
+    assert host in ("localhost", "127.0.0.1"), "integração só roda em banco local descartável"
+    monkeypatch.setenv("DATABASE_URL", URL)
+    monkeypatch.setenv("DB_SSLMODE", "disable")
+
+    from app import database, migrate
+
+    # Desfaz a trava do conftest SO' aqui, e recria o pool para a URL de teste.
+    monkeypatch.setattr(database, "get_connection", lambda: database._ConexaoDoPool(database._obter_pool().getconn()))
+    database._pool = None
+    conn = database.get_connection()
+    cur = conn.cursor()
+    cur.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
+    conn.commit()
+    conn.close()
+    migrate.run(logging.getLogger("test"))
+    yield database
+    database._pool.closeall()
+    database._pool = None
+
+
+@pytest.fixture
+def api(db):
+    from app.main import app
+
+    app.dependency_overrides.clear()
+    return TestClient(app)
+
+
+def _register(api, email):
+    r = api.post("/api/auth/register", json={"email": email, "password": "senha-forte-1", "name": "Teste"})
+    assert r.status_code == 200, r.text
+    return {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+
+def _activate(api, headers, h):
+    return api.post("/api/agent/activate", json={"device_hash": h, "device_name": f"PC-{h[0]}", "windows_build": "26100", "agent_version": "0.1.0"}, headers=headers)
+
+
+def test_ciclo_completo_trial_compra_dispositivos_telemetria(api, db):
+    from app import signing
+    from app.services import payments
+
+    # Cadastro cria trial PRO de 7 dias.
+    alice = _register(api, "alice@fpsx.app")
+    assert api.post("/api/auth/register", json={"email": "ALICE@fpsx.app", "password": "outra-senha-1"}).status_code == 409
+    overview = api.get("/api/account/overview", headers=alice).json()
+    assert overview["license"]["status"] == "trial" and overview["license"]["tier"] == "pro"
+
+    # Ativa o PC 1 no trial.
+    r = _activate(api, alice, H1)
+    assert r.status_code == 200, r.text
+    token = r.json()["token"]
+    assert signing.verify(token)["status"] == "trial"
+
+    # Outra conta no MESMO PC nao ganha outro trial.
+    bob = _register(api, "bob@fpsx.app")
+    assert _activate(api, bob, H1).status_code == 403
+
+    # Trial vale para 1 PC.
+    assert _activate(api, alice, H2).status_code == 409
+
+    # Compra do Pro (webhook simulado pelo caminho unico de ativacao).
+    uid = api.get("/api/auth/me", headers=alice).json()["user"]["id"]
+    paid = payments.NormalizedPayment("mercadopago", "mp-1", "approved", 2490, f"{uid}:pro:")
+    result = payments.apply_approved_payment(paid, "teste")
+    assert result["applied"] is True
+    assert payments.apply_approved_payment(paid, "teste")["reason"] == "already_applied"
+
+    overview = api.get("/api/account/overview", headers=alice).json()
+    assert overview["license"]["status"] == "active" and overview["license"]["max_devices"] == 2
+
+    # Pro: 2 PCs. O terceiro recebe 409 com a lista para trocar.
+    assert _activate(api, alice, H2).status_code == 200
+    third = _activate(api, alice, H3)
+    assert third.status_code == 409
+    devices = third.json()["detail"]["devices"]
+    assert len(devices) == 2
+
+    # "Trocar PC": desativa o PC 2 pelo site e o terceiro entra.
+    pc2 = next(d for d in devices if d["name"] == "PC-2")
+    assert api.post(f"/api/account/devices/{pc2['id']}/deactivate", headers=alice).status_code == 200
+    assert _activate(api, alice, H3).status_code == 200
+
+    # O PC 2 desativado perde acesso na hora.
+    pc2_token = signing.sign({"uid": uid, "device": H2})
+    assert api.post("/api/agent/refresh", json={"device_hash": H2}, headers={"X-Device-Token": pc2_token}).status_code == 401
+
+    # O PC 1 continua ativo: refresh traz o plano novo (trial -> pro ativo).
+    refreshed = api.post("/api/agent/refresh", json={"device_hash": H1}, headers={"X-Device-Token": token})
+    assert refreshed.status_code == 200, refreshed.text
+    assert signing.verify(refreshed.json()["token"])["status"] == "active"
+
+    # Telemetria aceita so' o que reconhece.
+    t = api.post("/api/agent/telemetry", headers={"X-Device-Token": token}, json={"events": [
+        {"event": "optimization_applied", "optimization_id": "game-mode-enable", "success": True, "detail": {"profile": "gaming", "usuario": "x"}},
+        {"event": "coisa_estranha"},
+    ]})
+    assert t.json() == {"accepted": 1}
+    b = api.post("/api/agent/benchmarks", headers={"X-Device-Token": token}, json={
+        "game_id": "cs2", "label": "antes", "avg_fps": 142, "low1_fps": 91, "low01_fps": 70, "frametime_ms": 7.04, "frames": 8520})
+    assert b.status_code == 200
+    assert len(api.get("/api/account/history", headers=alice).json()["events"]) == 1
+    assert api.get("/api/account/benchmarks", headers=alice).json()["benchmarks"][0]["avg_fps"] == 142
+
+
+def test_admin_planos_config_catalogo_e_auditoria(api, db):
+    from app import signing
+
+    admin = _register(api, "admin@fpsx.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'admin@fpsx.app'")
+
+    assert api.get("/api/admin/metrics", headers=admin).json()["users"] == 1
+
+    plan = {"key": "pro", "name": "Pro", "tier": "pro", "description": "x", "price_cents": 2990, "days": 30,
+            "max_devices": 3, "features": ["a"], "active": True, "sort": 2}
+    assert api.put("/api/admin/plans", json=plan, headers=admin).status_code == 200
+    public = api.get("/api/public/plans").json()
+    assert next(p for p in public["plans"] if p["key"] == "pro")["price_cents"] == 2990
+
+    assert api.put("/api/admin/settings", json={"key": "trial_days", "value": 3}, headers=admin).status_code == 200
+    assert api.put("/api/admin/settings", json={"key": "trial_days", "value": "tres"}, headers=admin).status_code == 400
+    assert api.get("/api/public/plans").json()["trial_days"] == 3
+
+    ov = {"kind": "optimization", "id": "power-plan-high-performance", "enabled": False}
+    assert api.put("/api/admin/catalog", json=ov, headers=admin).status_code == 200
+
+    # O Agent recebe o override assinado.
+    _activate(api, admin, H1)
+    token = _activate(api, admin, H1).json()["token"]
+    signed = api.get("/api/agent/catalog", headers={"X-Device-Token": token}).json()["token"]
+    overrides = signing.verify(signed)["overrides"]
+    assert overrides == [{"kind": "optimization", "id": "power-plan-high-performance", "enabled": False}]
+
+    assert api.post("/api/admin/releases", headers=admin, json={"component": "agent", "version": "0.2.0", "url": "https://cdn.fpsx.app/FPSX-Setup-0.2.0.exe", "sha256": "a" * 64}).status_code == 200
+    assert api.get("/api/public/releases").json()["releases"][0]["version"] == "0.2.0"
+
+    actions = [e["action"] for e in api.get("/api/admin/audit", headers=admin).json()["entries"]]
+    assert {"plan.save", "setting.save", "catalog.override", "release.publish"} <= set(actions)
