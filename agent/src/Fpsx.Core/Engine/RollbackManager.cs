@@ -30,7 +30,11 @@ public sealed class RollbackManager(ISystemAccess system, SessionStore store)
         // a ser desfeita é a última aplicada.
         foreach (var record in session.Changes.Reverse().Where(filter))
         {
-            if (record.Status != ChangeStatus.Applied && record.Status != ChangeStatus.Failed)
+            // Item mantido por drift só volta para a fila quando o usuário
+            // pede --force explicitamente.
+            var retryable = record.Status is ChangeStatus.Applied or ChangeStatus.Failed
+                            || (force && record.Status == ChangeStatus.RollbackSkipped && record.Inverse is not null);
+            if (!retryable)
                 continue;
 
             ChangeRecord updated;

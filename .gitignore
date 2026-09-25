@@ -1,0 +1,21 @@
+# Secrets: nunca commitar
+.env
+.env.*
+!.env.example
+
+# Build do Agent (.NET)
+bin/
+obj/
+.vs/
+*.user
+TestResults/
+
+# Node / Python (frontend e backend, nas proximas etapas)
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Dados locais do Agent em desenvolvimento (sessoes, backups, benchmarks)
+.fpsx-data/

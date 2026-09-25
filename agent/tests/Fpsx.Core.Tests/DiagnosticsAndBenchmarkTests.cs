@@ -183,16 +183,16 @@ public class BenchmarkTests
     [Fact]
     public void Estatisticas_seguem_as_definicoes_documentadas()
     {
-        // 990 quadros de 5 ms e 10 de 20 ms: exatamente 1% de quadros lentos.
-        var frames = Enumerable.Repeat(5.0, 990).Concat(Enumerable.Repeat(20.0, 10)).ToList();
+        // 1980 quadros de 5 ms e 20 de 20 ms: exatamente 1% de quadros lentos.
+        var frames = Enumerable.Repeat(5.0, 1980).Concat(Enumerable.Repeat(20.0, 20)).ToList();
         var s = FrameStats.From(frames);
 
-        Assert.Equal(1000, s.Frames);
-        Assert.Equal(5.15, s.DurationSeconds, 3);
-        Assert.Equal(1000 / 5.15, s.AvgFps, 3);
+        Assert.Equal(2000, s.Frames);
+        Assert.Equal(10.3, s.DurationSeconds, 3);
+        Assert.Equal(2000 / 10.3, s.AvgFps, 3);
         Assert.Equal(200, s.Low1Fps, 3); // P99 cai no último quadro de 5 ms
         Assert.Equal(50, s.Low01Fps, 3); // P99.9 cai nos de 20 ms
-        Assert.Equal(10, s.StutterCount);
+        Assert.Equal(20, s.StutterCount);
         Assert.True(s.Sufficient);
     }
 

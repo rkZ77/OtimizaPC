@@ -1,0 +1,43 @@
+# CI do FPSX, no mesmo formato do Pickia: uma perna por parte do monorepo,
+# independentes de proposito, para uma quebra nao esconder a outra.
+#
+# O Agent roda em windows-latest porque o executavel usa APIs do Windows. Os
+# testes do Core nao tocam no sistema (FakeSystem em memoria): nenhum job
+# altera registro, plano de energia ou monitor do runner.
+
+name: CI
+
+on:
+  push:
+    branches: [main, dev, noprod]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  agent:
+    name: Agent (.NET)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build
+        working-directory: agent
+        run: dotnet build -c Release
+      # Os testes leem o catalogo e os perfis de jogo REAIS: um id publicado
+      # sem handler, ou uma justificativa incompleta, quebra aqui.
+      - name: Testes
+        working-directory: agent
+        run: dotnet test -c Release --no-build
+      - name: Publicar executavel
+        working-directory: agent
+        run: dotnet publish src/Fpsx.Agent -c Release -r win-x64 --self-contained false -o publish
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fpsx-agent-win-x64
+          path: agent/publish
