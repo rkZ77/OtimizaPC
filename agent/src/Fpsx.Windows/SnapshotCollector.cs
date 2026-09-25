@@ -308,7 +308,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
     {
         const string storage = @"root\Microsoft\Windows\Storage";
         var partitions = Wmi.Query("SELECT DriveLetter, DiskNumber FROM MSFT_Partition", storage);
-        var physical = Wmi.Query("SELECT DeviceId, MediaType, BusType, HealthStatus FROM MSFT_PhysicalDisk", storage)
+        var physical = Wmi.Query("SELECT DeviceId, FriendlyName, MediaType, BusType, HealthStatus, OperationalStatus FROM MSFT_PhysicalDisk", storage)
             .ToDictionary(r => r.Str("DeviceId"), r => r);
         var systemRoot = Path.GetPathRoot(Environment.SystemDirectory)?.TrimEnd('\\').ToUpperInvariant() ?? "C:";
 
@@ -328,11 +328,29 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
                 Media = disk?.Long("MediaType") switch { 3 => MediaKind.Hdd, 4 => MediaKind.Ssd, _ => MediaKind.Unknown },
                 BusType = disk?.Long("BusType") switch { 17 => "NVMe", 11 => "SATA", 7 => "USB", 8 => "RAID", 10 => "SAS", null => "", _ => "outro" },
                 Health = disk?.Long("HealthStatus") switch { 0 => "Healthy", 1 => "Warning", 2 => "Unhealthy", null => "", _ => "Unknown" },
+                OperationalStatus = OperationalStatusText(disk),
+                Model = disk?.Str("FriendlyName") ?? "",
                 IsSystemDrive = letter == systemRoot,
             });
         }
 
         return result;
+    }
+
+    // OperationalStatus é um array de códigos; 0xD00B (53259) = Predictive Failure.
+    private static string OperationalStatusText(Dictionary<string, object?>? disk)
+    {
+        if (disk is null || !disk.TryGetValue("OperationalStatus", out var raw) || raw is not Array codes)
+            return "";
+        return string.Join(", ", codes.Cast<object>().Select(c => Convert.ToInt32(c, System.Globalization.CultureInfo.InvariantCulture) switch
+        {
+            2 => "OK",
+            3 => "Degraded",
+            5 => "Predictive Failure",
+            0xD00B => "Predictive Failure",
+            0xD00D => "Removing",
+            _ => "Code " + c,
+        }).Distinct());
     }
 
     private static PowerInfo? Power()

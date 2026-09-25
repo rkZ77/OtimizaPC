@@ -265,6 +265,8 @@ public sealed class StorageDiagnostic : IDiagnostic
                 ["tipo"] = d.Media switch { MediaKind.Ssd => "SSD", MediaKind.Hdd => "HDD", _ => "desconhecido" },
                 ["barramento"] = d.BusType,
                 ["saude"] = d.Health,
+                ["estado"] = d.OperationalStatus,
+                ["modelo"] = d.Model,
             };
             var games = gameDrives[d.DriveLetter.ToUpperInvariant()].ToList();
 
@@ -275,8 +277,10 @@ public sealed class StorageDiagnostic : IDiagnostic
                 {
                     DiagnosticId = Id, Area = Areas.Storage, Status = HealthStatus.Problem, ImpactArea = "SYSTEM",
                     Title = $"Disco {d.DriveLetter} com alerta de saúde",
-                    Detail = $"O Windows reporta o disco como \"{d.Health}\".",
-                    Recommendation = "Faça backup dos seus arquivos. Isso é prioridade sobre qualquer otimização.",
+                    Detail = d.OperationalStatus.Contains("Predictive", StringComparison.OrdinalIgnoreCase)
+                        ? $"O disco {d.Model} reporta falha prevista pelo SMART: ele mesmo está avisando que pode parar de funcionar."
+                        : $"O Windows reporta o disco {d.Model} como \"{d.Health}\" ({d.OperationalStatus}).",
+                    Recommendation = "Faça backup dos arquivos desse disco agora e planeje a troca. Isso é prioridade sobre qualquer otimização.",
                     Evidence = evidence,
                 };
             }

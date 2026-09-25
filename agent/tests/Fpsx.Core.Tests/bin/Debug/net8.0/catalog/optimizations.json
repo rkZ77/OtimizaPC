@@ -1,0 +1,414 @@
+{
+  // Catálogo de otimizações do FPSX. Descreve; não executa.
+  // A lógica de cada id vive em agent/src/Fpsx.Core/Optimizations e o Agent
+  // recusa o arquivo inteiro se houver id sem handler, handler sem id ou
+  // justificativa incompleta (CatalogValidator).
+  "version": "2026.09.1",
+  "optimizations": [
+    {
+      "id": "game-mode-enable",
+      "name": "Windows Game Mode",
+      "category": "gaming",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "STUTTER",
+      "description": "Reativa o Game Mode quando ele foi desligado.",
+      "min_plan": "free",
+      "measurement": true,
+      "justification": {
+        "problem": "Game Mode desligado deixa o Windows Update e notificações competirem com o jogo, e o agendador não prioriza o jogo em primeiro plano.",
+        "works_on": "Windows 10 1703+ e Windows 11 com AutoGameModeEnabled = 0.",
+        "does_not_work_on": "PCs onde o Game Mode já está ligado (padrão do Windows 11): nesse caso a decisão é ALREADY_OPTIMAL e nada é alterado.",
+        "expected_benefit": "Baixo no FPS médio; pode reduzir quedas pontuais causadas por atividade de fundo.",
+        "how_to_measure": "FPSX Benchmark antes/depois, olhando 1% low e contagem de stutter.",
+        "risk": "Baixo. É o padrão do sistema.",
+        "rollback": "Restaura o valor anterior de HKCU\\Software\\Microsoft\\GameBar\\AutoGameModeEnabled (ou remove o valor se ele não existia).",
+        "evidence": "Recurso documentado pela Microsoft (support.microsoft.com, 'Use o Modo de Jogo ao jogar no Windows').",
+        "safer_alternative": "Nenhuma: é voltar ao padrão.",
+        "user_need": "Só quando alguém ou algum 'otimizador' desligou o recurso."
+      }
+    },
+    {
+      "id": "game-capture-background-recording-disable",
+      "name": "Gravação em segundo plano da Game Bar",
+      "category": "gaming",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "FPS",
+      "description": "Desliga apenas o 'Gravar o que aconteceu' contínuo. A captura manual continua funcionando.",
+      "min_plan": "free",
+      "requires_user_confirmation": true,
+      "measurement": true,
+      "justification": {
+        "problem": "Com HistoricalCaptureEnabled = 1 a Game Bar mantém um buffer de vídeo contínuo, usando o encoder da GPU, memória e disco durante toda a partida.",
+        "works_on": "PCs com a gravação em segundo plano ligada.",
+        "does_not_work_on": "PCs com o recurso desligado (padrão). Também não se aplica a quem usa o recurso de propósito: por isso exige confirmação.",
+        "expected_benefit": "Baixo em GPUs com encoder dedicado; maior em GPUs integradas ou de entrada.",
+        "how_to_measure": "FPSX Benchmark antes/depois (FPS médio e 1% low).",
+        "risk": "Baixo. O usuário perde o recurso de salvar os últimos minutos.",
+        "rollback": "Restaura o valor anterior de HistoricalCaptureEnabled.",
+        "evidence": "Documentação da Microsoft sobre a Game Bar avisa que gravar em segundo plano pode afetar o desempenho do jogo.",
+        "safer_alternative": "Manter o recurso e reduzir a qualidade/duração do buffer nas configurações de Captura.",
+        "user_need": "Quem não usa clipes retroativos da Game Bar."
+      }
+    },
+    {
+      "id": "power-plan-leave-power-saver",
+      "name": "Sair do plano Economia de energia",
+      "category": "power",
+      "classification": "PROVEN",
+      "risk": "LOW",
+      "impact_area": "FPS",
+      "description": "Troca 'Economia de energia' por 'Equilibrado' quando o PC está na tomada.",
+      "min_plan": "free",
+      "measurement": true,
+      "justification": {
+        "problem": "O plano Economia de energia reduz o estado máximo do processador, limitando o clock sob carga.",
+        "works_on": "Desktops e notebooks na tomada com o plano Economia de energia ativo.",
+        "does_not_work_on": "Notebook na bateria (economia é legítima), PCs em outro plano.",
+        "expected_benefit": "Alto em jogos limitados por CPU: o processador volta a atingir a frequência máxima.",
+        "how_to_measure": "FPSX Benchmark antes/depois; contador '% Performance Limit' no scan.",
+        "risk": "Baixo. Equilibrado é o padrão do Windows.",
+        "rollback": "Reativa o plano anterior pelo GUID salvo no backup.",
+        "evidence": "Documentação de gerenciamento de energia do processador da Microsoft (Processor Power Management): o plano define o estado máximo do processador.",
+        "safer_alternative": "Nenhuma: Equilibrado já é a opção padrão.",
+        "user_need": "Quem joga na tomada com o plano de economia ativo, geralmente sem saber."
+      }
+    },
+    {
+      "id": "power-plan-high-performance",
+      "name": "Plano Alto desempenho",
+      "category": "power",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "STUTTER",
+      "description": "Troca Equilibrado por Alto desempenho em desktop, quando o plano existe no sistema.",
+      "min_plan": "starter",
+      "measurement": true,
+      "justification": {
+        "problem": "No Equilibrado o processador reduz o clock em cargas baixas e precisa subir de novo quando o jogo pede, o que pode aparecer em jogos leves de CPU e com muitos FPS.",
+        "works_on": "Desktops no plano Equilibrado com o plano Alto desempenho disponível.",
+        "does_not_work_on": "Notebook na bateria; PCs com Modern Standby (o plano não existe); planos personalizados de fabricante.",
+        "expected_benefit": "Baixo. Pode melhorar consistência de frametime; em muitos PCs modernos não muda nada.",
+        "how_to_measure": "FPSX Benchmark com 3 rodadas antes e depois. Se não houver diferença significativa, desfazer.",
+        "risk": "Baixo. Aumenta consumo em repouso. Em notebook aumenta temperatura, por isso só é opcional com aviso.",
+        "rollback": "Reativa o plano anterior pelo GUID salvo no backup.",
+        "evidence": "Documentação da Microsoft sobre planos de energia; ganho varia por CPU e deve ser medido.",
+        "safer_alternative": "Configurações > Energia > Modo de energia: 'Melhor desempenho', que mantém o plano Equilibrado.",
+        "user_need": "Jogadores competitivos em desktop que querem consistência de frametime."
+      }
+    },
+    {
+      "id": "display-refresh-rate-max",
+      "name": "Taxa de atualização máxima do monitor",
+      "category": "display",
+      "classification": "PROVEN",
+      "risk": "LOW",
+      "impact_area": "DISPLAY",
+      "description": "Coloca o monitor na maior taxa de atualização suportada na resolução atual.",
+      "min_plan": "free",
+      "measurement": false,
+      "justification": {
+        "problem": "Monitores de alta taxa (120/144/165/240 Hz) frequentemente ficam em 60 Hz depois de instalar o Windows ou trocar o cabo. A tela descarta os quadros extras.",
+        "works_on": "Monitores cujo modo atual está abaixo da taxa máxima suportada na mesma resolução.",
+        "does_not_work_on": "Monitores já na taxa máxima; cabos que não suportam a taxa (o Windows não lista o modo nesse caso).",
+        "expected_benefit": "Alto na suavidade e latência percebida. Não altera o FPS renderizado, por isso não é medido pelo benchmark de FPS.",
+        "how_to_measure": "Leitura do modo de vídeo após aplicar (verificação automática).",
+        "risk": "Baixo. Só usa modos que o próprio driver declara suportados.",
+        "rollback": "Volta ao modo anterior (resolução e taxa salvos no backup).",
+        "evidence": "A taxa de atualização define quantas imagens por segundo o monitor exibe; é a configuração documentada em Configurações > Vídeo > Vídeo avançado.",
+        "safer_alternative": "Ajustar manualmente em Configurações > Vídeo > Vídeo avançado.",
+        "user_need": "Qualquer pessoa com monitor de alta taxa rodando abaixo do máximo."
+      }
+    },
+    {
+      "id": "startup-entry-disable",
+      "name": "Programas na inicialização",
+      "category": "startup",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "SYSTEM",
+      "description": "Desliga, item por item e por escolha do usuário, programas que abrem com o Windows.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Programas que abrem com o Windows ficam rodando em segundo plano, ocupando RAM e às vezes CPU durante o jogo.",
+        "works_on": "PCs com programas de terceiros na inicialização que o usuário não precisa sempre abertos.",
+        "does_not_work_on": "Itens de segurança, drivers e anti-cheat: nunca são oferecidos.",
+        "expected_benefit": "Baixo individualmente; relevante em PCs com pouca RAM e muitos itens.",
+        "how_to_measure": "RAM disponível no scan seguinte ao próximo boot.",
+        "risk": "Baixo. O programa continua instalado e abre normalmente quando chamado.",
+        "rollback": "Restaura o valor anterior em StartupApproved (mesmo mecanismo do Gerenciador de Tarefas).",
+        "evidence": "Mesmo mecanismo da aba Inicializar do Gerenciador de Tarefas do Windows.",
+        "safer_alternative": "Desligar pela configuração do próprio programa.",
+        "user_need": "O usuário decide item a item; o FPSX nunca desliga sozinho."
+      }
+    },
+    {
+      "id": "hags-enable",
+      "name": "Agendamento de GPU acelerado por hardware (HAGS)",
+      "category": "gpu",
+      "classification": "EXPERIMENTAL",
+      "risk": "MEDIUM",
+      "impact_area": "LATENCY",
+      "description": "Liga o HAGS quando GPU e driver suportam. Resultado varia por jogo.",
+      "min_plan": "ultimate",
+      "requires_user_confirmation": true,
+      "measurement": true,
+      "justification": {
+        "problem": "Sem HAGS, a CPU faz parte do agendamento de trabalho da GPU. Alguns recursos (ex.: DLSS Frame Generation) exigem HAGS.",
+        "works_on": "Windows 10 2004+ com GPU e driver WDDM 2.7+ que suportam (a chave HwSchMode existe).",
+        "does_not_work_on": "GPUs/drivers sem suporte. Em vários jogos o efeito é nulo ou negativo.",
+        "expected_benefit": "Incerto. Por isso é experimental e só deve ser mantido com medição positiva.",
+        "how_to_measure": "FPSX Benchmark com 3 rodadas antes e depois do reinício.",
+        "risk": "Médio. Relatos de stutter em algumas combinações de driver e jogo. Exige reinício.",
+        "rollback": "Restaura o valor anterior de HwSchMode e pede reinício.",
+        "evidence": "Documentação do WDDM 2.7 (Microsoft) e notas de driver dos fabricantes; benchmarks independentes mostram resultado misto.",
+        "safer_alternative": "Manter o padrão definido pelo driver.",
+        "user_need": "Usuários avançados que vão medir o resultado."
+      }
+    },
+    {
+      "id": "shader-cache-clear-directx",
+      "name": "Limpar cache de shaders (DirectX e driver)",
+      "category": "troubleshooting",
+      "classification": "TROUBLESHOOTING",
+      "risk": "LOW",
+      "impact_area": "STUTTER",
+      "description": "Apaga os caches de shader do DirectX e do driver para forçar recompilação.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Cache de shader corrompido pode causar artefatos, crashes ou stutter anormal depois de atualização de driver.",
+        "works_on": "PCs com problema gráfico que surgiu após atualizar driver ou jogo.",
+        "does_not_work_on": "PCs sem problema: limpar só causa stutter extra até o cache se refazer. Não aumenta FPS.",
+        "expected_benefit": "Resolve o problema específico, quando a causa é o cache.",
+        "how_to_measure": "O sintoma relatado some ou não.",
+        "risk": "Baixo. Primeiras partidas com mais stutter durante a recompilação.",
+        "rollback": "Não há: o cache é regenerado automaticamente pelos jogos.",
+        "evidence": "Caches de shader são arquivos derivados, regenerados pelo driver (documentação do DirectX Shader Cache).",
+        "safer_alternative": "Limpeza de Disco do Windows > 'Cache de sombreador do DirectX'.",
+        "user_need": "Só quem está com o problema descrito."
+      }
+    },
+    {
+      "id": "shader-cache-clear-cs2",
+      "name": "Limpar cache de shaders do CS2",
+      "category": "troubleshooting",
+      "classification": "TROUBLESHOOTING",
+      "risk": "LOW",
+      "impact_area": "STUTTER",
+      "description": "Apaga o cache de shaders do CS2 mantido pela Steam.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Cache pré-compilado da Steam desatualizado ou corrompido pode causar stutter ou erro gráfico no CS2.",
+        "works_on": "PCs com CS2 instalado e stutter anormal após atualização do jogo ou driver.",
+        "does_not_work_on": "PCs sem sintoma. Não aumenta FPS.",
+        "expected_benefit": "Resolve o problema específico, quando a causa é o cache.",
+        "how_to_measure": "O sintoma relatado some ou não.",
+        "risk": "Baixo. A Steam baixa/recompila o cache de novo.",
+        "rollback": "Não há: o cache é regenerado pela Steam.",
+        "evidence": "Pasta steamapps\\shadercache\\730 é gerenciada pela Steam (Shader Pre-Caching).",
+        "safer_alternative": "Steam > Propriedades do jogo > Verificar integridade dos arquivos.",
+        "user_need": "Só quem está com o problema descrito."
+      }
+    },
+    {
+      "id": "dns-flush",
+      "name": "Limpar cache de DNS",
+      "category": "network",
+      "classification": "TROUBLESHOOTING",
+      "risk": "LOW",
+      "impact_area": "NETWORK",
+      "description": "Executa ipconfig /flushdns.",
+      "min_plan": "free",
+      "measurement": false,
+      "justification": {
+        "problem": "Registro de DNS antigo em cache faz um site ou serviço apontar para um endereço que mudou.",
+        "works_on": "Quando um serviço específico não conecta e outros funcionam.",
+        "does_not_work_on": "Ping alto, perda de pacotes, jitter. Não reduz latência.",
+        "expected_benefit": "Resolve o problema específico de resolução de nome.",
+        "how_to_measure": "O serviço volta a conectar.",
+        "risk": "Baixo. O cache se refaz sozinho.",
+        "rollback": "Não há: o cache é repopulado automaticamente.",
+        "evidence": "Documentação do comando ipconfig (Microsoft Learn).",
+        "safer_alternative": "Reiniciar o PC, que também limpa o cache.",
+        "user_need": "Só por pedido do usuário ou problema de DNS detectado."
+      }
+    },
+    {
+      "id": "winsock-reset",
+      "name": "Redefinir Winsock",
+      "category": "network",
+      "classification": "TROUBLESHOOTING",
+      "risk": "MEDIUM",
+      "impact_area": "NETWORK",
+      "description": "Executa netsh winsock reset. Exige administrador e reinício.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Catálogo Winsock corrompido (geralmente depois de remover VPN, proxy ou antivírus) faz programas perderem conexão.",
+        "works_on": "PCs sem conexão em alguns programas depois de desinstalar software de rede.",
+        "does_not_work_on": "Internet lenta, ping alto, perda de pacotes. Não acelera nada.",
+        "expected_benefit": "Resolve o problema específico.",
+        "how_to_measure": "Os programas voltam a conectar após reiniciar.",
+        "risk": "Médio. VPNs e firewalls de terceiros podem precisar ser reinstalados.",
+        "rollback": "Não há estado anterior restaurável; o reset volta ao padrão do Windows.",
+        "evidence": "Documentação do netsh winsock (Microsoft Learn).",
+        "safer_alternative": "Configurações > Rede > Configurações avançadas > Redefinição de rede.",
+        "user_need": "Só por pedido do usuário com o sintoma descrito."
+      }
+    },
+
+    // ---- NOT_RECOMMENDED: ficam aqui para o produto explicar POR QUE não aplica.
+    // Não têm handler: o Agent não sabe executá-las, por construção.
+    {
+      "id": "disable-windows-defender",
+      "name": "Desativar Windows Defender",
+      "category": "security",
+      "classification": "NOT_RECOMMENDED",
+      "risk": "HIGH",
+      "impact_area": "SYSTEM",
+      "enabled": false,
+      "description": "Tweak popular que remove a proteção do sistema.",
+      "justification": {
+        "problem": "Promete menos uso de CPU pelo antivírus.",
+        "works_on": "Nenhum cenário justifica no produto.",
+        "does_not_work_on": "Todos: o impacto do Defender em jogo é pequeno e ele já reduz atividade em tela cheia.",
+        "expected_benefit": "Desprezível.",
+        "how_to_measure": "Não se aplica.",
+        "risk": "Alto: PC sem proteção contra malware.",
+        "rollback": "Não se aplica.",
+        "evidence": "Spec do FPSX, seção 17: proibido desativar segurança.",
+        "safer_alternative": "Exclusão de pasta do jogo nas configurações do Defender, feita pelo próprio usuário se quiser.",
+        "user_need": "Nenhuma."
+      }
+    },
+    {
+      "id": "disable-services-bulk",
+      "name": "Desativar dezenas de serviços",
+      "category": "services",
+      "classification": "NOT_RECOMMENDED",
+      "risk": "HIGH",
+      "impact_area": "SYSTEM",
+      "enabled": false,
+      "description": "Listas genéricas de 'desative estes 50 serviços'.",
+      "justification": {
+        "problem": "Promete liberar RAM e CPU.",
+        "works_on": "Nenhum cenário genérico.",
+        "does_not_work_on": "Serviços parados consomem quase nada; os que rodam geralmente têm função (áudio, rede, impressão, atualizações).",
+        "expected_benefit": "Desprezível em FPS.",
+        "how_to_measure": "Não se aplica.",
+        "risk": "Alto: quebra funções do Windows de forma difícil de diagnosticar.",
+        "rollback": "Não se aplica.",
+        "evidence": "Spec do FPSX, seção 18.",
+        "safer_alternative": "Diagnóstico de processos em segundo plano do FPSX, que mostra o que realmente consome recurso.",
+        "user_need": "Nenhuma."
+      }
+    },
+    {
+      "id": "process-priority-realtime",
+      "name": "Prioridade Tempo real para o jogo",
+      "category": "cpu",
+      "classification": "NOT_RECOMMENDED",
+      "risk": "HIGH",
+      "impact_area": "FPS",
+      "enabled": false,
+      "description": "Colocar o processo do jogo em prioridade Realtime.",
+      "justification": {
+        "problem": "Promete mais FPS dando prioridade máxima ao jogo.",
+        "works_on": "Nenhum cenário.",
+        "does_not_work_on": "Realtime pode impedir entrada de mouse/teclado, áudio e o próprio driver de rodar, travando o sistema.",
+        "expected_benefit": "Nenhum confiável.",
+        "how_to_measure": "Não se aplica.",
+        "risk": "Alto: travamentos e input atrasado.",
+        "rollback": "Não se aplica.",
+        "evidence": "Documentação da Microsoft sobre classes de prioridade (SetPriorityClass) desaconselha REALTIME_PRIORITY_CLASS; spec do FPSX, seção 19.",
+        "safer_alternative": "Game Mode, que já prioriza o jogo em primeiro plano.",
+        "user_need": "Nenhuma."
+      }
+    },
+    {
+      "id": "ram-cleaner-standby-purge",
+      "name": "Limpador de RAM / esvaziar standby list",
+      "category": "memory",
+      "classification": "NOT_RECOMMENDED",
+      "risk": "MEDIUM",
+      "impact_area": "STUTTER",
+      "enabled": false,
+      "description": "Programas que 'liberam RAM' esvaziando o cache do Windows periodicamente.",
+      "justification": {
+        "problem": "Promete reduzir stutter liberando memória.",
+        "works_on": "Houve um bug específico do Windows 10 1903 corrigido em atualização; não se aplica a Windows 11 atualizado.",
+        "does_not_work_on": "Sistemas atualizados: memória em standby é cache e é liberada instantaneamente quando o jogo precisa.",
+        "expected_benefit": "Nenhum em sistema atualizado; pode piorar carregamentos por jogar fora o cache.",
+        "how_to_measure": "Não se aplica.",
+        "risk": "Médio: carregamentos mais lentos.",
+        "rollback": "Não se aplica.",
+        "evidence": "Documentação da Microsoft sobre gerenciamento de memória (standby list é cache reutilizável).",
+        "safer_alternative": "Diagnóstico de pressão de memória do FPSX e fechar aplicações antes de jogar.",
+        "user_need": "Nenhuma."
+      }
+    },
+    {
+      "id": "tcp-nagle-dns-ping-tweaks",
+      "name": "Tweaks de TCP/Nagle/DNS para 'reduzir ping'",
+      "category": "network",
+      "classification": "NOT_RECOMMENDED",
+      "risk": "MEDIUM",
+      "impact_area": "NETWORK",
+      "enabled": false,
+      "description": "TcpAckFrequency, TCPNoDelay, autotuning, DNS 'gamer'.",
+      "justification": {
+        "problem": "Prometem menos ping.",
+        "works_on": "Nenhum cenário relevante para jogos atuais.",
+        "does_not_work_on": "Jogos competitivos usam UDP; Nagle e ACK de TCP não participam. DNS só é consultado ao conectar, não afeta o ping da partida.",
+        "expected_benefit": "Nenhum no ping de jogo.",
+        "how_to_measure": "Não se aplica.",
+        "risk": "Médio: pode piorar downloads e outros aplicativos TCP.",
+        "rollback": "Não se aplica.",
+        "evidence": "Spec do FPSX, seções 15 e 16; jogos como CS2 usam UDP (Steam Datagram Relay).",
+        "safer_alternative": "Diagnóstico de rede do FPSX (latência, jitter e perda separados por rede local e internet).",
+        "user_need": "Nenhuma."
+      }
+    },
+    {
+      "id": "disable-pagefile",
+      "name": "Desativar arquivo de paginação",
+      "category": "memory",
+      "classification": "NOT_RECOMMENDED",
+      "risk": "HIGH",
+      "impact_area": "SYSTEM",
+      "enabled": false,
+      "description": "Tweak popular de 'desempenho'.",
+      "justification": {
+        "problem": "Promete evitar uso de disco.",
+        "works_on": "Nenhum cenário de jogo.",
+        "does_not_work_on": "Todos: o Windows usa o pagefile para o limite de commit; sem ele, jogos fecham quando a memória acaba.",
+        "expected_benefit": "Nenhum.",
+        "how_to_measure": "Não se aplica.",
+        "risk": "Alto: crashes por falta de memória.",
+        "rollback": "Não se aplica.",
+        "evidence": "Documentação da Microsoft sobre dimensionamento do arquivo de paginação.",
+        "safer_alternative": "Manter gerenciado pelo sistema; o FPSX avisa quando está desativado.",
+        "user_need": "Nenhuma."
+      }
+    }
+  ],
+  "diagnostics": [
+    { "id": "windows-version", "name": "Versão do Windows", "category": "system" },
+    { "id": "cpu-throttling", "name": "Limitação da CPU", "category": "cpu" },
+    { "id": "cpu-background-load", "name": "Carga em segundo plano", "category": "cpu" },
+    { "id": "memory-pressure", "name": "Memória e paginação", "category": "memory" },
+    { "id": "storage-health", "name": "Armazenamento", "category": "storage" },
+    { "id": "gpu-driver", "name": "GPU e driver", "category": "gpu" },
+    { "id": "network-quality", "name": "Qualidade da rede", "category": "network" },
+    { "id": "memory-integrity-status", "name": "Integridade de memória", "category": "security" },
+    { "id": "game-settings", "name": "Configurações dos jogos", "category": "game" }
+  ]
+}

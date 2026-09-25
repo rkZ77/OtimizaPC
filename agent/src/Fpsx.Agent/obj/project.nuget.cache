@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "qBKPO3QZmpc=",
+  "dgSpecHash": "zH8VrvFAs5U=",
   "success": true,
   "projectFilePath": "H:\\Projeto Aposta\\OtimizaPC\\agent\\src\\Fpsx.Agent\\Fpsx.Agent.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\rkZ\\.nuget\\packages\\system.codedom\\8.0.0\\system.codedom.8.0.0.nupkg.sha512",
-    "C:\\Users\\rkZ\\.nuget\\packages\\system.management\\8.0.0\\system.management.8.0.0.nupkg.sha512"
+    "C:\\Users\\rkZ\\.nuget\\packages\\system.management\\8.0.0\\system.management.8.0.0.nupkg.sha512",
+    "C:\\Users\\rkZ\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.56\\microsoft.windows.sdk.net.ref.10.0.19041.56.nupkg.sha512"
   ],
   "logs": []
 }

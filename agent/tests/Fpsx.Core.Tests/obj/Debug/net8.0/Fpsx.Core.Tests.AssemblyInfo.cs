@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Fpsx.Core.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+75dd3eeda2adb43cb960422511e0917b3e9cb7d0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+041f3ffc73162a71f233a7bf517b5369cdf9c72f")]
 [assembly: System.Reflection.AssemblyProductAttribute("Fpsx.Core.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Fpsx.Core.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.1.0.0")]

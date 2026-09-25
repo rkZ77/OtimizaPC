@@ -1,0 +1,46 @@
+using System.Text;
+using Fpsx.Agent;
+
+Console.OutputEncoding = Encoding.UTF8;
+
+var valueOptions = new[] { "profile", "seconds", "session", "change", "label", "game", "presentmon", "duration", "before", "after", "process" };
+Args cli;
+try
+{
+    cli = new Args(args, valueOptions);
+}
+catch (ArgumentException ex)
+{
+    Ui.Error(ex.Message);
+    return 2;
+}
+
+var command = cli.Positional.FirstOrDefault()?.ToLowerInvariant();
+if (command is null or "help" or "ajuda" || cli.Flag("help"))
+{
+    Commands.Help();
+    return 0;
+}
+
+try
+{
+    var ctx = new AgentContext();
+    return command switch
+    {
+        "scan" => Commands.Scan(ctx, cli),
+        "apply" => Commands.Apply(ctx, cli),
+        "rollback" => Commands.Rollback(ctx, cli),
+        "history" => Commands.History(ctx, cli),
+        "benchmark" => Commands.Benchmark(ctx, cli),
+        "catalog" => Commands.CatalogList(ctx, cli),
+        "license" => Commands.License(ctx),
+        _ => Commands.Unknown(command),
+    };
+}
+catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException or ArgumentException or InvalidOperationException or Fpsx.Core.Engine.SafetyViolationException)
+{
+    // Erro esperado (catálogo inválido, PresentMon ausente, sessão que não
+    // existe): mensagem limpa, sem stack trace.
+    Ui.Error(ex.Message);
+    return 1;
+}

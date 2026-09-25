@@ -93,6 +93,11 @@ public sealed record DiskInfo
     public MediaKind Media { get; init; }
     public string BusType { get; init; } = "";
     public string Health { get; init; } = "";
+
+    /// <summary>Estado operacional reportado pelo disco (ex.: "Predictive Failure" do SMART).</summary>
+    public string OperationalStatus { get; init; } = "";
+
+    public string Model { get; init; } = "";
     public bool IsSystemDrive { get; init; }
 
     public double FreePercent => TotalBytes <= 0 ? 0 : 100.0 * FreeBytes / TotalBytes;
