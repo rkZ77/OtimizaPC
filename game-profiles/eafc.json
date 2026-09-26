@@ -1,0 +1,38 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "eafc",
+  "name": "EA SPORTS FC",
+  "version": "2026.09.1",
+  "detect": {
+    "processes": [
+      "FC27.exe",
+      "FC26.exe",
+      "FC25.exe"
+    ]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "FC27.exe",
+    "processes": [
+      "FC27.exe",
+      "FC26.exe",
+      "FC25.exe"
+    ],
+    "method": "Partida contra a CPU no mesmo estádio, mesma câmera e mesmo clima, pulando replays. A tela de menu não entra na conta."
+  },
+  "recommended_settings": {
+    "Taxa de quadros": "Limite igual à taxa do monitor. O FC trava a lógica do jogo em quadros fixos: FPS acima disso só gasta a placa.",
+    "Qualidade de renderização": "Baixa ou Média em PC fraco. É a opção que mais pesa na placa de vídeo.",
+    "Sincronização vertical": "Desligada se você usa limite de FPS. Ligada só se aparecer tearing.",
+    "Modo de exibição": "Tela cheia: em janela o Windows compõe a imagem por cima e adiciona atraso."
+  }
+}

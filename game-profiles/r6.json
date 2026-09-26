@@ -1,0 +1,37 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "r6",
+  "name": "Rainbow Six Siege",
+  "version": "2026.09.1",
+  "detect": {
+    "steam_app_id": 359550,
+    "processes": [
+      "RainbowSix.exe",
+      "RainbowSix_Vulkan.exe"
+    ],
+    "executable": "RainbowSix.exe"
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "RainbowSix.exe",
+    "processes": [
+      "RainbowSix.exe",
+      "RainbowSix_Vulkan.exe"
+    ],
+    "method": "O teste de desempenho do próprio jogo, com as mesmas opções antes e depois."
+  },
+  "recommended_settings": {
+    "Versão Vulkan": "Teste no seu PC: em processador fraco costuma render mais que a DirectX.",
+    "Sombras e reflexos": "Baixo em PC fraco.",
+    "NVIDIA Reflex": "Ligado em placa NVIDIA."
+  }
+}

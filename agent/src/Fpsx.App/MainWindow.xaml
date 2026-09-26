@@ -35,10 +35,10 @@
                     <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">
                         <TextBlock Text="{Binding PlanLabel, StringFormat=Plano {0}}" FontSize="13" />
                     </Border>
-                    <TextBlock Text="Sem privilégio de administrador" Style="{StaticResource MutedText}"
-                               Visibility="{Binding IsElevated, Converter={StaticResource Hidden}}" />
-                    <Button Content="Reabrir como administrador" Style="{StaticResource Ghost}" HorizontalAlignment="Left"
-                            Command="{Binding RelaunchCommand}" Visibility="{Binding IsElevated, Converter={StaticResource Hidden}}" />
+                    <!-- Sem aviso de "sem administrador": o app pede a permissão do
+                         Windows sozinho, só na hora de aplicar o que precisa dela. -->
+                    <TextBlock Text="{Binding PlanHint}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap"
+                               Visibility="{Binding PlanHint, Converter={StaticResource Visible}}" />
                 </StackPanel>
 
                 <ItemsControl ItemsSource="{Binding Pages}">

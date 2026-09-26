@@ -1,0 +1,32 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "dota2",
+  "name": "Dota 2",
+  "version": "2026.09.1",
+  "detect": {
+    "steam_app_id": 570,
+    "processes": [
+      "dota2.exe"
+    ],
+    "executable": "game/bin/win64/dota2.exe"
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "dota2.exe",
+    "method": "Replay da mesma partida, mesma luta, com a câmera parada no mesmo ponto."
+  },
+  "recommended_settings": {
+    "API de renderização": "Teste Vulkan e DirectX 11 no seu PC: um deles costuma render mais.",
+    "Qualidade de renderização": "Abaixo de 100% só em PC fraco.",
+    "Sombras e grama": "Baixo em PC fraco."
+  }
+}

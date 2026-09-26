@@ -1,0 +1,30 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "roblox",
+  "name": "Roblox",
+  "version": "2026.09.1",
+  "detect": {
+    "processes": [
+      "RobloxPlayerBeta.exe"
+    ]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "RobloxPlayerBeta.exe",
+    "method": "O mesmo jogo do Roblox e o mesmo lugar do mapa. Cada jogo do Roblox pesa diferente: compare sempre o mesmo."
+  },
+  "recommended_settings": {
+    "Modo gráfico": "Manual, com a qualidade um ou dois níveis abaixo do automático em PC fraco.",
+    "Taxa de quadros máxima": "Igual à taxa do monitor, se o seu Roblox mostrar essa opção.",
+    "Programas abertos": "Feche o navegador durante o jogo: o Roblox divide memória com ele."
+  }
+}

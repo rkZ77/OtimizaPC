@@ -5,6 +5,8 @@
     <Color x:Key="BgColor">#0E1116</Color>
     <Color x:Key="SurfaceColor">#161B22</Color>
     <Color x:Key="Surface2Color">#1E252F</Color>
+    <!-- Item em foco numa lista (seletor aberto). -->
+    <Color x:Key="Surface3Color">#2A323D</Color>
     <Color x:Key="BorderColor">#2A323D</Color>
     <Color x:Key="TextColor">#E6EDF3</Color>
     <Color x:Key="MutedColor">#8B97A6</Color>
@@ -17,6 +19,7 @@
     <SolidColorBrush x:Key="Bg" Color="{StaticResource BgColor}" />
     <SolidColorBrush x:Key="Surface" Color="{StaticResource SurfaceColor}" />
     <SolidColorBrush x:Key="Surface2" Color="{StaticResource Surface2Color}" />
+    <SolidColorBrush x:Key="Surface3" Color="{StaticResource Surface3Color}" />
     <SolidColorBrush x:Key="Border" Color="{StaticResource BorderColor}" />
     <SolidColorBrush x:Key="Text" Color="{StaticResource TextColor}" />
     <SolidColorBrush x:Key="Muted" Color="{StaticResource MutedColor}" />
@@ -160,9 +163,67 @@
         <Setter Property="FontSize" Value="14" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
+    <!-- Seletor no tema escuro. O padrão do Windows (fundo branco, borda azul)
+         destoava de todo o resto do app. -->
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Foreground" Value="{StaticResource Text}" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Surface3}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style TargetType="ComboBox">
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Foreground" Value="{StaticResource Text}" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton x:Name="Toggle" Focusable="False" ClickMode="Press"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="Bd" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8">
+                                        <Path HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
+                                              Data="M 0 0 L 5 5 L 10 0" Stroke="{StaticResource Muted}" StrokeThickness="1.6" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Muted}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <ContentPresenter IsHitTestVisible="False" Margin="12,0,32,0" VerticalAlignment="Center"
+                                          Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" />
+                        <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                            <Border Background="{StaticResource Surface2}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="8"
+                                    Margin="0,4,0,0" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="320">
+                                <ScrollViewer>
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     <Style TargetType="ScrollViewer">
         <Setter Property="VerticalScrollBarVisibility" Value="Auto" />

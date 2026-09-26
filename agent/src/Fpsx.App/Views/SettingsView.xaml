@@ -10,13 +10,13 @@
                     <TextBlock Text="Perfil de otimização" Style="{StaticResource H2}" />
                     <TextBlock Style="{StaticResource MutedText}" Margin="0,0,0,10"
                                Text="O perfil decide o que o botão Otimizar agora seleciona sozinho. Tudo continua disponível para escolha item a item." />
-                    <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding Profile}" Width="320" HorizontalAlignment="Left">
+                    <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding Profile}" Width="420" HorizontalAlignment="Left">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Foreground="Black">
+                                <TextBlock TextTrimming="CharacterEllipsis">
                                     <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" />
-                                    <Run Text=" · " />
-                                    <Run Text="{Binding Description, Mode=OneWay}" />
+                                    <Run Text=": " />
+                                    <Run Text="{Binding Description, Mode=OneWay}" Foreground="{StaticResource Muted}" />
                                 </TextBlock>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>

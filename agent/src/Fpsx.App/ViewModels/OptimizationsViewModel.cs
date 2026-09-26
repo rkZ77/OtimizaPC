@@ -51,7 +51,7 @@ public sealed class OptimizationsViewModel : PageViewModel
 
             Add("Recomendadas", "Há benefício esperado neste PC. As marcadas vêm do seu perfil.", i => i.Result.Decision == Decision.Recommended);
             Add("Opcionais", "Disponíveis por escolha sua: troubleshooting, itens de inicialização e experimentais.", i => i.Result.Decision == Decision.Optional);
-            Add("Bloqueadas", "Aplicáveis, mas exigem outro plano ou abrir o FPSX como administrador.", i => i.Result.Decision == Decision.Blocked);
+            Add("Disponíveis em outro plano", "Resolveriam algo encontrado no seu PC. Cada uma diz o quê: para aplicar, é só assinar o plano indicado.", i => i.Result.Decision == Decision.Blocked);
             Add("Já otimizado", "Já estão na configuração certa. O FPSX não mexe no que já está bom.", i => i.Result.Decision == Decision.AlreadyOptimal);
             Add("Não se aplicam a este PC", "Hardware, sistema ou jogo não atendem aos critérios.", i => i.Result.Decision is Decision.NotApplicable or Decision.Unknown);
         }

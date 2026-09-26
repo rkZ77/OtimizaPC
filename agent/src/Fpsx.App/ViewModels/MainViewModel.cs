@@ -28,7 +28,10 @@ public sealed class MainViewModel : ObservableObject
         _host.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppHost.PlanLabel))
+            {
                 Raise(nameof(PlanLabel));
+                Raise(nameof(PlanHint));
+            }
         };
     }
 
@@ -48,6 +51,9 @@ public sealed class MainViewModel : ObservableObject
     public ICommand RelaunchCommand { get; }
     public ICommand UpdateCommand { get; }
     public string PlanLabel => _host.PlanLabel;
+
+    /// <summary>No Free, lembra que aplicar exige plano; nos pagos fica vazio.</summary>
+    public string PlanHint => _host.License.Plan == "free" ? "No Free você vê tudo. Para aplicar, entre com um plano em Conta." : "";
     public bool IsElevated => _host.IsElevated;
 
     public string? UpdateAvailable

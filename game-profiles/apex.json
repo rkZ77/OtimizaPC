@@ -1,0 +1,38 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "apex",
+  "name": "Apex Legends",
+  "version": "2026.09.1",
+  "detect": {
+    "steam_app_id": 1172470,
+    "processes": [
+      "r5apex.exe",
+      "r5apex_dx12.exe"
+    ],
+    "executable": "r5apex.exe"
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "r5apex.exe",
+    "processes": [
+      "r5apex.exe",
+      "r5apex_dx12.exe"
+    ],
+    "method": "Campo de tiro, o mesmo percurso por 60 segundos, com as mesmas opções de vídeo."
+  },
+  "recommended_settings": {
+    "Sincronização vertical": "Desligada.",
+    "NVIDIA Reflex": "Ligado em placa NVIDIA.",
+    "Orçamento de textura": "Até metade da memória da sua placa de vídeo, para evitar travadas.",
+    "Sombras e efeitos": "Baixo em PC fraco: são os que mais pesam em luta."
+  }
+}

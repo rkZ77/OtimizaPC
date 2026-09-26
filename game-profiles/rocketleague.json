@@ -1,0 +1,30 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "rocketleague",
+  "name": "Rocket League",
+  "version": "2026.09.1",
+  "detect": {
+    "processes": [
+      "RocketLeague.exe"
+    ]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "RocketLeague.exe",
+    "method": "Treino livre, o mesmo mapa, por 60 segundos."
+  },
+  "recommended_settings": {
+    "Limite de FPS": "Igual à taxa do monitor ou acima: o jogo é leve e responde bem a FPS alto.",
+    "Qualidade da renderização": "Alto desempenho em PC fraco.",
+    "Sincronização vertical": "Desligada."
+  }
+}

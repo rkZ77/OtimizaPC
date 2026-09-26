@@ -82,7 +82,17 @@ public sealed class OptimizationItem
     public OptimizationResult Result { get; }
     public string Id => Result.Definition.Id;
     public string Name => Result.Definition.Name;
-    public string Meta => $"{Result.Definition.Classification.ToString().ToUpperInvariant()} · risco {Risk(Result.Definition.Risk)} · {StatusStyle.Potential(Result.Evaluation.Potential)}";
+    public string Meta => $"{Kind(Result.Definition.Classification)}, risco {Risk(Result.Definition.Risk)}, {StatusStyle.Potential(Result.Evaluation.Potential).ToLowerInvariant()}"
+                          + (Result.RequiresElevation ? ", pede permissão do Windows" : "");
+
+    private static string Kind(Classification c) => c switch
+    {
+        Classification.Proven => "Comprovada",
+        Classification.Conditional => "Depende do PC",
+        Classification.Troubleshooting => "Solução de problema",
+        Classification.Experimental => "Experimental",
+        _ => "Não recomendada",
+    };
     public string Reason => Result.Reason;
     public string? Warning => Result.Evaluation.Warning;
     public string DecisionLabel { get; }
@@ -115,7 +125,7 @@ public sealed class ChangeItem(string sessionId, ChangeRecord c)
 public sealed class SessionItem(SessionRecord s)
 {
     public SessionRecord Session { get; } = s;
-    public string Title { get; } = $"{s.StartedAt.ToLocalTime():dd/MM/yyyy HH:mm} · perfil {s.ProfileId}";
+    public string Title { get; } = $"{s.StartedAt.ToLocalTime():dd/MM/yyyy HH:mm}, perfil {s.ProfileId}";
     public string Summary { get; } =
         $"{s.Changes.Count(c => c.Status == ChangeStatus.Applied)} ativa(s), {s.Changes.Count(c => c.Status == ChangeStatus.RolledBack)} desfeita(s), " +
         $"{s.AlreadyOptimal.Count} já estavam corretas, {s.Skipped.Count} ignorada(s)";

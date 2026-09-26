@@ -70,6 +70,9 @@ public sealed class GameplayViewModel : PageViewModel
 
     public string MonitorStatus => _host.MonitorStatus;
 
+    public string MeasuredGames => "Jogos reconhecidos: " + string.Join(", ", _host.Ctx.GameProfiles.Select(p => p.Name))
+        + ". A medição usa o registro de quadros do próprio Windows, sem mexer no jogo: não conflita com anti-cheat.";
+
     public bool AutoMeasure
     {
         get => _host.AutoMeasure;

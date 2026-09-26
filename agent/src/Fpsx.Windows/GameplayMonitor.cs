@@ -95,19 +95,20 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
     {
         foreach (var profile in profiles)
         {
-            var exe = profile.Benchmark.Process;
-            if (string.IsNullOrEmpty(exe))
-                continue;
-            var name = exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? exe[..^4] : exe;
-            foreach (var p in Process.GetProcessesByName(name))
+            // Todos os executáveis do jogo: o FC muda de nome a cada ano
+            // (FC26.exe, FC27.exe) e alguns jogos têm versão DX12 separada.
+            foreach (var name in profile.Benchmark.MeasuredProcesses(profile.Detect))
             {
-                if (profile.Benchmark.WindowTitle is { } title && !SafeTitle(p).Contains(title, StringComparison.OrdinalIgnoreCase))
+                foreach (var p in Process.GetProcessesByName(name))
                 {
-                    p.Dispose();
-                    continue;
-                }
+                    if (profile.Benchmark.WindowTitle is { } title && !SafeTitle(p).Contains(title, StringComparison.OrdinalIgnoreCase))
+                    {
+                        p.Dispose();
+                        continue;
+                    }
 
-                return (profile, p);
+                    return (profile, p);
+                }
             }
         }
 

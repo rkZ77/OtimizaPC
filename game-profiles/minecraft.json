@@ -50,6 +50,7 @@
   ],
   "benchmark": {
     "process": "javaw.exe",
+    "processes": ["javaw.exe"],
     "window_title": "Minecraft",
     "duration_seconds": 60,
     "recommended_runs": 3,

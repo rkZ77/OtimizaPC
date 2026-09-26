@@ -11,7 +11,8 @@
                 <StackPanel>
                     <TextBlock Text="Medição automática" Style="{StaticResource H2}" />
                     <TextBlock Text="{Binding MonitorStatus}" Foreground="{StaticResource Accent}" Margin="0,0,0,10" TextWrapping="Wrap" />
-                    <CheckBox IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das partidas de CS2, Fortnite e Minecraft" />
+                    <CheckBox IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das minhas partidas automaticamente" />
+                    <TextBlock Text="{Binding MeasuredGames}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="26,4,0,0" />
                     <CheckBox IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"
                               Content="Iniciar com o Windows, na bandeja, para medir sempre que eu jogar" />
                     <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="26,4,0,0"

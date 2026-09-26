@@ -1,0 +1,32 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "pubg",
+  "name": "PUBG: Battlegrounds",
+  "version": "2026.09.1",
+  "detect": {
+    "steam_app_id": 578080,
+    "processes": [
+      "TslGame.exe"
+    ],
+    "executable": "TslGame/Binaries/Win64/TslGame.exe"
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "TslGame.exe",
+    "method": "Campo de treino, o mesmo trajeto de veículo, com as mesmas opções."
+  },
+  "recommended_settings": {
+    "Pós-processamento, sombras, efeitos e folhagem": "Muito baixo: pesam muito e ajudam pouco a enxergar o inimigo.",
+    "Texturas": "Médio se a placa tiver 4 GB ou mais.",
+    "Limite de FPS": "Igual à taxa do monitor."
+  }
+}

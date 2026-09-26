@@ -100,6 +100,19 @@ public sealed record RefreshRateCheck
 public sealed record GameBenchmarkSpec
 {
     public string Process { get; init; } = "";
+
+    /// <summary>
+    /// Executáveis que SÃO o jogo, para a medição automática. Vazio = os de
+    /// detect.processes mais o de cima. Existe para tirar o launcher da conta:
+    /// o do Minecraft também tem "Minecraft" no título.
+    /// </summary>
+    public IReadOnlyList<string> Processes { get; init; } = [];
+
+    public IEnumerable<string> MeasuredProcesses(GameDetect detect) =>
+        (Processes.Count > 0 ? Processes : detect.Processes.Append(Process))
+        .Where(n => !string.IsNullOrEmpty(n))
+        .Select(n => n.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? n[..^4] : n)
+        .Distinct(StringComparer.OrdinalIgnoreCase);
     public int DurationSeconds { get; init; } = 60;
     public int RecommendedRuns { get; init; } = 3;
     public string Method { get; init; } = "";

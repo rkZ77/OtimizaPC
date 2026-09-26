@@ -1,0 +1,31 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "marvelrivals",
+  "name": "Marvel Rivals",
+  "version": "2026.09.1",
+  "detect": {
+    "steam_app_id": 2767030,
+    "processes": [
+      "Marvel-Win64-Shipping.exe"
+    ]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "Marvel-Win64-Shipping.exe",
+    "method": "Modo prática, o mesmo herói e o mesmo mapa, por 60 segundos."
+  },
+  "recommended_settings": {
+    "Escala de resolução (DLSS, FSR ou XeSS)": "Balanceado em PC fraco.",
+    "Iluminação global e reflexos": "Baixo: são os mais caros do jogo.",
+    "NVIDIA Reflex": "Ligado em placa NVIDIA."
+  }
+}

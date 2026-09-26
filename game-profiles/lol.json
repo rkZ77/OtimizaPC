@@ -1,0 +1,31 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "lol",
+  "name": "League of Legends",
+  "version": "2026.09.1",
+  "detect": {
+    "processes": [
+      "League of Legends.exe"
+    ]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "League of Legends.exe",
+    "method": "Modo prática, mesma rota e os mesmos 3 minutos. Partida com 10 jogadores varia demais."
+  },
+  "recommended_settings": {
+    "Taxa de quadros": "Limite igual à taxa do monitor ou pouco acima. Sem limite o LoL chega a centenas de FPS e esquenta o PC à toa.",
+    "Sombras": "Desligadas em PC fraco: é o item que mais pesa em luta de equipe.",
+    "Qualidade de efeitos e ambiente": "Baixa em PC fraco.",
+    "Esperar sincronização vertical": "Desligada."
+  }
+}

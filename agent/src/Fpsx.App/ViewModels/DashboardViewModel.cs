@@ -109,7 +109,7 @@ public sealed class DashboardViewModel : PageViewModel
             RecommendedCount = report.Recommended;
             OptimalCount = report.AlreadyOptimal;
             AutoCount = scan.Optimizations.Count(o => o.AutoSelected);
-            ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm} · perfil {scan.ProfileId} · catálogo {scan.CatalogVersion}";
+            ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }
 
         foreach (var name in new[] { nameof(HasScan), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(ScanInfo), nameof(Headline) })

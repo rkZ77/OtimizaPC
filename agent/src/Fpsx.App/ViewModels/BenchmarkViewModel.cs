@@ -17,9 +17,9 @@ public sealed class RunItem(BenchmarkRun run) : ObservableObject
     private bool _after;
 
     public BenchmarkRun Run { get; } = run;
-    public string Title { get; } = $"{run.At.ToLocalTime():dd/MM HH:mm} · {run.Label}";
-    public string Stats { get; } = string.Format(CultureInfo.InvariantCulture,
-        "FPS {0:0.0} · 1% low {1:0.0} · 0.1% low {2:0.0} · frametime {3:0.00} ms · {4} stutters",
+    public string Title { get; } = $"{run.At.ToLocalTime():dd/MM HH:mm}, {run.Label}";
+    public string Stats { get; } = string.Format(CultureInfo.GetCultureInfo("pt-BR"),
+        "FPS {0:0.0}, 1% low {1:0.0}, 0,1% low {2:0.0}, frametime {3:0.00} ms, {4} travadas",
         run.Stats.AvgFps, run.Stats.Low1Fps, run.Stats.Low01Fps, run.Stats.AvgFrametimeMs, run.Stats.StutterCount);
 
     public bool IsBefore
@@ -129,7 +129,7 @@ public sealed class BenchmarkViewModel : PageViewModel
         var after = Runs.Where(r => r.IsAfter).Select(r => r.Run.Stats).ToList();
         var cmp = BenchmarkComparer.Compare(before, after);
         var lines = cmp.Metrics.Select(m => string.Format(CultureInfo.InvariantCulture, "{0}: {1:0.0} → {2:0.0} ({3}{4:0.0}%){5}",
-            m.Metric, m.Before, m.After, m.DeltaPercent >= 0 ? "+" : "", m.DeltaPercent, m.Significant ? "" : " · dentro da variação normal"));
+            m.Metric, m.Before, m.After, m.DeltaPercent >= 0 ? "+" : "", m.DeltaPercent, m.Significant ? "" : ", dentro da variação normal"));
         Result = string.Join("\n", lines) + "\n\n" + cmp.Verdict + "\n\n" + string.Join("\n", cmp.Warnings) + "\n" + cmp.Method;
     }
 

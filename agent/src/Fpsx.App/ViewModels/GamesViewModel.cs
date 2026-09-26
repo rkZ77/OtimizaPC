@@ -48,6 +48,8 @@ public sealed class GamesViewModel : PageViewModel
     public ICommand PresetCommand { get; }
 
     /// <summary>Nível do PC vindo do diagnóstico, para a pessoa entender por que o preset aparece (ou não).</summary>
+    public string OtherGames { get; private set; } = "";
+
     public string TierTitle { get; private set; } = "";
     public string TierDetail { get; private set; } = "";
     public ICommand ScanCommand { get; }
@@ -64,7 +66,17 @@ public sealed class GamesViewModel : PageViewModel
         TierDetail = tier is null ? "" : $"{tier.Detail} {tier.Recommendation}".Trim();
         var presets = scan?.Optimizations.FirstOrDefault(o => o.Definition.Id == "game-preset-low-end")?.Evaluation.Proposals ?? [];
 
-        foreach (var profile in _host.Ctx.GameProfiles)
+        // Só os jogos deste PC (instalados ou já jogados com o FPSX aberto):
+        // 15 cartões de "não encontrado" esconderiam os que importam.
+        var played = _host.Ctx.Gameplay.All().Select(s => s.GameId).ToHashSet();
+        var mine = _host.Ctx.GameProfiles
+            .Where(p => scan?.Snapshot.Games.Any(g => g.GameId == p.Id) == true || played.Contains(p.Id))
+            .ToList();
+        var others = _host.Ctx.GameProfiles.Except(mine).Select(p => p.Name).ToList();
+        OtherGames = others.Count == 0 ? "" : "O FPSX também reconhece e mede o FPS de: " + string.Join(", ", others) + ". Eles aparecem aqui quando forem instalados ou jogados com o FPSX aberto.";
+        Raise(nameof(OtherGames));
+
+        foreach (var profile in mine)
         {
             var preset = presets.FirstOrDefault(p => p.Id.StartsWith($"game-preset-low-end:{profile.Id}:", StringComparison.Ordinal));
             var install = scan?.Snapshot.Games.FirstOrDefault(g => g.GameId == profile.Id);
@@ -77,7 +89,9 @@ public sealed class GamesViewModel : PageViewModel
                 Name = profile.Name,
                 Installed = install is not null,
                 InstallPath = install?.InstallPath,
-                Status = scan is null ? "Rode a análise para detectar o jogo." : install is null ? "Não encontrado neste PC." : "Instalado.",
+                Status = install is not null ? "Instalado."
+                    : played.Contains(profile.Id) ? "Jogado neste PC: o FPS das partidas está em Partidas."
+                    : "Rode a análise para detectar o jogo.",
                 Findings = findings,
                 Recommended = profile.RecommendedSettings.Select(kv => new KeyValueItem(kv.Key, kv.Value)).ToList(),
                 HasFix = findings.Any(f => f.HasFix),

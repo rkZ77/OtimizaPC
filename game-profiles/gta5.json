@@ -1,0 +1,38 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "gta5",
+  "name": "GTA V",
+  "version": "2026.09.1",
+  "detect": {
+    "steam_app_id": 271590,
+    "processes": [
+      "GTA5.exe",
+      "GTA5_Enhanced.exe"
+    ],
+    "executable": "GTA5.exe"
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "GTA5.exe",
+    "processes": [
+      "GTA5.exe",
+      "GTA5_Enhanced.exe"
+    ],
+    "method": "O teste de desempenho do próprio jogo (Configurações > Gráficos), ou o mesmo trajeto de carro no mesmo horário do jogo."
+  },
+  "recommended_settings": {
+    "MSAA": "Desligado em PC fraco: é o item mais caro da placa.",
+    "Qualidade da grama": "Normal: Altíssima derruba o FPS em áreas abertas.",
+    "Sombras e reflexos": "Normal em PC fraco.",
+    "Densidade de população": "Reduzir alivia o processador em cidade."
+  }
+}

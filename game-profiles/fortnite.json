@@ -53,6 +53,7 @@
   ],
   "benchmark": {
     "process": "FortniteClient-Win64-Shipping.exe",
+    "processes": ["FortniteClient-Win64-Shipping.exe"],
     "duration_seconds": 60,
     "recommended_runs": 3,
     "method": "Use o Modo Criativo ou o Campo de Treino, sempre o mesmo percurso, com as mesmas opções de vídeo. Partida normal varia demais para comparar."

@@ -41,7 +41,14 @@ public partial class App : Application
 
         // Uma instância só: duas aplicando alterações ao mesmo tempo
         // disputariam o mesmo backup, e dois monitores mediriam a mesma partida.
-        _single = new Mutex(true, @"Local\FPSX.App.Single", out var first);
+        var instance = @"Local\FPSX.App.Single";
+#if DEBUG
+        // Só em desenvolvimento: uma cópia separada para prints de QA, sem
+        // brigar com o FPSX instalado que o dono está usando.
+        if (Environment.GetEnvironmentVariable("FPSX_INSTANCE") is { Length: > 0 } suffix)
+            instance += "." + suffix;
+#endif
+        _single = new Mutex(true, instance, out var first);
         if (!first)
         {
             // Já está aberto (talvez só na bandeja): pede para ele mostrar a janela.
@@ -94,7 +101,7 @@ public partial class App : Application
             $"FPS médio {s.Stats.AvgFps:0}, 1% low {s.Stats.Low1Fps:0}. Veja o antes e depois em Partidas.");
         AppHost.Current.StartMonitor();
 
-        _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSignalName);
+        _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, instance == @"Local\FPSX.App.Single" ? ShowSignalName : instance + ".Show");
         new Thread(() =>
         {
             while (_showSignal.WaitOne())

@@ -1,0 +1,33 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "valorant",
+  "name": "Valorant",
+  "version": "2026.09.1",
+  "detect": {
+    "processes": [
+      "VALORANT-Win64-Shipping.exe"
+    ]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "VALORANT-Win64-Shipping.exe",
+    "method": "Campo de treino, sempre o mesmo percurso por 60 segundos, com as mesmas opções de vídeo."
+  },
+  "recommended_settings": {
+    "Renderização multithread": "Ligada: divide o trabalho entre os núcleos do processador.",
+    "Qualidade de material, textura e detalhe": "Baixa em PC fraco. Pouca diferença visual em partida.",
+    "Anti-aliasing": "MSAA 2x ou nenhum em PC fraco.",
+    "Sincronização vertical": "Desligada: atraso de entrada pesa mais que tearing em jogo competitivo.",
+    "NVIDIA Reflex": "Ligado em placa NVIDIA: reduz a fila de quadros e o atraso.",
+    "Limite de FPS no menu": "Ligado, para a placa não esquentar à toa fora da partida."
+  }
+}

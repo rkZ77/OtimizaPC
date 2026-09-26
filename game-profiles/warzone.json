@@ -1,0 +1,31 @@
+{
+  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  "id": "warzone",
+  "name": "Call of Duty (Warzone e Black Ops)",
+  "version": "2026.09.1",
+  "detect": {
+    "processes": [
+      "cod.exe"
+    ]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "cod.exe",
+    "method": "O teste de desempenho do próprio jogo, quando disponível, ou o mesmo trecho do modo treino."
+  },
+  "recommended_settings": {
+    "Escala de resolução (DLSS, FSR ou XeSS)": "Qualidade ou Balanceado em PC fraco: é o ajuste que mais devolve FPS.",
+    "Qualidade das sombras": "Baixa.",
+    "Streaming de texturas sob demanda": "Desligado se a sua internet for instável.",
+    "NVIDIA Reflex": "Ligado em placa NVIDIA."
+  }
+}

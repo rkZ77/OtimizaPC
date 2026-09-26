@@ -38,6 +38,7 @@ public static class ProcessClassifier
     [
         "cs2", "VALORANT-Win64-Shipping", "FortniteClient-Win64-Shipping", "League of Legends", "r5apex", "r5apex_dx12", "cod", "cod22-cod",
         "Overwatch", "RainbowSix", "RainbowSix_Vulkan", "RocketLeague", "TslGame", "GTA5", "GTA5_Enhanced", "Minecraft.Windows", "javaw",
+        "RobloxPlayerBeta", "dota2", "Marvel-Win64-Shipping", "Minecraft",
     ];
 
     // Jogos com o ano no nome do executável (FC25, FC27, FIFA23...). Lista
