@@ -8,7 +8,7 @@
                 <StackPanel>
                     <TextBlock Text="Jogos" Style="{StaticResource H1}" />
                     <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
-                               Text="O FPSX lê a configuração de vídeo do jogo e aponta o que aumenta latência ou limita os quadros exibidos. Em PC fraco, oferece uma configuração leve que só reduz o que está pesado. Tudo grava no arquivo do jogo, com o jogo fechado, e pode ser desfeito." />
+                               Text="Cada jogo recebe a configuração certa para o nível do seu PC: leve em PC de entrada, equilibrada em intermediário e só correções de atraso em PC forte. Um clique otimiza, outro volta como era." />
                 </StackPanel>
             </DockPanel>
             <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" Margin="0,0,0,10"
@@ -53,31 +53,38 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <Border Style="{StaticResource Card}" Background="{StaticResource Surface2}" Margin="0,12,0,0"
-                                        Visibility="{Binding PresetTitle, Converter={StaticResource Visible}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding PresetTitle}" FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding PresetDescription}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
-                                        <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,0"
-                                                   Text="Muda a aparência do jogo. Feche o jogo antes. Tudo volta com Desfazer." />
-                                    </StackPanel>
+                                <!-- Otimizar este jogo / Voltar como era -->
+                                <Border Background="{StaticResource Surface2}" CornerRadius="10" Padding="16,14" Margin="0,12,0,0"
+                                        Visibility="{Binding Tunable, Converter={StaticResource Visible}}">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                                            <Button Content="Voltar como era" Margin="0,0,8,0" CommandParameter="{Binding GameId}"
+                                                    Command="{Binding DataContext.RevertGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    Visibility="{Binding CanRevert, Converter={StaticResource Visible}}" />
+                                            <Button Content="Otimizar este jogo" Style="{StaticResource Primary}" CommandParameter="{Binding GameId}"
+                                                    Command="{Binding DataContext.OptimizeGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    Visibility="{Binding CanOptimize, Converter={StaticResource Visible}}" />
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="9" Height="9" Fill="{Binding TuneBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                <TextBlock Text="{Binding TuneTitle}" FontWeight="SemiBold" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding TuneDetail}" Style="{StaticResource MutedText}" Margin="17,4,0,0" />
+                                        </StackPanel>
+                                    </DockPanel>
                                 </Border>
+                                <TextBlock Text="{Binding ManualNote}" Style="{StaticResource MutedText}" Margin="0,12,0,0"
+                                           Visibility="{Binding ManualNote, Converter={StaticResource Visible}}" />
 
-                                <WrapPanel Margin="0,12,0,0" Visibility="{Binding Installed, Converter={StaticResource Visible}}">
-                                    <Button Content="Corrigir configurações" Style="{StaticResource Primary}" Margin="0,0,8,8"
-                                            Command="{Binding DataContext.FixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            Visibility="{Binding HasFix, Converter={StaticResource Visible}}" />
-                                    <Button Content="Aplicar configuração leve" Style="{StaticResource Primary}" Margin="0,0,8,8"
-                                            CommandParameter="{Binding PresetId}"
-                                            Command="{Binding DataContext.PresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            Visibility="{Binding PresetId, Converter={StaticResource Visible}}" />
+                                <WrapPanel Margin="0,12,0,0" Visibility="{Binding HasShaderCache, Converter={StaticResource Visible}}">
                                     <Button Content="Limpar cache de shaders" Margin="0,0,8,8"
                                             ToolTip="Só para stutter anormal ou erro gráfico depois de atualização. Não aumenta FPS."
                                             Command="{Binding DataContext.ShaderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             Visibility="{Binding HasShaderCache, Converter={StaticResource Visible}}" />
                                 </WrapPanel>
 
-                                <TextBlock Text="Configuração recomendada" FontWeight="SemiBold" Margin="0,16,0,6" />
+                                <TextBlock Text="O que mais pesa neste jogo" FontWeight="SemiBold" Margin="0,16,0,6" />
                                 <ItemsControl ItemsSource="{Binding Recommended}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>

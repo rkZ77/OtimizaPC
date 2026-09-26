@@ -1,37 +1,51 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Windows.Media;
 using Fpsx.Core.Diagnostics;
 using Fpsx.Core.Engine;
+using Fpsx.Core.Model;
 
 namespace Fpsx.App.ViewModels;
 
 public sealed class GameCard
 {
+    public string GameId { get; init; } = "";
     public string Name { get; init; } = "";
     public string Status { get; init; } = "";
     public string? InstallPath { get; init; }
     public bool Installed { get; init; }
     public IReadOnlyList<FindingItem> Findings { get; init; } = [];
     public IReadOnlyList<KeyValueItem> Recommended { get; init; } = [];
-    public bool HasFix { get; init; }
-
-    /// <summary>Proposta do preset leve; só preenchida quando o plano libera a aplicação.</summary>
-    public string? PresetId { get; init; }
-    public string? PresetTitle { get; init; }
-    public string? PresetDescription { get; init; }
     public bool HasShaderCache { get; init; }
+
+    // ---- Otimizar este jogo / Voltar como era ----
+
+    /// <summary>O FPSX sabe editar a configuração deste jogo (CS2, Fortnite, Minecraft).</summary>
+    public bool Tunable { get; init; }
+
+    public string TuneTitle { get; init; } = "";
+    public string TuneDetail { get; init; } = "";
+    public Brush TuneBrush { get; init; } = Brushes.Transparent;
+    public bool CanOptimize { get; init; }
+    public bool CanRevert { get; init; }
+
+    /// <summary>Jogo só com medição: o ajuste é pelo menu dele, com as dicas abaixo.</summary>
+    public string ManualNote { get; init; } = "";
 }
 
-/// <summary>Perfis de jogo (CS2 primeiro): diagnóstico sempre visível, correção no plano Pro.</summary>
+/// <summary>
+/// Um cartão por jogo deste PC, com o que muda de verdade no FPS: otimizar
+/// para o nível do hardware com um clique e voltar como era com outro.
+/// </summary>
 public sealed class GamesViewModel : PageViewModel
 {
     private readonly AppHost _host = AppHost.Current;
 
     public GamesViewModel()
     {
-        FixCommand = new AsyncCommand(() => Busy(() => ApplyFlow.RunAsync(["game-settings-fix"], Reporter)), () => !IsBusy);
+        OptimizeGameCommand = new AsyncCommand(p => Busy(() => Optimize((string)p!)), p => !IsBusy && p is string);
+        RevertGameCommand = new AsyncCommand(p => Busy(() => Revert((string)p!)), p => !IsBusy && p is string);
         ShaderCommand = new AsyncCommand(() => Busy(() => ApplyFlow.RunAsync(["shader-cache-clear-cs2"], Reporter)), () => !IsBusy);
-        PresetCommand = new AsyncCommand(p => Busy(() => ApplyFlow.RunAsync([(string)p!], Reporter)), p => !IsBusy && p is string);
         ScanCommand = new AsyncCommand(() => Busy(() => _host.RunScanAsync(Reporter, network: false)), () => !IsBusy);
         _host.PropertyChanged += (_, e) =>
         {
@@ -43,30 +57,57 @@ public sealed class GamesViewModel : PageViewModel
 
     public override string Title => "Jogos";
 
-    public override string Icon => "\uE7FC";
+    public override string Icon => "";
 
-    public ICommand FixCommand { get; }
+    public ICommand OptimizeGameCommand { get; }
+    public ICommand RevertGameCommand { get; }
     public ICommand ShaderCommand { get; }
-    public ICommand PresetCommand { get; }
+    public ICommand ScanCommand { get; }
 
-    /// <summary>Nível do PC vindo do diagnóstico, para a pessoa entender por que o preset aparece (ou não).</summary>
     public string OtherGames { get; private set; } = "";
 
+    /// <summary>Nível do PC vindo do diagnóstico, para a pessoa entender o que cada jogo recebe.</summary>
     public string TierTitle { get; private set; } = "";
     public string TierDetail { get; private set; } = "";
-    public ICommand ScanCommand { get; }
     public ObservableCollection<GameCard> Games { get; } = [];
     public bool CanFix => _host.Allows(Feature.GameProfiles);
-    public string PlanNote => CanFix ? "" : $"A correção automática das configurações do jogo faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.GameProfiles))}. O diagnóstico continua disponível.";
+    public string PlanNote => CanFix ? "" : $"Otimizar os jogos com um clique faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.GameProfiles))}. Você já vê aqui o que mudaria em cada um.";
+
+    public override void OnShown() => Load();
+
+    private async Task Optimize(string gameId)
+    {
+        if (_host.Scan is not { } scan)
+            return;
+        var ids = GameTuning.ProposalIdsFor(scan, gameId);
+        if (ids.Count > 0)
+            await ApplyFlow.RunAsync(ids, Reporter);
+        Load();
+    }
+
+    private async Task Revert(string gameId)
+    {
+        var applied = GameTuning.AppliedChanges(_host.Ctx.Store.All(), gameId);
+        if (applied.Count == 0)
+            return;
+        var name = _host.Ctx.GameProfiles.FirstOrDefault(p => p.Id == gameId)?.Name ?? gameId;
+        if (!Dialogs.Confirm("Voltar como era", $"As {applied.Count} opções que o FPSX mudou no {name} voltam para o valor que tinham antes. Feche o jogo antes de continuar.", "Voltar como era"))
+            return;
+        foreach (var (sessionId, changeId, _) in applied)
+            await _host.RollbackAsync(sessionId, changeId, force: false);
+        await _host.RunScanAsync(Reporter, network: false);
+        Dialogs.Info("Pronto", $"O {name} voltou à configuração que tinha antes do FPSX.");
+    }
 
     private void Load()
     {
         Games.Clear();
         var scan = _host.Scan;
-        var tier = scan?.Findings.FirstOrDefault(f => f.DiagnosticId == "hardware-tier");
-        TierTitle = tier?.Title ?? "";
-        TierDetail = tier is null ? "" : $"{tier.Detail} {tier.Recommendation}".Trim();
-        var presets = scan?.Optimizations.FirstOrDefault(o => o.Definition.Id == "game-preset-low-end")?.Evaluation.Proposals ?? [];
+        var tierFinding = scan?.Findings.FirstOrDefault(f => f.DiagnosticId == "hardware-tier");
+        TierTitle = tierFinding?.Title ?? "";
+        TierDetail = tierFinding?.Detail ?? "";
+        var tier = scan is null ? HardwareTier.Unknown : HardwareTierClassifier.Assess(scan.Snapshot).Tier;
+        var sessions = _host.Ctx.Store.All();
 
         // Só os jogos deste PC (instalados ou já jogados com o FPSX aberto):
         // 15 cartões de "não encontrado" esconderiam os que importam.
@@ -76,38 +117,78 @@ public sealed class GamesViewModel : PageViewModel
             .ToList();
         var others = _host.Ctx.GameProfiles.Except(mine).Select(p => p.Name).ToList();
         OtherGames = others.Count == 0 ? "" : "O FPSX também reconhece e mede o FPS de: " + string.Join(", ", others) + ". Eles aparecem aqui quando forem instalados ou jogados com o FPSX aberto.";
-        Raise(nameof(OtherGames));
 
+        var res = System.Windows.Application.Current.Resources;
         foreach (var profile in mine)
         {
-            var preset = presets.FirstOrDefault(p => p.Id.StartsWith($"game-preset-low-end:{profile.Id}:", StringComparison.Ordinal));
             var install = scan?.Snapshot.Games.FirstOrDefault(g => g.GameId == profile.Id);
             var findings = scan is null || install is null
                 ? []
                 : scan.Findings.Where(f => f.DiagnosticId == "game-settings" && f.Title.StartsWith(profile.Name, StringComparison.Ordinal))
                     .Select(f => new FindingItem(f, scan)).ToList();
+            var tunable = profile.Config is not null && install?.Config.Count > 0;
+            var pending = scan is null || !tunable ? [] : GameTuning.ProposalIdsFor(scan, profile.Id);
+            var applied = GameTuning.AppliedChanges(sessions, profile.Id);
+            var changes = scan is null ? 0 : pending.Sum(id => scan.FindProposal(id)?.Proposal.Changes.Count ?? 0);
+
+            string title, detail;
+            Brush brush;
+            if (!tunable)
+            {
+                title = "";
+                detail = "";
+                brush = Brushes.Transparent;
+            }
+            else if (pending.Count > 0)
+            {
+                title = applied.Count > 0 ? "Otimizado, com ajustes novos para aplicar" : "Pode ficar melhor neste PC";
+                detail = $"{changes} {(changes == 1 ? "opção" : "opções")} para ajustar: correções que tiram atraso"
+                         + (tier switch
+                         {
+                             HardwareTier.Low => " e a configuração leve para PC de entrada.",
+                             HardwareTier.Mid => " e a configuração equilibrada para PC intermediário.",
+                             _ => ". Em PC forte a qualidade de imagem não muda.",
+                         });
+                brush = (Brush)res["Warn"];
+            }
+            else if (applied.Count > 0)
+            {
+                title = "Otimizado pelo FPSX";
+                detail = $"{applied.Count} {(applied.Count == 1 ? "opção ajustada" : "opções ajustadas")} em {applied[0].At.ToLocalTime():dd/MM}. Pode voltar como era quando quiser.";
+                brush = (Brush)res["Accent"];
+            }
+            else
+            {
+                title = "Já está na configuração certa para este PC";
+                detail = "Nada para mudar neste jogo agora.";
+                brush = (Brush)res["Accent"];
+            }
+
             Games.Add(new GameCard
             {
+                GameId = profile.Id,
                 Name = profile.Name,
                 Installed = install is not null,
                 InstallPath = install?.InstallPath,
                 Status = install is not null ? "Instalado."
-                    : played.Contains(profile.Id) ? "Jogado neste PC: o FPS das partidas está em Partidas."
+                    : played.Contains(profile.Id) ? "Jogado neste PC: o FPS das partidas está em Partidas e FPS."
                     : "Rode a análise para detectar o jogo.",
                 Findings = findings,
                 Recommended = profile.RecommendedSettings.Select(kv => new KeyValueItem(kv.Key, kv.Value)).ToList(),
-                HasFix = findings.Any(f => f.HasFix),
-                PresetId = preset is not null && CanFix ? preset.Id : null,
-                PresetTitle = preset is null ? null
-                    : $"Configuração leve para PC fraco: {preset.Changes.Count} {(preset.Changes.Count == 1 ? "opção está" : "opções estão")} mais pesada{(preset.Changes.Count == 1 ? "" : "s")} do que este PC aguenta",
-                PresetDescription = preset is null ? null : CanFix ? preset.Rationale : $"{preset.Rationale} Disponível no plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.GameProfiles))}.",
-                HasShaderCache = profile.Optimizations.Contains("shader-cache-clear-cs2"),
+                HasShaderCache = install is not null && profile.Optimizations.Contains("shader-cache-clear-cs2"),
+                Tunable = tunable,
+                TuneTitle = title,
+                TuneDetail = detail,
+                TuneBrush = brush,
+                CanOptimize = pending.Count > 0,
+                CanRevert = applied.Count > 0,
+                ManualNote = tunable ? "" : profile.Config is null
+                    ? "Neste jogo o FPSX mede o FPS e mostra o que mais pesa. O ajuste é pelo menu de vídeo do próprio jogo, com as dicas abaixo."
+                    : "Abra o jogo uma vez para ele criar o arquivo de configuração. Depois o FPSX consegue otimizar.",
             });
         }
 
-        Raise(nameof(CanFix));
-        Raise(nameof(PlanNote));
-        Raise(nameof(TierTitle));
-        Raise(nameof(TierDetail));
+        foreach (var n in new[] { nameof(CanFix), nameof(PlanNote), nameof(TierTitle), nameof(TierDetail), nameof(OtherGames) })
+            Raise(n);
     }
 }
