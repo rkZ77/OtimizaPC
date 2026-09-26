@@ -126,12 +126,13 @@ public class GamePresetTests
     }
 
     [Fact]
-    public void PC_intermediario_e_forte_nao_recebem_preset()
+    public void PC_forte_nao_recebe_preset_e_intermediario_recebe_o_equilibrado()
     {
         var weak = WeakWithGames();
         Assert.Equal(Decision.NotApplicable, Eval(weak with { Gpus = Pc.Healthy().Gpus, Memory = Pc.Healthy().Memory }).Decision);
-        var mid = weak with { Gpus = [new GpuInfo { Name = "GTX 1650", Vendor = GpuVendor.Nvidia, VramBytes = 4 * Gb }], Memory = Pc.Healthy().Memory };
-        Assert.Equal(Decision.NotApplicable, Eval(mid).Decision);
+        var mid = Eval(weak with { Gpus = [new GpuInfo { Name = "GTX 1650", Vendor = GpuVendor.Nvidia, VramBytes = 4 * Gb }], Memory = Pc.Healthy().Memory });
+        Assert.Equal(Decision.Optional, mid.Decision);
+        Assert.All(mid.Proposals, p => Assert.EndsWith(":equilibrado", p.Id));
     }
 
     [Fact]
@@ -154,7 +155,7 @@ public class GamePresetTests
     [InlineData("entityShadows", "false", false)]
     public void Preset_so_reduz(string key, string current, bool applies)
     {
-        var preset = TestData.Games().Single(g => g.Id == "minecraft").Presets.Single();
+        var preset = TestData.Games().Single(g => g.Id == "minecraft").Presets.Single(p => p.Id == "pc-fraco");
         Assert.Equal(applies, preset.ShouldApply(key, current));
     }
 

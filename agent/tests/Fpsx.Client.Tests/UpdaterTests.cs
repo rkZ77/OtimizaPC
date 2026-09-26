@@ -58,6 +58,17 @@ public class UpdaterTests
         File.Delete(file);
     }
 
+    [Theory]
+    [InlineData(@"C:\Users\ana\AppData\Local\Programs\FPSX\FPSX.exe", "/CURRENTUSER")]
+    [InlineData(@"C:\Program Files\FPSX\FPSX.exe", "/ALLUSERS")]
+    [InlineData(@"D:\Jogos\FPSX\FPSX.exe", "/ALLUSERS")]
+    public void Atualiza_no_mesmo_tipo_de_instalacao(string exe, string expected)
+    {
+        // O caso real: instalado só para o usuário, a atualização sem este
+        // argumento instalou uma segunda cópia em Arquivos de Programas.
+        Assert.Equal(expected, Updater.ScopeArg(exe, @"C:\Users\ana\AppData\Local"));
+    }
+
     [Fact]
     public void Sem_versao_publicada_nao_faz_nada()
     {

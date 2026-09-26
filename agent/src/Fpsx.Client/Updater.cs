@@ -108,8 +108,20 @@ public static class Updater
     public static void Install(string installer)
     {
         var psi = new ProcessStartInfo(installer) { UseShellExecute = true };
-        foreach (var arg in new[] { "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS" })
+        foreach (var arg in new[] { "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS", ScopeArg(Environment.ProcessPath ?? "") })
             psi.ArgumentList.Add(arg);
         Process.Start(psi);
+    }
+
+    /// <summary>
+    /// Atualiza no MESMO tipo de instalação que está rodando. Sem isso o
+    /// instalador usa o padrão (todos os usuários, pede administrador) e quem
+    /// tinha instalado só para si ficava com duas cópias do FPSX.
+    /// </summary>
+    public static string ScopeArg(string runningExe, string? localAppData = null)
+    {
+        localAppData ??= Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var perUser = Path.GetFullPath(Path.Combine(localAppData, "Programs")) + Path.DirectorySeparatorChar;
+        return runningExe.StartsWith(perUser, StringComparison.OrdinalIgnoreCase) ? "/CURRENTUSER" : "/ALLUSERS";
     }
 }

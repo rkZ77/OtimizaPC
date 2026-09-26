@@ -35,6 +35,7 @@
   "presets": [
     {
       "id": "pc-fraco",
+      "tiers": ["LOW"],
       "title": "configuração leve para PC fraco",
       "description": "Sombras, iluminação global, reflexos, pós-processamento, efeitos, folhagem e antisserrilhado no mínimo. Distância de visão em Média, para jogadores distantes continuarem aparecendo. Resolução não muda.",
       "settings": {
@@ -48,6 +49,26 @@
         "ScalabilityGroups|sg.EffectsQuality": "0",
         "ScalabilityGroups|sg.FoliageQuality": "0",
         "ScalabilityGroups|sg.ShadingQuality": "0"
+      }
+    },
+    {
+      "id": "equilibrado",
+      "title": "configuração equilibrada para este PC",
+      "tiers": [
+        "MID"
+      ],
+      "description": "Sombras, iluminação global, reflexos e pós-processamento em Médio; texturas e distância de visão em Alto. Resolução não muda.",
+      "settings": {
+        "ScalabilityGroups|sg.ViewDistanceQuality": "2",
+        "ScalabilityGroups|sg.AntiAliasingQuality": "2",
+        "ScalabilityGroups|sg.ShadowQuality": "1",
+        "ScalabilityGroups|sg.GlobalIlluminationQuality": "1",
+        "ScalabilityGroups|sg.ReflectionQuality": "1",
+        "ScalabilityGroups|sg.PostProcessQuality": "1",
+        "ScalabilityGroups|sg.TextureQuality": "2",
+        "ScalabilityGroups|sg.EffectsQuality": "2",
+        "ScalabilityGroups|sg.FoliageQuality": "1",
+        "ScalabilityGroups|sg.ShadingQuality": "2"
       }
     }
   ],

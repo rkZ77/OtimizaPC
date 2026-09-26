@@ -10,9 +10,11 @@ namespace Fpsx.Core.Optimizations;
 // Nenhum deles aparece em PC onde não resolve nada.
 
 /// <summary>
-/// Configuração leve do jogo em PC de entrada: sombras, efeitos, oclusão e
-/// antisserrilhado no mínimo. É o método de maior efeito comprovado quando a
-/// GPU é o gargalo, e também o que mais muda a imagem: sempre pede confirmação.
+/// Configuração do jogo pelo nível do PC. Entrada: leve (sombras, efeitos,
+/// oclusão e antisserrilhado no mínimo), recomendada. Intermediário:
+/// equilibrada (baixa só o que costuma pesar sem deixar o jogo feio),
+/// opcional. Forte: nenhuma, só as correções de latência do game-settings-fix.
+/// Muda a imagem: sempre pede confirmação, e nunca sobe qualidade.
 /// </summary>
 public sealed class GamePresetOptimization : IOptimization
 {
@@ -24,9 +26,9 @@ public sealed class GamePresetOptimization : IOptimization
         var evidence = Ev.Of(("nivel", tier.Tier.ToString().ToUpperInvariant()), ("motivo", string.Join(" ", tier.Reasons)));
         if (tier.Tier == HardwareTier.Unknown)
             return Evaluation.Unknown("Não foi possível ler o hardware para decidir se vale reduzir a qualidade gráfica.");
-        // Só PC de entrada. Em intermediário o ganho não compensa a perda de
-        // imagem na maioria dos jogos, e quem quiser ainda tem o menu do jogo.
-        if (tier.Tier != HardwareTier.Low)
+        // PC forte não tem o que ganhar trocando imagem por FPS: nesse caso o
+        // FPSX só corrige o que aumenta atraso (V-Sync, Reflex, taxa do monitor).
+        if (tier.Tier == HardwareTier.High)
             return Evaluation.NotApplicable($"{tier.Label}: reduzir a qualidade gráfica não é necessário aqui.", evidence);
 
         var proposals = new List<Proposal>();
@@ -38,7 +40,7 @@ public sealed class GamePresetOptimization : IOptimization
                 continue;
             anyGame = true;
 
-            foreach (var preset in profile.Presets)
+            foreach (var preset in profile.Presets.Where(p => p.Tiers.Contains(tier.Tier)))
             {
                 // Só chave que já existe no arquivo e que está mais pesada que o
                 // preset: o FPSX não inventa chave nem piora o que já está leve.
@@ -57,13 +59,16 @@ public sealed class GamePresetOptimization : IOptimization
         if (!anyGame)
             return Evaluation.NotApplicable("Nenhum jogo com perfil encontrado, ou o jogo ainda não criou a configuração de vídeo.", evidence);
         if (proposals.Count == 0)
-            return Evaluation.Optimal("Os jogos encontrados já estão com a configuração leve.", evidence);
+            return Evaluation.Optimal("Os jogos encontrados já estão na configuração certa para este PC.", evidence);
 
+        var low = tier.Tier == HardwareTier.Low;
         return new Evaluation
         {
-            Decision = Decision.Recommended,
-            Potential = Potential.High,
-            Reason = "Neste PC o hardware é o limite. Baixar sombras, efeitos e antisserrilhado é o que mais aumenta o FPS, bem mais do que qualquer ajuste do Windows.",
+            Decision = low ? Decision.Recommended : Decision.Optional,
+            Potential = low ? Potential.High : Potential.Moderate,
+            Reason = low
+                ? "Neste PC o hardware é o limite. Baixar sombras, efeitos e antisserrilhado é o que mais aumenta o FPS, bem mais do que qualquer ajuste do Windows."
+                : "Este PC roda bem, mas algumas opções custam muito FPS e mudam pouco a imagem. A configuração equilibrada baixa só essas.",
             Warning = "Muda a aparência do jogo: sombras, efeitos e texturas ficam mais simples. Feche o jogo antes de aplicar. Tudo volta com Desfazer. Meça com o FPSX Benchmark antes e depois.",
             Evidence = evidence,
             Proposals = proposals,

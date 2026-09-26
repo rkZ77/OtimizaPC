@@ -413,6 +413,37 @@ public static class Commands
         return 0;
     }
 
+    /// <summary>
+    /// Confere se há versão nova (assinatura do servidor), baixa e confere o
+    /// hash. --install roda o instalador. --version finge estar numa versão
+    /// (teste do caminho completo sem precisar de uma instalação antiga).
+    /// </summary>
+    public static async Task<int> Update(AgentContext ctx, Args args)
+    {
+        var current = args.Get("version") ?? AgentContext.Version;
+        var token = await ctx.Api().SignedUpdateAsync();
+        Ui.Title("Atualização do FPSX");
+        Ui.Line($"  Versão instalada: {current}");
+        var release = Updater.Check(token, current);
+        if (release is null)
+        {
+            Ui.Ok(token is null ? "  Nenhuma versão publicada." : "  O FPSX está na versão mais nova (ou a publicada não passou na conferência).");
+            return 0;
+        }
+
+        Ui.Line($"  Versão nova: {release.Version} (assinatura do servidor conferida)");
+        Ui.Muted($"  {release.Notes}");
+        var file = await Updater.DownloadAsync(release);
+        Ui.Ok($"  Baixado e conferido (SHA-256 bate): {file}");
+        if (args.Flag("install"))
+        {
+            Updater.Install(file);
+            Ui.Line("  Instalador aberto.");
+        }
+
+        return 0;
+    }
+
     public static int Gameplay(AgentContext ctx, Args args)
     {
         var sessions = ctx.Gameplay.All();

@@ -34,6 +34,7 @@
   "presets": [
     {
       "id": "pc-fraco",
+      "tiers": ["LOW"],
       "title": "configuração leve para PC fraco",
       "description": "Gráficos Rápidos, distância de renderização 8 e de simulação 6, sem nuvens e sem sombra de entidades, partículas reduzidas e sem mistura de biomas. Só reduz: quem já usa distância menor continua com a sua.",
       "settings": {
@@ -45,7 +46,24 @@
         "particles": "1",
         "biomeBlendRadius": "0"
       },
-      "higher_is_lighter": ["particles"]
+      "higher_is_lighter": ["particles"],
+      "lighter_order": { "renderClouds": ["\"false\"", "\"fast\"", "\"true\""] }
+    },
+    {
+      "id": "equilibrado",
+      "title": "configuração equilibrada para este PC",
+      "tiers": [
+        "MID"
+      ],
+      "description": "Gráficos Detalhados (em vez de Fabulosos), distância de renderização 12 e de simulação 8, nuvens rápidas. Só reduz o que estiver acima.",
+      "settings": {
+        "graphicsMode": "1",
+        "renderDistance": "12",
+        "simulationDistance": "8",
+        "renderClouds": "\"fast\"",
+        "biomeBlendRadius": "2"
+      },
+      "lighter_order": { "renderClouds": ["\"false\"", "\"fast\"", "\"true\""] }
     }
   ],
   "benchmark": {

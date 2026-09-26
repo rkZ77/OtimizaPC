@@ -34,6 +34,7 @@
   "presets": [
     {
       "id": "pc-fraco",
+      "tiers": ["LOW"],
       "title": "configuração leve para PC fraco",
       "description": "Sombras, texturas, partículas, oclusão de ambiente e antisserrilhado no mínimo. Resolução e sombras dinâmicas continuam como estão.",
       "settings": {
@@ -45,6 +46,22 @@
         "setting.videocfg_ao_detail": "0",
         "setting.shaderquality": "0",
         "setting.r_texturefilteringquality": "0"
+      }
+    },
+    {
+      "id": "equilibrado",
+      "title": "configuração equilibrada para este PC",
+      "tiers": [
+        "MID"
+      ],
+      "description": "Antisserrilhado 2x, sombras e texturas médias, oclusão de ambiente desligada e filtro 4x. Tira o que mais custa FPS e quase não se vê em partida.",
+      "settings": {
+        "setting.msaa_samples": "2",
+        "setting.videocfg_shadow_quality": "1",
+        "setting.videocfg_texture_detail": "1",
+        "setting.videocfg_particle_detail": "1",
+        "setting.videocfg_ao_detail": "0",
+        "setting.r_texturefilteringquality": "3"
       }
     }
   ],
