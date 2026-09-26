@@ -1,282 +1,230 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
-  Activity, ArrowRight, Check, CircleSlash, Cpu, Gamepad2, Gauge, HardDrive, ListChecks, MemoryStick,
-  Monitor, MonitorPlay, Network, Power, RotateCcw, ScanSearch, ShieldCheck,
+  ArrowRight, BadgeCheck, CircleSlash, CreditCard, Download, RotateCcw, ShieldCheck, Undo2,
 } from 'lucide-react'
+import api from '../services/api'
 import PageShell from '../components/PageShell'
 import SiteHeader from '../components/SiteHeader'
 import PlansGrid from '../components/PlansGrid'
-import { Button, LiveDot, Marquee, StatusBadge } from '../components/ui'
+import { Button } from '../components/ui'
+import { date } from '../lib/format'
 
 /*
- * Home no desenho da home do Pickia: cabecalho transparente sobre o hero,
- * selo com ponto vivo, titulo com a linha do meio na cor da marca, card de
- * destaque a direita, fita rolando logo abaixo e secoes centralizadas.
- * O conteudo e' do FPSX e segue a regra do produto: nenhum numero de ganho
- * inventado, e o card de diagnostico e' rotulado como exemplo.
+ * Home com cara de produto, nao de template: tela REAL do app no lugar de
+ * ilustracao, texto direto, garantias visiveis (pagamento, desistencia,
+ * desfazer), historico de versoes real e nada de numero de ganho inventado.
+ * Menos efeito (sem grade brilhando, sem ponto pulsando, sem fita rolando):
+ * e' o que os sites em que as pessoas confiam fazem.
  */
 
-function Section({ id, eyebrow, title, sub, children, alt }: { id?: string; eyebrow?: string; title: string; sub?: string; children: ReactNode; alt?: boolean }) {
+interface Version { version: string; notes: string; published_at: string }
+
+function Screenshot({ src, alt }: { src: string; alt: string }) {
   return (
-    <section id={id} className={alt ? 'section-alt scroll-mt-16' : 'scroll-mt-16'}>
-      <div className="max-w-6xl mx-auto px-4 py-16 sm:py-20">
-        <div className="text-center max-w-2xl mx-auto">
-          {eyebrow && <p className="text-xs font-bold uppercase tracking-widest text-accent-ink">{eyebrow}</p>}
-          <h2 className="mt-2 font-display text-2xl sm:text-3xl font-bold text-ink-1">{title}</h2>
-          {sub && <p className="mt-3 text-ink-3">{sub}</p>}
-        </div>
-        <div className="mt-10">{children}</div>
-      </div>
-    </section>
+    <figure className="min-w-0">
+      <img src={src} alt={alt} width={1180} height={780} loading="lazy"
+           className="w-full h-auto rounded-lg border border-line shadow-elev" />
+      <figcaption className="mt-2 text-xs text-ink-4">Tela real do app, sem edição.</figcaption>
+    </figure>
   )
 }
 
-/** O "Dica do dia" do Pickia, aqui como o relatorio do app. Rotulado como exemplo. */
-function DiagnosticoCard() {
-  const rows: { area: string; texto: string; status: 'ok' | 'attention' | 'problem' }[] = [
-    { area: 'CPU', texto: 'Sem limitação no teste de carga', status: 'ok' },
-    { area: 'Monitor', texto: '144 Hz disponível, rodando a 60 Hz', status: 'attention' },
-    { area: 'Game Mode', texto: 'Já ativado', status: 'ok' },
-    { area: 'RAM', texto: '86% em uso antes de abrir o jogo', status: 'attention' },
-    { area: 'Disco', texto: 'Alerta de saúde do SMART', status: 'problem' },
-    { area: 'Rede', texto: 'Sem perda de pacotes', status: 'ok' },
-  ]
+function Row({ title, children, img, alt, flip }: { title: string; children: ReactNode; img: string; alt: string; flip?: boolean }) {
   return (
-    <div className="rounded-lg border border-line bg-surface-0/80 backdrop-blur-sm shadow-elev">
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-line">
-        <div className="flex items-center gap-2 text-sm font-semibold text-ink-1">
-          <LiveDot /> Diagnóstico do PC
-        </div>
-        <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-sm border border-green-500/30 text-accent-ink bg-green-500/5">Grátis</span>
+    <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
+      <div className={flip ? 'lg:order-2' : undefined}>
+        <h3 className="font-display text-2xl font-bold text-ink-1">{title}</h3>
+        <div className="mt-4 space-y-3 text-ink-2 leading-relaxed">{children}</div>
       </div>
-      <div className="px-5 py-4">
-        <p className="text-center text-[11px] font-semibold uppercase tracking-widest text-ink-4">Exemplo de relatório</p>
-        <ul className="mt-3 divide-y divide-line/60">
-          {rows.map((r) => (
-            <li key={r.area} className="flex items-center gap-3 py-2.5 text-sm min-w-0">
-              <StatusBadge status={r.status} className="w-[74px] justify-center shrink-0" />
-              <span className="w-20 shrink-0 font-semibold text-ink-1">{r.area}</span>
-              <span className="min-w-0 truncate text-ink-3">{r.texto}</span>
-            </li>
-          ))}
-        </ul>
-        <Button to="/download" block size="md" IconRight={ArrowRight} className="mt-4">Analisar o meu PC</Button>
-        <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-ink-3">
-          {['Só leitura na análise', 'Backup em tudo', 'Desfazer em todos os planos'].map((t) => (
-            <span key={t} className="inline-flex items-center gap-1"><Check className="w-3 h-3 text-accent" aria-hidden />{t}</span>
-          ))}
-        </div>
-      </div>
+      <Screenshot src={img} alt={alt} />
     </div>
   )
 }
 
-const CHECKS = [
-  { icon: Cpu, title: 'CPU', text: 'Uso e limitação térmica medidos com teste de carga.' },
-  { icon: MonitorPlay, title: 'GPU e driver', text: 'Modelo, memória de vídeo e idade do driver.' },
-  { icon: MemoryStick, title: 'RAM', text: 'Pressão de memória e pagefile desligado por tweak antigo.' },
-  { icon: HardDrive, title: 'Armazenamento', text: 'SSD ou HD, espaço livre e saúde do disco.' },
-  { icon: Monitor, title: 'Monitor', text: 'Taxa de atualização abaixo do que o monitor suporta.' },
-  { icon: Gamepad2, title: 'Game Mode e captura', text: 'Game Mode e gravação contínua da Game Bar.' },
-  { icon: Power, title: 'Energia', text: 'Plano de energia avaliado por tipo de PC.' },
-  { icon: Network, title: 'Rede', text: 'Latência, jitter e perda, local e provedor.' },
-  { icon: ListChecks, title: 'Inicialização', text: 'O que abre com o Windows e o que pesa.' },
-  { icon: Activity, title: 'Jogos', text: 'CS2, Fortnite e Minecraft: V-Sync, Reflex e taxa do jogo.' },
-  { icon: Gauge, title: 'PC fraco', text: 'Nível do hardware e configuração leve só quando precisa.' },
+const GUARANTEES = [
+  { icon: CreditCard, t: 'Pagamento pelo Mercado Pago', d: 'PIX ou cartão. O FPSX não vê nem guarda os dados do seu cartão.' },
+  { icon: Undo2, t: '7 dias para desistir', d: 'Não gostou? Peça o reembolso em até 7 dias da compra, como manda o Código de Defesa do Consumidor.' },
+  { icon: RotateCcw, t: 'Desfazer tudo, sempre', d: 'Toda alteração guarda o estado anterior. Desfazer funciona em qualquer plano, mesmo depois de cancelar.' },
+  { icon: ShieldCheck, t: 'Segurança do Windows intocada', d: 'Antivírus, firewall e Windows Update ficam exatamente como estão.' },
 ]
 
-function CheckChip({ icon: Icon, title, text }: (typeof CHECKS)[number]) {
-  return (
-    <div className="w-60 shrink-0 rounded-lg border border-line bg-surface-1 p-4">
-      <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 text-accent" aria-hidden />
-        <p className="font-semibold text-sm text-ink-1">{title}</p>
-      </div>
-      <p className="mt-1.5 text-xs text-ink-3 leading-relaxed">{text}</p>
-    </div>
-  )
-}
+const GAMES = ['Counter-Strike 2', 'EA SPORTS FC', 'Fortnite', 'Valorant', 'League of Legends', 'Minecraft', 'Roblox', 'GTA V',
+  'Apex Legends', 'Call of Duty', 'PUBG', 'Rainbow Six Siege', 'Dota 2', 'Rocket League', 'Marvel Rivals']
 
 const NOT_DOING = [
-  'Desativar Windows Defender, Firewall ou Windows Update',
+  'Desligar antivírus, firewall ou Windows Update',
   'Desligar dezenas de serviços do Windows de uma vez',
-  'Colocar o jogo em prioridade Tempo real',
-  'Limpar RAM esvaziando o cache do sistema',
-  'Mexer em TCP ou DNS prometendo menos ping',
-  'Prometer +50 FPS ou PC 300% mais rápido',
+  'Colocar o jogo em prioridade "Tempo real"',
+  'Prometer "+50 FPS" ou "PC 300% mais rápido"',
+  'Instalar driver baixado de fonte que não seja o fabricante',
+  'Fechar programa à força e perder o que você não salvou',
 ]
 
-const FAQ = [
-  ['O FPSX aumenta meu FPS?', 'Depende do seu PC, e é exatamente isso que ele descobre. Em PC com configuração errada (monitor a 60 Hz, plano de economia, pagefile desligado, programas pesando) o ganho pode ser grande. Em PC já bem configurado, o FPSX diz que não há nada a mudar. O benchmark mede antes e depois e mostra o número real.'],
-  ['É seguro?', 'Cada alteração tem backup antes e verificação depois, e pode ser desfeita a qualquer momento, em qualquer plano. O FPSX só executa operações de uma lista fechada e nunca toca em segurança do Windows.'],
-  ['Funciona em PC fraco?', 'É onde mais faz diferença. O FPSX identifica o perfil do seu hardware, aponta o gargalo (CPU, GPU, RAM ou disco) e ajusta o que dá resultado real nesse tipo de PC.'],
-  ['Preciso ser administrador?', 'Não para o diagnóstico. Algumas correções que mexem em configuração do sistema pedem para reabrir o FPSX como administrador, e o app avisa quais.'],
-  ['Funciona em notebook?', 'Sim. O FPSX identifica notebook e bateria e ajusta as recomendações: nada que aumente consumo e temperatura é aplicado sem aviso.'],
-  ['Que dados vocês coletam?', 'Só com a sua permissão, e só o mínimo: quais otimizações foram aplicadas, se funcionaram, resultado de benchmark e versão do app e do Windows. Nunca arquivos, nomes de programas ou conteúdo pessoal.'],
+const FAQ: [string, string][] = [
+  ['O FPSX aumenta meu FPS?', 'Depende do seu PC, e é isso que ele descobre primeiro. Em PC com configuração errada (monitor rodando a 60 Hz, plano de economia de energia, jogo na placa integrada, programas pesando) o ganho costuma ser grande. Em PC já bem configurado, o FPSX diz que não há o que mudar. A medição das partidas mostra o número real, antes e depois.'],
+  ['O que eu consigo fazer no plano grátis?', 'Ver tudo: o diagnóstico completo, os problemas encontrados, o que cada otimização resolveria no seu PC e o FPS das suas partidas. Para aplicar as correções, é preciso um plano pago.'],
+  ['É seguro? E se der problema?', 'Cada alteração guarda o estado anterior e é conferida depois de aplicada. Qualquer uma pode ser desfeita com um clique, em qualquer plano. O FPSX só executa operações de uma lista fechada e revisada.'],
+  ['Funciona com anti-cheat (Vanguard, Easy Anti-Cheat)?', 'Sim. A medição de FPS usa o registro de quadros do próprio Windows e não injeta nada no jogo. O FPSX também nunca fecha nem mexe em anti-cheat.'],
+  ['Preciso ser administrador do PC?', 'Não para usar. Quando uma correção mexe em configuração do sistema, o Windows pede a sua permissão só para ela, e você vê antes o que vai mudar.'],
+  ['Posso usar em mais de um PC?', 'Cada assinatura vale para 1 PC por vez. Trocou de PC? Desative o antigo em Minha conta e entre no novo.'],
+  ['Como cancelo?', 'Na sua conta, quando quiser. O plano vale até o fim do período pago e o desfazer continua liberado depois.'],
+  ['O app recebe atualizações?', 'Sim. Novos jogos, novas correções e ajustes para versões novas do Windows e dos jogos entram nas atualizações, sem custo a mais para quem assina. O histórico está nesta página.'],
 ]
 
 export default function Home() {
+  const [versions, setVersions] = useState<Version[]>([])
+  useEffect(() => {
+    api.get<{ versions: Version[] }>('/public/changelog').then(({ data }) => setVersions(data.versions)).catch(() => setVersions([]))
+  }, [])
+  const latest = versions[0]
+
   return (
     <PageShell nav={<SiteHeader />} width="wide" mainClassName="!max-w-none !px-0 !py-0" revelacao={false}>
-      {/* Hero */}
-      {/* isolate: a grade (-z-10) fica atras do conteudo mas na frente do fundo da pagina */}
-      <section className="relative isolate overflow-hidden pt-16">
-        <div className="absolute inset-0 -z-10 bg-data-grid [background-size:48px_48px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]" aria-hidden />
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgb(var(--accent)/0.10),transparent_55%)]" aria-hidden />
-        <div className="max-w-6xl mx-auto px-4 py-14 sm:py-20 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center [&>*]:min-w-0">
+      {/* Hero: o app de verdade, sem efeito de fundo */}
+      <section className="pt-16">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:py-20 lg:grid-cols-[0.95fr_1.05fr] [&>*]:min-w-0">
           <div>
-            <span className="entra inline-flex items-center gap-2 rounded-full border border-line bg-surface-1/60 px-3 py-1 text-xs font-medium text-ink-2">
-              <LiveDot /> Para Windows 10 e 11
-            </span>
-            <h1 className="entra entra-1 mt-5 font-display text-4xl sm:text-5xl font-extrabold leading-[1.08] text-ink-1">
-              Seu PC pode estar entregando
-              <span className="block text-accent-ink">menos desempenho</span>
-              do que deveria.
+            <h1 className="font-display text-4xl font-extrabold leading-[1.1] text-ink-1 sm:text-5xl">
+              Descubra o que está travando seus jogos. E corrija sem medo.
             </h1>
-            <p className="entra entra-2 mt-5 text-lg text-ink-2 leading-relaxed max-w-xl">
-              O FPSX analisa seu computador e aplica apenas otimizações compatíveis que podem trazer
-              benefício real. Com backup, desfazer e medição antes e depois.
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-2">
+              O FPSX analisa o Windows e o hardware do seu PC, corrige só o que encontrar de errado e mede o FPS
+              das suas partidas antes e depois. Toda alteração tem backup e pode ser desfeita.
             </p>
-            <div className="entra entra-3 mt-8 flex flex-col sm:flex-row gap-3">
-              <Button to="/download" size="lg" Icon={ScanSearch} IconRight={ArrowRight}>ANALISAR MEU PC</Button>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button to="/download" size="lg" Icon={Download}>Baixar grátis para Windows</Button>
               <Button to="/planos" size="lg" variant="ghost">Ver planos</Button>
             </div>
-            <p className="mt-4 text-sm text-ink-4">O diagnóstico completo é gratuito e não altera nada.</p>
+            <p className="mt-4 text-sm text-ink-3">
+              Windows 10 e 11, 64 bits.{latest ? ` Versão ${latest.version}, de ${date(latest.published_at)}.` : ''} O diagnóstico é grátis e não altera nada.
+            </p>
           </div>
-          <DiagnosticoCard />
+          <Screenshot src="/img/app-dashboard.png" alt="Tela inicial do FPSX com o diagnóstico do PC" />
         </div>
-
-        {/* Fita rolando, como o "Na fila da IA" do Pickia */}
-        <div className="max-w-6xl mx-auto px-4 pb-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="flex items-center gap-2 text-sm font-semibold text-ink-1"><LiveDot /> O que o FPSX verifica</p>
-            <p className="text-xs text-ink-4">10 áreas do PC</p>
-          </div>
-        </div>
-        <Marquee items={CHECKS.map((c) => <CheckChip key={c.title} {...c} />)} speed={45} />
       </section>
 
-      {/* Principios */}
-      <section className="border-y border-line bg-surface-1/40 mt-10">
-        <div className="max-w-6xl mx-auto grid gap-6 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { icon: ScanSearch, t: 'Diagnóstico antes de alterar', d: 'Nada muda sem motivo encontrado no seu PC.' },
-            { icon: RotateCcw, t: 'Backup e desfazer em tudo', d: 'Cada alteração guarda o valor anterior.' },
-            { icon: Gauge, t: 'Medição antes e depois', d: 'FPS médio, 1% low e frametime reais.' },
-            { icon: ShieldCheck, t: 'Segurança intocada', d: 'Defender, Firewall e Update ficam como estão.' },
-          ].map(({ icon: Icon, t, d }) => (
+      {/* Garantias */}
+      <section className="border-y border-line bg-surface-1/50">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
+          {GUARANTEES.map(({ icon: Icon, t, d }) => (
             <div key={t} className="flex gap-3">
-              <Icon className="w-5 h-5 shrink-0 text-accent mt-0.5" aria-hidden />
-              <div><p className="font-semibold text-ink-1">{t}</p><p className="text-sm text-ink-3">{d}</p></div>
+              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
+              <div><p className="font-semibold text-ink-1">{t}</p><p className="mt-1 text-sm text-ink-3">{d}</p></div>
             </div>
           ))}
         </div>
       </section>
 
-      <Section id="como-funciona" eyebrow="Como funciona" title="Medir, alterar só o necessário, medir de novo."
-               sub="O FPSX não é uma coleção de comandos. É um motor que decide, item por item, se uma otimização faz sentido para o seu PC.">
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ['Instale e analise', 'O app faz o scan ao abrir: hardware, Windows, energia, monitor, rede, processos e jogos. Só leitura.'],
-            ['Entenda o relatório', 'Cada ponto diz o que foi encontrado, por que importa e onde o efeito aparece: FPS, stutter, carregamento ou rede.'],
-            ['Resolva com backup', 'Um clique em Resolver. O FPSX mostra o que muda e o risco, guarda o estado anterior e confere se funcionou.'],
-            ['Meça o resultado', 'O benchmark compara antes e depois. Se não houve ganho real, o FPSX diz isso e você desfaz.'],
-          ].map(([t, d], i) => (
-            <li key={t} className="card p-5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/15 font-bold text-accent-ink">{i + 1}</span>
-              <p className="mt-4 font-semibold text-ink-1">{t}</p>
-              <p className="mt-2 text-sm text-ink-3">{d}</p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section id="diagnostico" alt eyebrow="Diagnóstico" title="O que o FPSX analisa no seu PC">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {CHECKS.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="card p-5">
-              <Icon className="w-5 h-5 text-accent" aria-hidden />
-              <p className="mt-3 font-semibold text-ink-1">{title}</p>
-              <p className="mt-1.5 text-sm text-ink-3">{text}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section eyebrow="O diferencial" title="O FPSX sabe quais otimizações fazem sentido para o seu PC."
-               sub="Dois PCs, o mesmo catálogo, resultados diferentes. Isso é proposital: o FPSX prefere não alterar nada quando nada precisa ser alterado.">
-        <div className="grid gap-4 sm:grid-cols-2 max-w-4xl mx-auto">
-          {[
-            { pc: 'PC A', desc: 'Monitor em 60 Hz, plano de economia, captura contínua ligada', n: [15, 5, 3, 7] },
-            { pc: 'PC B', desc: 'Já bem configurado', n: [15, 2, 1, 12] },
-          ].map(({ pc, desc, n }) => (
-            <div key={pc} className="card p-6">
-              <p className="font-display text-lg font-bold text-ink-1">{pc}</p>
-              <p className="text-sm text-ink-3">{desc}</p>
-              <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <div><dt className="text-ink-3">No catálogo</dt><dd className="font-mono text-2xl font-bold text-ink-1">{n[0]}</dd></div>
-                <div><dt className="text-ink-3">Aplicáveis</dt><dd className="font-mono text-2xl font-bold text-ink-1">{n[1]}</dd></div>
-                <div><dt className="text-ink-3">Recomendadas</dt><dd className="font-mono text-2xl font-bold text-accent-ink">{n[2]}</dd></div>
-                <div><dt className="text-ink-3">Desnecessárias</dt><dd className="font-mono text-2xl font-bold text-ink-3">{n[3]}</dd></div>
-              </dl>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section alt eyebrow="Medição honesta" title="Quando não há ganho, o FPSX diz."
-               sub="A variação normal entre duas partidas iguais passa fácil de 3%. O FPSX Benchmark separa ganho real de ruído, e nunca inventa resultado.">
-        <div className="grid gap-4 lg:grid-cols-2 max-w-4xl mx-auto">
-          <div className="card p-6">
-            <p className="text-sm text-ink-3">Resultado possível 1</p>
-            <p className="mt-2 text-lg font-semibold text-accent-ink">Ganho significativo em 1% low</p>
-            <p className="mt-2 text-sm text-ink-3">A diferença ficou acima da variação entre rodadas. O número mostrado é o medido no seu PC, no seu cenário.</p>
+      {/* Como funciona, com as telas reais */}
+      <section id="como-funciona" className="scroll-mt-16">
+        <div className="mx-auto max-w-6xl space-y-20 px-4 py-16 sm:py-24">
+          <div className="max-w-2xl">
+            <h2 className="font-display text-3xl font-bold text-ink-1">Como funciona</h2>
+            <p className="mt-3 text-ink-3">Analisar, corrigir o que estiver errado e provar o resultado. Nessa ordem.</p>
           </div>
-          <div className="card p-6">
-            <p className="text-sm text-ink-3">Resultado possível 2</p>
-            <p className="mt-2 text-lg font-semibold text-ink-1">Não detectamos ganho significativo.</p>
-            <p className="mt-2 text-sm text-ink-3">Sua configuração já estava bem otimizada. Você pode desfazer as alterações com um clique.</p>
+          <Row title="1. Um diagnóstico que não chuta" img="/img/app-dashboard.png" alt="Diagnóstico do FPSX">
+            <p>Ao abrir, o FPSX lê processador, placa de vídeo, memória, discos, energia, monitor, rede, inicialização e os jogos instalados. Só leitura: nada muda nessa etapa.</p>
+            <p>Cada ponto diz o que foi encontrado e por que importa. Se o PC já está bem configurado, ele diz isso, e não inventa trabalho.</p>
+          </Row>
+          <Row flip title="2. Ajuste por jogo, no nível do seu PC" img="/img/app-jogos.png" alt="Tela de jogos do FPSX">
+            <p>O FPSX reconhece {GAMES.length} jogos e sabe o que pesa em cada um. No CS2, no Fortnite e no Minecraft ele corrige o arquivo de vídeo sozinho, com o jogo fechado e com backup.</p>
+            <p>Em PC fraco, oferece uma configuração leve que só reduz o que está pesado: nunca deixa pior o que você já tinha ajustado.</p>
+          </Row>
+          <Row title="3. Prova de resultado nas suas partidas" img="/img/app-partidas.png" alt="Tela de partidas do FPSX">
+            <p>Com o FPSX aberto (pode ser perto do relógio), cada partida é medida sozinha: FPS médio, 1% low e travadas por minuto. Só entram os minutos com o jogo na tela.</p>
+            <p>Depois de otimizar, o app compara as partidas de antes e de depois. Se a diferença estiver dentro da variação normal, ele diz que não houve ganho.</p>
+          </Row>
+        </div>
+      </section>
+
+      {/* Jogos */}
+      <section className="border-y border-line bg-surface-1/50">
+        <div className="mx-auto max-w-6xl px-4 py-14">
+          <h2 className="font-display text-2xl font-bold text-ink-1">Jogos reconhecidos</h2>
+          <p className="mt-2 text-ink-3">A lista cresce a cada atualização. A medição não mexe no jogo e funciona com anti-cheat.</p>
+          <ul className="mt-6 flex flex-wrap gap-2">
+            {GAMES.map((g) => <li key={g} className="rounded-md border border-line bg-surface-0 px-3 py-1.5 text-sm text-ink-2">{g}</li>)}
+          </ul>
+        </div>
+      </section>
+
+      {/* O que nao faz */}
+      <section id="o-que-nao-fazemos" className="scroll-mt-16">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-ink-1">O que o FPSX não faz, de propósito</h2>
+            <p className="mt-3 text-ink-3">Muito "otimizador" ganha fama com truque que não funciona ou que deixa o PC exposto. Isto fica de fora do FPSX, e o app mostra o porquê de cada um.</p>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {NOT_DOING.map((item) => (
+              <li key={item} className="flex items-start gap-3 rounded-lg border border-line px-4 py-3">
+                <CircleSlash className="mt-0.5 h-5 w-5 shrink-0 text-red-400" aria-hidden />
+                <span className="text-ink-2">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Sempre atualizado: versoes reais publicadas */}
+      {versions.length > 0 && (
+        <section className="border-y border-line bg-surface-1/50">
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-ink-1">Sempre atualizado</h2>
+              <p className="mt-3 text-ink-3">Jogos e o Windows mudam o tempo todo. O FPSX acompanha: cada versão traz jogos novos, correções e ajustes, sem custo a mais para quem assina.</p>
+            </div>
+            <ol className="space-y-4">
+              {versions.slice(0, 4).map((v) => (
+                <li key={v.version} className="rounded-lg border border-line bg-surface-0 p-4">
+                  <p className="flex items-center gap-2 font-semibold text-ink-1"><BadgeCheck className="h-4 w-4 text-accent" aria-hidden />Versão {v.version}<span className="text-sm font-normal text-ink-4">{date(v.published_at)}</span></p>
+                  {v.notes && <p className="mt-1.5 text-sm text-ink-3">{v.notes}</p>}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
+
+      {/* Planos */}
+      <section id="planos" className="scroll-mt-16">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+          <div className="max-w-2xl">
+            <h2 className="font-display text-3xl font-bold text-ink-1">Planos</h2>
+            <p className="mt-3 text-ink-3">Comece grátis para ver o diagnóstico do seu PC. Assine quando quiser que o FPSX corrija.</p>
+          </div>
+          <div className="mt-10"><PlansGrid compact /></div>
+          <div className="mt-6"><Button variant="ghost" to="/planos" IconRight={ArrowRight}>Comparar os planos em detalhe</Button></div>
+        </div>
+      </section>
+
+      {/* Perguntas */}
+      <section id="faq" className="scroll-mt-16 border-t border-line">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-ink-1">Perguntas frequentes</h2>
+            <p className="mt-3 text-ink-3">Não achou sua dúvida? Fale com a gente pelo suporte, no rodapé.</p>
+          </div>
+          <div className="divide-y divide-line rounded-lg border border-line">
+            {FAQ.map(([q, a]) => (
+              <details key={q} className="group p-5">
+                <summary className="flex cursor-pointer list-none justify-between gap-4 font-semibold text-ink-1">
+                  {q}<span className="text-ink-3 transition-transform group-open:rotate-45" aria-hidden>+</span>
+                </summary>
+                <p className="mt-3 leading-relaxed text-ink-3">{a}</p>
+              </details>
+            ))}
           </div>
         </div>
-      </Section>
+      </section>
 
-      <Section id="o-que-nao-fazemos" eyebrow="Transparência" title="O que o FPSX não faz, de propósito"
-               sub="Tweaks populares sem benefício comprovado, ou que colocam o PC em risco, ficam fora do produto. O app mostra cada um e explica o porquê.">
-        <ul className="grid gap-3 sm:grid-cols-2 max-w-4xl mx-auto">
-          {NOT_DOING.map((item) => (
-            <li key={item} className="flex items-start gap-3 card px-4 py-3">
-              <CircleSlash className="mt-0.5 w-5 h-5 shrink-0 text-red-400" aria-hidden />
-              <span className="text-ink-2">{item}</span>
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section id="planos" alt eyebrow="Planos" title="Do diagnóstico gratuito ao pacote completo"
-               sub="Cada plano contém o anterior. Desfazer alterações é liberado em todos, sempre.">
-        <PlansGrid compact />
-        <div className="mt-6 text-center"><Button variant="ghost" to="/planos">Comparar planos em detalhe</Button></div>
-      </Section>
-
-      <Section id="faq" eyebrow="Dúvidas" title="Perguntas frequentes">
-        <div className="panel max-w-3xl mx-auto divide-y divide-line">
-          {FAQ.map(([q, a]) => (
-            <details key={q} className="group p-5">
-              <summary className="cursor-pointer list-none font-semibold text-ink-1 flex justify-between gap-4">
-                {q}<span className="text-ink-3 group-open:rotate-45 transition-transform" aria-hidden>+</span>
-              </summary>
-              <p className="mt-3 text-ink-3 leading-relaxed">{a}</p>
-            </details>
-          ))}
-        </div>
-      </Section>
-
-      <section className="max-w-6xl mx-auto px-4 pb-20">
-        <div className="relative isolate overflow-hidden rounded-lg border border-green-500/30 bg-green-500/5 p-8 sm:p-12 text-center">
-          <div className="absolute inset-0 -z-10 bg-data-grid [background-size:32px_32px] opacity-60" aria-hidden />
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-1">Descubra o que realmente pode melhorar no seu PC.</h2>
-          <p className="mt-3 text-ink-3">O diagnóstico é gratuito e não altera nada.</p>
-          <div className="mt-6 flex justify-center"><Button to="/download" size="lg" Icon={ScanSearch} IconRight={ArrowRight}>ANALISAR MEU PC</Button></div>
+      <section className="border-t border-line">
+        <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-4 py-14 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-2xl font-bold text-ink-1">Veja o que está pesando no seu PC.</h2>
+            <p className="mt-2 text-ink-3">Grátis, em poucos minutos, sem mudar nada.</p>
+          </div>
+          <Button to="/download" size="lg" Icon={Download}>Baixar grátis</Button>
         </div>
       </section>
     </PageShell>

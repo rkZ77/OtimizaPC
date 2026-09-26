@@ -87,6 +87,14 @@ def latest_releases() -> list[dict]:
            FROM releases WHERE active ORDER BY component, published_at DESC""")
 
 
+def changelog(limit: int = 10) -> list[dict]:
+    """Versoes do app, da mais nova para a mais antiga, para o site mostrar
+    que o produto e' atualizado. So' o que o admin publicou: versao, data e notas."""
+    return database.fetch_all(
+        """SELECT version, notes, published_at FROM releases
+           WHERE active AND component = 'agent' ORDER BY published_at DESC LIMIT %s""", (limit,))
+
+
 def publish_release(r: dict) -> dict:
     if r.get("component") not in ("agent", "engine", "catalog", "game_profiles"):
         raise ValueError("component inválido.")

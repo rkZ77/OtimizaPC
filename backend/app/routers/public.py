@@ -17,6 +17,11 @@ def releases():
     return {"releases": catalog.latest_releases()}
 
 
+@router.get("/changelog")
+def changelog():
+    return {"versions": catalog.changelog()}
+
+
 @router.get("/license-key")
 def license_key():
     return {"algorithm": "ECDSA-P256-SHA256", "public_key_pem": signing.public_key_pem()}
