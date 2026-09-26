@@ -34,7 +34,7 @@ public sealed class GameModeOptimization : IOptimization
             Proposals =
             [
                 new Proposal(Id, "Ativar o Game Mode",
-                    [new RegistryValueChange(RegistryRoot.CurrentUser, RegistryPaths.GameBar, "AutoGameModeEnabled", RegValue.DWord(1))],
+                    [new RegistryValueChange(RegistryRoot.CurrentUser, RegistryPaths.GameBar, "AutoGameModeEnabled", RegValue.DWord(1), Label: "Ativar o Game Mode do Windows")],
                     Potential.Low, "Restaura o padrão do Windows."),
             ],
         };
@@ -70,7 +70,7 @@ public sealed class BackgroundRecordingOptimization : IOptimization
             Proposals =
             [
                 new Proposal(Id, "Desligar a gravação em segundo plano da Game Bar",
-                    [new RegistryValueChange(RegistryRoot.CurrentUser, RegistryPaths.GameDvr, "HistoricalCaptureEnabled", RegValue.DWord(0))],
+                    [new RegistryValueChange(RegistryRoot.CurrentUser, RegistryPaths.GameDvr, "HistoricalCaptureEnabled", RegValue.DWord(0), Label: "Desligar a gravação em segundo plano da Game Bar")],
                     Potential.Low, "Libera o encoder de vídeo e a escrita contínua em disco."),
             ],
         };
@@ -106,7 +106,7 @@ public sealed class HagsOptimization : IOptimization
             Proposals =
             [
                 new Proposal(Id, "Ativar agendamento de GPU acelerado por hardware",
-                    [new RegistryValueChange(RegistryRoot.LocalMachine, RegistryPaths.GraphicsDrivers, "HwSchMode", RegValue.DWord(2), NeedsReboot: true)],
+                    [new RegistryValueChange(RegistryRoot.LocalMachine, RegistryPaths.GraphicsDrivers, "HwSchMode", RegValue.DWord(2), NeedsReboot: true, Label: "Ativar o agendamento de GPU acelerado por hardware")],
                     Potential.Low, "Resultado depende do jogo e do driver."),
             ],
         };

@@ -33,7 +33,7 @@ public sealed class PagefileRestoreOptimization : IOptimization
             [
                 new Proposal(Id, "Reativar o arquivo de paginação gerenciado pelo Windows",
                     [new RegistryValueChange(RegistryRoot.LocalMachine, RegistryPaths.MemoryManagement, "PagingFiles",
-                        new RegValue(RegistryKind.MultiString, SystemManaged), NeedsReboot: true)],
+                        new RegValue(RegistryKind.MultiString, SystemManaged), NeedsReboot: true, Label: "Reativar o arquivo de paginação gerenciado pelo Windows")],
                     Potential.Moderate, "Evita fechamento do jogo por falta de memória."),
             ],
         };

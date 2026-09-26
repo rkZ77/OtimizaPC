@@ -39,7 +39,8 @@ public sealed record RegValue(RegistryKind Kind, string Data)
 }
 
 /// <summary>Escreve (ou apaga, quando Value é null) um valor de registro.</summary>
-public sealed record RegistryValueChange(RegistryRoot Root, string Path, string Name, RegValue? Value, bool NeedsReboot = false) : Change
+/// <param name="Label">Descrição para o usuário; sem ela, a tela mostra a chave técnica.</param>
+public sealed record RegistryValueChange(RegistryRoot Root, string Path, string Name, RegValue? Value, bool NeedsReboot = false, string? Label = null) : Change
 {
     public override bool RequiresAdmin => Root == RegistryRoot.LocalMachine;
 
@@ -47,9 +48,9 @@ public sealed record RegistryValueChange(RegistryRoot Root, string Path, string 
 
     public string FullPath => (Root == RegistryRoot.CurrentUser ? "HKCU\\" : "HKLM\\") + Path;
 
-    public override string Describe() => Value is null
+    public override string Describe() => Label ?? (Value is null
         ? $"Remover valor {FullPath}\\{Name}"
-        : $"Definir {FullPath}\\{Name} = {Value.Data}";
+        : $"Definir {FullPath}\\{Name} = {Value.Data}");
 }
 
 public sealed record PowerSchemeChange(string SchemeGuid, string SchemeName) : Change

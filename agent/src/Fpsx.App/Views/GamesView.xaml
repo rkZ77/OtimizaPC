@@ -1,0 +1,76 @@
+<UserControl x:Class="Fpsx.App.Views.GamesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer>
+        <StackPanel Margin="32,28">
+            <DockPanel Margin="0,0,0,18">
+                <Button DockPanel.Dock="Right" Content="Procurar jogos" Command="{Binding ScanCommand}" VerticalAlignment="Top" />
+                <StackPanel>
+                    <TextBlock Text="Jogos" Style="{StaticResource H1}" />
+                    <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                               Text="O FPSX lê a configuração de vídeo do jogo e aponta o que aumenta latência ou limita os quadros exibidos. A correção grava no arquivo do jogo, com o jogo fechado, e pode ser desfeita." />
+                </StackPanel>
+            </DockPanel>
+            <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" Margin="0,0,0,10"
+                       Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
+            <Border Style="{StaticResource Card}" Background="{StaticResource Surface2}" Visibility="{Binding PlanNote, Converter={StaticResource Visible}}">
+                <TextBlock Text="{Binding PlanNote}" />
+            </Border>
+
+            <ItemsControl ItemsSource="{Binding Games}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" Style="{StaticResource H2}" />
+                                <TextBlock Text="{Binding Status}" Style="{StaticResource MutedText}" />
+                                <TextBlock Text="{Binding InstallPath}" Style="{StaticResource MutedText}" FontSize="12"
+                                           Visibility="{Binding InstallPath, Converter={StaticResource Visible}}" />
+
+                                <ItemsControl ItemsSource="{Binding Findings}" Margin="0,12,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,6">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Border Style="{StaticResource Chip}" Background="{Binding StatusBrush}">
+                                                        <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="Bold" Foreground="#0E1116" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                                                <TextBlock Text="{Binding Recommendation}" Foreground="{StaticResource Info}" FontSize="13"
+                                                           Visibility="{Binding Recommendation, Converter={StaticResource Visible}}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0" Visibility="{Binding Installed, Converter={StaticResource Visible}}">
+                                    <Button Content="Corrigir configurações" Style="{StaticResource Primary}" Margin="0,0,8,0"
+                                            Command="{Binding DataContext.FixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Visibility="{Binding HasFix, Converter={StaticResource Visible}}" />
+                                    <Button Content="Limpar cache de shaders"
+                                            ToolTip="Só para stutter anormal ou erro gráfico depois de atualização. Não aumenta FPS."
+                                            Command="{Binding DataContext.ShaderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                </StackPanel>
+
+                                <TextBlock Text="Configuração recomendada" FontWeight="SemiBold" Margin="0,16,0,6" />
+                                <ItemsControl ItemsSource="{Binding Recommended}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Style="{StaticResource MutedText}" Margin="0,2">
+                                                <Run Text="{Binding Key, Mode=OneWay}" Foreground="{StaticResource Text}" />
+                                                <Run Text=": " />
+                                                <Run Text="{Binding Value, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -86,7 +86,7 @@ public sealed class StartupOptimization : IOptimization
             proposals.Add(new Proposal(
                 $"{Id}:{e.Name}",
                 $"Não iniciar \"{e.Name}\" com o Windows ({StartupClassifier.Label(category)})",
-                [new RegistryValueChange(location.Root, location.Path, e.Name, DisabledValue(s.CapturedAt))],
+                [new RegistryValueChange(location.Root, location.Path, e.Name, DisabledValue(s.CapturedAt), Label: $"Desligar a inicialização automática de {e.Name}")],
                 Potential.Low,
                 $"Libera memória e tempo de boot. {ram}. O programa continua instalado e abre normalmente quando você quiser."));
         }

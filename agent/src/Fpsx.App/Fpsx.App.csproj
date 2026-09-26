@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- O app que o cliente instala. Mesmo motor do CLI (Fpsx.Core + Windows +
+       Client), com interface. Nenhuma biblioteca de UI de terceiros: menos
+       dependencia para auditar num programa que mexe no sistema. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Fpsx.App</RootNamespace>
+    <AssemblyName>FPSX</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\fpsx.ico</ApplicationIcon>
+    <Product>FPSX</Product>
+    <Company>FPSX</Company>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fpsx.Core\Fpsx.Core.csproj" />
+    <ProjectReference Include="..\Fpsx.Windows\Fpsx.Windows.csproj" />
+    <ProjectReference Include="..\Fpsx.Client\Fpsx.Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\fpsx.ico" />
+    <Content Include="..\..\..\optimization-engine\catalog\*.json" LinkBase="catalog" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\game-profiles\*.json" LinkBase="game-profiles" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

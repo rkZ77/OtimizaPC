@@ -1,0 +1,67 @@
+<Window x:Class="Fpsx.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Fpsx.App.ViewModels"
+        xmlns:v="clr-namespace:Fpsx.App.Views"
+        Title="FPSX" Width="1180" Height="780" MinWidth="960" MinHeight="620"
+        Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
+        Icon="Assets/fpsx.ico">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><v:DashboardView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:OptimizationsViewModel}"><v:OptimizationsView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GamesViewModel}"><v:GamesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BenchmarkViewModel}"><v:BenchmarkView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><v:HistoryView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AccountViewModel}"><v:AccountView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><v:SettingsView /></DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="232" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Barra lateral -->
+        <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="14,20">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,26">
+                    <Image Source="Assets/fpsx.ico" Width="30" Height="30" />
+                    <TextBlock Text="FPSX" FontSize="22" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom" Margin="8,0">
+                    <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">
+                        <TextBlock Text="{Binding PlanLabel, StringFormat=Plano {0}}" FontSize="13" />
+                    </Border>
+                    <TextBlock Text="Sem privilégio de administrador" Style="{StaticResource MutedText}"
+                               Visibility="{Binding IsElevated, Converter={StaticResource Hidden}}" />
+                    <Button Content="Reabrir como administrador" Style="{StaticResource Ghost}" HorizontalAlignment="Left"
+                            Command="{Binding RelaunchCommand}" Visibility="{Binding IsElevated, Converter={StaticResource Hidden}}" />
+                </StackPanel>
+
+                <ItemsControl ItemsSource="{Binding Pages}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <RadioButton GroupName="nav" Style="{StaticResource NavItem}" Content="{Binding Title}"
+                                         Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                         CommandParameter="{Binding}" Loaded="NavItem_Loaded" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DockPanel>
+        </Border>
+
+        <!-- Conteúdo -->
+        <DockPanel Grid.Column="1">
+            <Border DockPanel.Dock="Top" Background="{StaticResource Info}" Padding="16,8"
+                    Visibility="{Binding UpdateAvailable, Converter={StaticResource Visible}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Baixar" Command="{Binding UpdateCommand}" Padding="12,4" />
+                    <TextBlock Text="{Binding UpdateAvailable}" Foreground="#06121F" VerticalAlignment="Center" />
+                </DockPanel>
+            </Border>
+            <ContentControl Content="{Binding Current}" />
+        </DockPanel>
+    </Grid>
+</Window>
