@@ -19,3 +19,10 @@ __pycache__/
 
 # Dados locais do Agent em desenvolvimento (sessoes, backups, benchmarks)
 .fpsx-data/
+
+# Saida do instalador (vai para o GitHub Releases, nao para o repo)
+installer/out/
+
+# Chaves nunca entram no repo, nem por engano
+*.pem
+.keys/

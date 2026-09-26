@@ -6,6 +6,7 @@ em migrations/ roda uma vez, em ordem, dentro de uma transacao, registrado em
 schema_migrations.
 """
 import logging
+import os
 from pathlib import Path
 
 from app import database
@@ -21,8 +22,27 @@ def pending(applied: set[str]) -> list[Path]:
     return [p for p in sorted(MIGRATIONS_DIR.glob("*.sql")) if p.name not in applied]
 
 
+def _connection():
+    """Conexao para migrar.
+
+    No Supabase o site usa o pooler em modo TRANSACAO (porta 6543), onde a
+    sessao e' compartilhada entre requests e o pg_advisory_lock (de sessao)
+    deixaria de proteger nada, sem dar erro. Mesma armadilha documentada no
+    Pickia. Por isso as migrations podem usar uma URL propria, em modo sessao
+    (porta 5432 do pooler ou conexao direta).
+    """
+    url = os.getenv("MIGRATIONS_DATABASE_URL")
+    if not url:
+        return database.get_connection()
+    import psycopg2
+    import psycopg2.extras
+
+    return psycopg2.connect(url, sslmode=os.getenv("DB_SSLMODE", "require"),
+                            cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10)
+
+
 def run(logger: logging.Logger) -> list[str]:
-    conn = database.get_connection()
+    conn = _connection()
     done = []
     try:
         cur = conn.cursor()

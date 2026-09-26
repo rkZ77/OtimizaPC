@@ -180,7 +180,8 @@ public sealed class MemoryDiagnostic : IDiagnostic
             evidence[$"{p.Name} ({p.Pid})"] = Fmt.Gb(p.WorkingSetBytes);
 
         var totalGb = m.TotalBytes / 1024.0 / 1024 / 1024;
-        var topNames = string.Join(", ", top.Take(3).Select(p => p.Name));
+        // O jogo aberto não entra na sugestão de "feche antes de jogar".
+        var topNames = string.Join(", ", top.Where(p => ProcessClassifier.Classify(p.Name) is ProcessCategory.User or ProcessCategory.Launcher).Take(3).Select(p => p.Name));
 
         if (m.UsedPercent >= 90)
         {

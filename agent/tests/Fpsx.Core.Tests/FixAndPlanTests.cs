@@ -107,6 +107,8 @@ public class FixTests
     [InlineData("cs2")]
     [InlineData("vgtray")]
     [InlineData("fpsx")]
+    [InlineData("FC27")]
+    [InlineData("FIFA23")]
     public void Politica_recusa_fechar_processo_protegido(string name)
     {
         Assert.Throws<SafetyViolationException>(() => SafetyPolicy.Validate(new ProcessCloseChange(1234, name)));

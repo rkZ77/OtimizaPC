@@ -34,7 +34,17 @@ public static class ProcessClassifier
         "UbisoftConnect", "upc", "RiotClientServices", "GalaxyClient", "RockstarService",
     ];
 
-    private static readonly string[] Games = ["cs2", "VALORANT-Win64-Shipping", "FortniteClient-Win64-Shipping", "League of Legends", "r5apex", "cod", "Overwatch", "RainbowSix", "RocketLeague", "TslGame", "GTA5", "FC25", "javaw"];
+    private static readonly string[] Games =
+    [
+        "cs2", "VALORANT-Win64-Shipping", "FortniteClient-Win64-Shipping", "League of Legends", "r5apex", "r5apex_dx12", "cod", "cod22-cod",
+        "Overwatch", "RainbowSix", "RainbowSix_Vulkan", "RocketLeague", "TslGame", "GTA5", "GTA5_Enhanced", "Minecraft.Windows", "javaw",
+    ];
+
+    // Jogos com o ano no nome do executável (FC25, FC27, FIFA23...). Lista
+    // fixa por ano quebraria a cada lançamento: o FC27 já foi visto sendo
+    // tratado como "programa em segundo plano" e oferecido para fechar.
+    private static readonly System.Text.RegularExpressions.Regex YearlyGames =
+        new(@"^(FC|FIFA|NBA2K|MADDEN|F1_?)\d{2}", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
     public static ProcessCategory Classify(string name)
     {
@@ -42,7 +52,7 @@ public static class ProcessClassifier
             return ProcessCategory.Critical;
         if (SystemNames.Contains(name))
             return ProcessCategory.System;
-        if (Games.Any(g => name.Equals(g, StringComparison.OrdinalIgnoreCase)))
+        if (Games.Any(g => name.Equals(g, StringComparison.OrdinalIgnoreCase)) || YearlyGames.IsMatch(name))
             return ProcessCategory.Game;
         if (Launchers.Any(l => name.Equals(l, StringComparison.OrdinalIgnoreCase)))
             return ProcessCategory.Launcher;

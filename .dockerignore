@@ -1,0 +1,14 @@
+.git
+.github
+**/node_modules
+**/dist
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/bin
+**/obj
+agent
+installer
+docs
+.env
+.env.*

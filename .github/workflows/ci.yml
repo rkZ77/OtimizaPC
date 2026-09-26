@@ -1,9 +1,5 @@
 # CI do FPSX, no mesmo formato do Pickia: uma perna por parte do monorepo,
 # independentes de proposito, para uma quebra nao esconder a outra.
-#
-# O Agent roda em windows-latest porque o executavel usa APIs do Windows. Os
-# testes do Core nao tocam no sistema (FakeSystem em memoria): nenhum job
-# altera registro, plano de energia ou monitor do runner.
 
 name: CI
 
@@ -19,7 +15,10 @@ concurrency:
 
 jobs:
   agent:
-    name: Agent (.NET)
+    name: Agent e app desktop (.NET)
+    # windows-latest porque o app usa WPF e APIs do Windows. Os testes do
+    # Core usam FakeSystem em memoria: nenhum job altera registro, plano de
+    # energia ou monitor do runner.
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,10 +33,58 @@ jobs:
       - name: Testes
         working-directory: agent
         run: dotnet test -c Release --no-build
-      - name: Publicar executavel
-        working-directory: agent
-        run: dotnet publish src/Fpsx.Agent -c Release -r win-x64 --self-contained false -o publish
+      - name: Publicar app
+        shell: pwsh
+        run: ./installer/publish.ps1 -Configuration Release
       - uses: actions/upload-artifact@v4
         with:
-          name: fpsx-agent-win-x64
-          path: agent/publish
+          name: fpsx-app-win-x64
+          path: installer/out/app
+
+  backend:
+    name: Backend (API)
+    runs-on: ubuntu-latest
+    # Postgres descartavel so' para os testes de integracao. O resto da suite
+    # continua proibido de tocar banco (trava do conftest).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fpsx_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - name: Instalar dependencias
+        working-directory: backend
+        run: pip install -r requirements-dev.txt
+      - name: Testes
+        working-directory: backend
+        env:
+          FPSX_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fpsx_test
+        run: python -m pytest tests -q
+
+  frontend:
+    name: Site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instalar dependencias
+        working-directory: frontend
+        run: npm ci
+      # `build` ja' roda tsc antes do vite.
+      - name: Build
+        working-directory: frontend
+        run: npm run build
