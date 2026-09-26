@@ -6,23 +6,52 @@ namespace Fpsx.Core.Games;
 
 // Perfil de jogo é dado, não código: um jogo novo entra com um JSON em
 // /game-profiles, sem tocar no núcleo. O que exige código é só um tipo novo
-// de fonte de configuração (hoje: steam_userdata com formato valve_kv).
+// de fonte (steam_userdata, local_appdata, roaming_appdata) ou de formato de
+// configuração (valve_kv, ini, colon_kv).
 
 public sealed record GameDetect
 {
     public int? SteamAppId { get; init; }
     public IReadOnlyList<string> Processes { get; init; } = [];
+
+    /// <summary>Executável relativo à pasta de instalação (usado na preferência de GPU).</summary>
+    public string? Executable { get; init; }
+
+    /// <summary>
+    /// Jogo fora da Steam (Epic, launcher próprio): considera instalado quando
+    /// o arquivo de configuração existe. Honesto o bastante para o que o
+    /// FPSX faz com ele, que é ler e ajustar essa configuração.
+    /// </summary>
+    public bool ByConfigFile { get; init; }
 }
 
 public sealed record GameConfigSource
 {
-    /// <summary>steam_userdata: caminho relativo a Steam\userdata\&lt;conta&gt;\.</summary>
+    /// <summary>
+    /// steam_userdata: relativo a Steam\userdata\&lt;conta&gt;\.
+    /// local_appdata / roaming_appdata: relativo a %LOCALAPPDATA% / %APPDATA%.
+    /// </summary>
     public string Source { get; init; } = "";
 
     public string RelativePath { get; init; } = "";
 
-    /// <summary>valve_kv: linhas "chave" "valor".</summary>
+    /// <summary>valve_kv ("chave" "valor"), ini ("Seção|chave"), colon_kv (chave:valor).</summary>
     public string Format { get; init; } = "";
+}
+
+/// <summary>
+/// Conjunto de opções gráficas aplicado de uma vez (ex.: PC fraco). Reduzir a
+/// qualidade gráfica é o método de maior efeito comprovado em PC limitado
+/// pela GPU, e também o que mais muda a imagem: por isso sempre pede confirmação.
+/// </summary>
+public sealed record GamePreset
+{
+    public string Id { get; init; } = "";
+    public string Title { get; init; } = "";
+    public string Description { get; init; } = "";
+
+    /// <summary>Chave de configuração e valor aplicado. Chaves fora da whitelist compilada são recusadas.</summary>
+    public IReadOnlyDictionary<string, string> Settings { get; init; } = new Dictionary<string, string>();
 }
 
 public sealed record SettingCheck
@@ -69,6 +98,7 @@ public sealed record GameProfile
     public RefreshRateCheck? RefreshRateCheck { get; init; }
     public GameBenchmarkSpec Benchmark { get; init; } = new();
     public IReadOnlyDictionary<string, string> RecommendedSettings { get; init; } = new Dictionary<string, string>();
+    public IReadOnlyList<GamePreset> Presets { get; init; } = [];
 
     public static IReadOnlyList<GameProfile> LoadAll(string directory)
     {

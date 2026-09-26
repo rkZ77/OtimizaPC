@@ -1,14 +1,20 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Lock, Mail, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { errorMessage } from '../services/api'
-import { PageShell } from '../components/Layout'
-import { Alert, Button, Card, Field } from '../components/ui'
+import PageShell from '../components/PageShell'
+import PublicNav from '../components/PublicNav'
+import { Alert, Button, Card, Input } from '../components/ui'
 
 // So' aceita caminho interno: um ?voltar=https://site-falso nao vira redirect aberto.
 function safeReturn(value: string | null, fallback: string): string {
   return value && value.startsWith('/') && !value.startsWith('//') ? value : fallback
 }
+
+/* Na tela de login, os botoes "Entrar/Criar conta" apontariam para onde a
+   pessoa ja' esta' (licao da PublicNav do Pickia): a saida certa e' voltar. */
+const navDoLogin = <PublicNav width="narrow" acoes={<Button to="/" variant="link" size="sm">Voltar ao site</Button>} />
 
 export function Entrar() {
   const { login } = useAuth()
@@ -34,18 +40,20 @@ export function Entrar() {
   }
 
   return (
-    <PageShell narrow>
-      <h1 className="text-2xl font-bold text-ink-1">Entrar</h1>
+    <PageShell title="Entrar" noindex width="narrow" nav={navDoLogin} mainClassName="max-w-md">
+      <h1 className="font-display text-2xl font-bold text-ink-1">Entrar</h1>
       <p className="mt-1 text-ink-3">Use a mesma conta no site e no app.</p>
-      <Card className="mt-6">
+      <Card className="mt-6 p-6">
         <form onSubmit={submit} className="space-y-4">
           {error && <Alert>{error}</Alert>}
-          <Field label="E-mail" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Field label="Senha" name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input label="E-mail" name="email" type="email" Icon={Mail} autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input label="Senha" name="password" type="password" Icon={Lock} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           <Button type="submit" block loading={busy}>Entrar</Button>
         </form>
       </Card>
-      <p className="mt-4 text-center text-sm text-ink-3">Ainda não tem conta? <Link to="/cadastro" className="text-accent-ink font-semibold">Criar conta grátis</Link></p>
+      <p className="mt-4 text-center text-sm text-ink-3">
+        Ainda não tem conta? <Link to="/cadastro" className="font-semibold text-accent-ink">Criar conta grátis</Link>
+      </p>
     </PageShell>
   )
 }
@@ -81,23 +89,25 @@ export function Cadastro() {
   }
 
   return (
-    <PageShell narrow>
-      <h1 className="text-2xl font-bold text-ink-1">Criar conta</h1>
+    <PageShell title="Criar conta" noindex width="narrow" nav={navDoLogin} mainClassName="max-w-md">
+      <h1 className="font-display text-2xl font-bold text-ink-1">Criar conta</h1>
       <p className="mt-1 text-ink-3">Conta nova ganha um período de teste do plano Pro em 1 PC, sem cartão.</p>
-      <Card className="mt-6">
+      <Card className="mt-6 p-6">
         <form onSubmit={submit} className="space-y-4">
           {error && <Alert>{error}</Alert>}
-          <Field label="Nome" name="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Field label="E-mail" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Field label="Senha" name="password" type="password" autoComplete="new-password" required hint="Pelo menos 8 caracteres." value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input label="Nome" name="name" Icon={User} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input label="E-mail" name="email" type="email" Icon={Mail} autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input label="Senha" name="password" type="password" Icon={Lock} autoComplete="new-password" required hint="Pelo menos 8 caracteres." value={password} onChange={(e) => setPassword(e.target.value)} />
           <label className="flex items-start gap-3 text-sm text-ink-3">
-            <input type="checkbox" className="mt-1 h-4 w-4" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} required />
+            <input type="checkbox" className="mt-1 h-4 w-4 accent-[rgb(var(--accent))]" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} required />
             <span>Li e aceito os <Link to="/termos" className="text-accent-ink">termos de uso</Link> e a <Link to="/privacidade" className="text-accent-ink">política de privacidade</Link>.</span>
           </label>
           <Button type="submit" block loading={busy} disabled={!accepted}>Criar conta</Button>
         </form>
       </Card>
-      <p className="mt-4 text-center text-sm text-ink-3">Já tem conta? <Link to="/entrar" className="text-accent-ink font-semibold">Entrar</Link></p>
+      <p className="mt-4 text-center text-sm text-ink-3">
+        Já tem conta? <Link to="/entrar" className="font-semibold text-accent-ink">Entrar</Link>
+      </p>
     </PageShell>
   )
 }

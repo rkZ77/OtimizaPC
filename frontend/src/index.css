@@ -1,54 +1,695 @@
+/* As fontes sao nossas, servidas de /fonts. O @import entra no mesmo arquivo
+   de CSS no build (o Vite resolve em tempo de compilacao, nao vira um segundo
+   pedido em tempo de execucao), e o preload do index.html garante que o woff2
+   comece a baixar sem esperar este CSS terminar. Ver src/fontes.css. */
+@import './fontes.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
- * Tokens em canais RGB (rgb(var(--x) / alpha) no tailwind.config).
- * Mesma paleta do app desktop (agent/src/Fpsx.App/Theme.xaml): quem sai do
- * site e abre o app reconhece o produto.
+ * Tokens neutros. Valores em canal RGB porque o Tailwind monta a cor como
+ * rgb(var(--token) / <alpha-value>) e assim bg-surface-2/60 continua valendo.
+ *
+ * Rampa de superficie medida em L* (CIELAB), degrau de 3.7 a 5.8 entre niveis:
+ * apertado o bastante pra parecer um sistema, aberto o bastante pra o olho ver
+ * a pilha. Rampa de tinta validada em WCAG sobre surface-1.
+ */
+/*
+ * O TEMA PADRAO E O ESCURO, e ele fica em `:root` puro.
+ *
+ * O claro nao entra por `prefers-color-scheme`: quem ja usa o site conhece ele
+ * escuro, e seguir o sistema viraria o produto do avesso, sozinho, pra todo
+ * mundo que usa o celular no modo claro. Ele so' vale quando a pessoa escolhe,
+ * e a escolha vira `data-theme="light"` no <html> (ver lib/theme.ts).
  */
 :root {
   color-scheme: dark;
 
-  --surface-0: 14 17 22;    /* #0e1116 fundo da pagina */
-  --surface-1: 22 27 34;    /* #161b22 card */
-  --surface-2: 30 37 47;    /* #1e252f card elevado, input */
-  --surface-3: 42 50 61;    /* #2a323d hover */
+  --surface-0:  10  10  12;   /* #0a0a0c · fundo de pagina           */
+  --surface-1:  20  20  24;   /* #141418 · card                      */
+  --surface-2:  31  31  36;   /* #1f1f24 · card elevado, input       */
+  --surface-3:  43  43  49;   /* #2b2b31 · hover, estado ativo       */
 
-  --line: 42 50 61;
-  --line-strong: 60 70 84;
+  --line:        35  35  41;  /* #232329 · borda padrao              */
+  --line-strong: 51  51  58;  /* #33333a · borda em foco/destaque    */
 
-  --ink-1: 230 237 243;     /* titulo, numero */
-  --ink-2: 196 205 214;     /* corpo */
-  --ink-3: 139 151 166;     /* apoio */
-  --ink-4: 105 117 131;     /* so' texto grande */
+  --ink-1: 250 250 250;       /* #fafafa · 17.8:1 · titulo, numero   */
+  --ink-2: 199 199 207;       /* #c7c7cf · 11.0:1 · corpo            */
+  --ink-3: 148 148 158;       /* #94949e ·  6.2:1 · apoio, rotulo    */
+  --ink-4: 117 117 127;       /* #75757f ·  4.1:1 · so' texto grande */
 
-  --accent: 61 220 151;     /* #3ddc97 */
+  /* Verde-menta do FPSX (#3ddc97), o mesmo do app desktop. O resto do sistema
+     (superficies, tinta, raio, sombra) e' o do Pickia; so' a marca muda, pra
+     um produto nao ser confundido com o outro. */
+  --accent:       61 220 151; /* #3ddc97 · a marca                   */
   --accent-hover: 91 232 171;
+  --accent-press: 40 190 125;
+  /*
+   * O verde da marca quando ele e' TEXTO, nao preenchimento.
+   *
+   * No escuro e' o mesmo #00CC00. No claro nao pode ser: verde neon sobre
+   * branco da' 2:1 de contraste e some. O botao continua #00CC00 nos dois
+   * temas (a marca nao muda); o que muda e' so' a palavra escrita em verde.
+   */
   --accent-ink: 61 220 151;
-  --warn: 242 184 75;
-  --danger: 242 84 91;
-  --info: 88 166 255;
+
+  /* Texto por cima de preenchimento semantico (amarelo do VIP, laranja da
+     alavancagem...). Preto sobre o tom claro do tema escuro; branco sobre o
+     tom fechado do tema claro. Ver `text-on-fill`. */
+  --on-fill: 0 0 0;
+
+  /* Sombra. No escuro ela e' um poco de preto; no claro, um veu. */
+  --shadow-elev:    0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-elev-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-hover:   0 12px 24px -8px rgba(0, 0, 0, 0.5);
+
+  /* Alpha das linhas da grade decorativa (bg-data-grid, bg-field-pattern).
+     Verde a 5% se ve sobre #0a0a0c e desaparece sobre #ffffff. */
+  --grid-alpha: 0.05;
+
+  /*
+   * Cores semanticas. Nao sao decorativas: verde e' GREEN, vermelho e' RED,
+   * amarelo e' VIP, laranja e' alavancagem, azul e' multipla, roxo e' faltas.
+   * O significado nao muda com o tema · o TOM muda, porque o tom que se le
+   * sobre #0a0a0c e' invisivel sobre #ffffff.
+   *
+   * Elas entram no Tailwind pelos mesmos nomes de sempre (text-green-400,
+   * bg-yellow-400/10), entao nenhuma tela precisou ser reescrita.
+   */
+  --c-green-300: 134 239 172;
+  --c-green-400:  74 222 128;
+  --c-red-300:   252 165 165;
+  --c-red-400:   248 113 113;
+  --c-red-500:   239  68  68;
+  --c-red-600:   220  38  38;
+  --c-yellow-300: 253 224  71;
+  --c-yellow-400: 250 204  21;
+  --c-yellow-500: 234 179   8;
+  --c-yellow-600: 202 138   4;
+  --c-amber-300: 252 211  77;
+  --c-amber-400: 251 191  36;
+  --c-amber-500: 245 158  11;
+  --c-orange-300: 253 186 116;
+  --c-orange-400: 251 146  60;
+  --c-orange-500: 249 115  22;
+  --c-blue-300:  147 197 253;
+  --c-blue-400:   96 165 250;
+  --c-blue-500:   59 130 246;
+  /*
+   * blue-600 e' PREENCHIMENTO, e por isso e' igual nos dois temas.
+   *
+   * Ele vivia fora da paleta, caindo no #2563eb padrao do Tailwind por
+   * acidente · o mesmo acidente que fazia o botao de Cash Out virar
+   * verde-garrafa. Como aqui o valor herdado ja' era o certo, o token so'
+   * torna explicito o que era sorte: branco sobre ele da 5,2:1, e o azul
+   * fechado se le tanto sobre #0a0a0c quanto sobre #ffffff.
+   *
+   * Nao confundir com o -500 logo acima, que e' azul COMO COR (selo e texto
+   * da multipla) e muda de tom entre os temas.
+   */
+  --c-blue-600:   37  99 235;  /* #2563eb · 5,2:1 com texto branco */
+  --c-purple-300: 216 180 254;
+  --c-purple-400: 192 132 252;
+  --c-purple-500: 168  85 247;
+  /* Indigo · a cor do AO VIVO. Ver a nota em components/ui/Badge.tsx: verde e'
+     a marca, amarelo o VIP, azul a multipla, laranja a alavancagem, roxo as
+     faltas, ciano o Boost, e vermelho fica RESERVADO pro RED -- num site de
+     aposta nenhum produto pode vestir a cor de "perdeu".
+
+     Ele vivia na escala fixa do Tailwind, e por isso era o unico produto sem
+     tom proprio no tema claro: indigo-300 (#a5b4fc) sobre branco da' 2.0:1 e
+     o selo "AO VIVO" sumia. */
+  --c-indigo-300: 165 180 252;
+  --c-indigo-400: 129 140 248;
+  --c-indigo-500:  99 102 241;
+  --c-teal-400:   45 212 191;
+  --c-teal-500:   20 184 166;
+  --c-sky-400:    56 189 248;
+  --c-rose-400:  251 113 133;
+  --c-rose-500:  244  63  94;
+  --c-cyan-400:   34 211 238;
+  --c-cyan-500:    6 182 212;
+  /* Lime · a linha do Ao Vivo no grafico de lucro. Separa do verde da marca
+     (VIP) sem sair da familia: os dois sao produtos de assinante, e o ao vivo
+     e verde no site inteiro desde 29/08. */
+  --c-lime-400:  163 230  53;
+  --c-emerald-400: 52 211 153;
+  /* Tons de ponta, usados em um lugar so' cada: tinta clarissima dentro de
+     caixa de aviso (yellow-100/200) e lavagem escura de fundo (yellow-950,
+     green-900/950). Precisam de token porque os DOIS extremos invertem no
+     tema claro · tinta clara vira tinta escura, e fundo escuro vira lavagem
+     clara. */
+  --c-yellow-100: 254 249 195;
+  --c-yellow-200: 254 240 138;
+  --c-yellow-700: 161  98   7;
+  --c-yellow-950:  66  32   6;
+  --c-green-900:  20  83  45;
+  --c-green-950:   5  46  22;
+
+  --ease:  cubic-bezier(0.2, 0, 0, 1);
+  --dur-1: 150ms;
+  --dur-2: 240ms;
 }
 
-html {
-  background: rgb(var(--surface-0));
-  color: rgb(var(--ink-2));
-  -webkit-font-smoothing: antialiased;
+/*
+ * TEMA CLARO.
+ *
+ * A rampa de superficie inverte a ordem, nao a logica: surface-0 continua
+ * sendo a PAGINA (e o fundo do .panel e do .pick-card, que se definem pela
+ * borda) e surface-1 continua sendo o card que se destaca dela. No escuro o
+ * card e' mais claro que a pagina; aqui e' mais escuro. A relacao e' a mesma.
+ *
+ * A rampa de tinta foi medida em WCAG sobre surface-0, como a do escuro:
+ * 18.3:1 / 10.4:1 / 5.9:1 / 4.2:1.
+ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-0: 255 255 255;   /* #ffffff · fundo de pagina           */
+  --surface-1: 245 245 247;   /* #f5f5f7 · card                      */
+  --surface-2: 236 236 239;   /* #ececef · card elevado, input       */
+  --surface-3: 224 224 229;   /* #e0e0e5 · hover, estado ativo       */
+
+  --line:        227 227 232; /* #e3e3e8 · borda padrao              */
+  --line-strong: 203 203 211; /* #cbcbd3 · borda em foco/destaque    */
+
+  --ink-1:  22  22  26;       /* #16161a · 18.3:1 · titulo, numero   */
+  --ink-2:  63  63  71;       /* #3f3f47 · 10.4:1 · corpo            */
+  --ink-3: 100 100 110;       /* #64646e ·  5.9:1 · apoio, rotulo    */
+  --ink-4: 124 124 134;       /* #7c7c86 ·  4.2:1 · so' texto grande */
+
+  /* O botao da marca nao muda de cor entre os temas · so' o verde escrito.
+     #009a00 e' o #00CC00 escurecido NA MESMA MATIZ (120 graus), nao um verde
+     de outra familia: continua sendo o verde do PickIA, so' que legivel sobre
+     branco. Era #067a1a, que puxava pro azul e lia como verde-garrafa. */
+  --accent-ink: 4 138 88;     /* #048a58 · a menta escurecida na mesma matiz, legivel sobre branco */
+
+  /*
+   * Preto nos DOIS temas, de proposito · nao e' descuido.
+   *
+   * A primeira versao do tema claro fechava as cores semanticas em tons -600/
+   * -700, e ai o texto por cima delas tinha que ser branco. So' que aquela
+   * paleta ficou de verde-musgo e dourado-marrom, e o dono do site reprovou:
+   * o verde tem que continuar parecendo verde. Com a paleta viva de agora,
+   * todo preenchimento semantico esta' entre 5:1 e 9:1 contra o PRETO, e
+   * abaixo de 4:1 contra o branco. O token fica porque documenta o papel e
+   * porque, se a paleta girar de novo, muda-se um lugar so'.
+   */
+  --on-fill: 0 0 0;
+
+  --shadow-elev:    0 12px 32px rgba(15, 15, 20, 0.12);
+  --shadow-elev-sm: 0 4px 12px rgba(15, 15, 20, 0.08);
+  --shadow-hover:   0 12px 24px -8px rgba(15, 15, 20, 0.16);
+
+  --grid-alpha: 0.10;
+
+  /*
+   * A cor tem que continuar sendo A COR.
+   *
+   * A primeira tentativa desceu tudo pra -600/-700 atras de 4,5:1 de contraste
+   * e o resultado foi um site de verde-musgo, dourado-marrom e vermelho-tijolo
+   * · o dono reprovou na hora, e com razao: o usuario reconhece o produto pela
+   * cor, e GREEN em verde-musgo nao e' GREEN.
+   *
+   * A regra agora e' a luminancia relativa entre 0,20 e 0,30. Nessa faixa a
+   * cor fica VIVA (mesma familia do tema escuro), da' 5:1 a 9:1 contra o preto
+   * escrito por cima dela, e 3,1:1 a 4,8:1 sobre o branco da pagina. Os 3:1
+   * sao o piso de WCAG pra texto grande, e todo texto colorido aqui e' negrito
+   * (selo, numero, rotulo) · texto corrido do site e --ink-2, que da' 10:1.
+   *
+   * O -300 fica MAIS ESCURO que o -400 aqui, invertendo o tema escuro de
+   * proposito: la' o -300 e o degrau de MAIS contraste (mais claro sobre
+   * fundo escuro), entao aqui o degrau de mais contraste e' pra baixo.
+   */
+  --c-green-300:  21 128  61;  /* #15803d */
+  --c-green-400:  15 157  64;  /* #0f9d40 · 3.5:1 */
+  --c-red-300:   185  28  28;  /* #b91c1c */
+  --c-red-400:   220  38  38;  /* #dc2626 · 4.8:1 */
+  --c-red-500:   239  68  68;  /* #ef4444 */
+  --c-red-600:   185  28  28;  /* #b91c1c */
+  --c-yellow-300: 161  98   7; /* #a16207 */
+  --c-yellow-400: 198 138   0; /* #c68a00 · 3.1:1 · ouro, nao marrom */
+  --c-yellow-500: 214 152   3; /* #d69803 */
+  --c-yellow-600: 180 118   4; /* #b47604 */
+  --c-amber-300: 180  83   9;  /* #b45309 */
+  --c-amber-400: 217 119   6;  /* #d97706 · 3.2:1 */
+  --c-amber-500: 245 158  11;  /* #f59e0b */
+  --c-orange-300: 194  65  12; /* #c2410c */
+  --c-orange-400: 234  88  12; /* #ea580c · 3.5:1 */
+  --c-orange-500: 249 115  22; /* #f97316 */
+  --c-blue-300:   29  78 216;  /* #1d4ed8 */
+  --c-blue-400:   59 130 246;  /* #3b82f6 · 3.7:1 */
+  --c-blue-500:   37  99 235;  /* #2563eb */
+  /* Igual ao tema escuro de propósito · é preenchimento, não cor escrita. */
+  --c-blue-600:   37  99 235;  /* #2563eb */
+  --c-purple-300: 126  34 206; /* #7e22ce */
+  --c-purple-400: 168  85 247; /* #a855f7 · 4.0:1 */
+  --c-purple-500: 147  51 234; /* #9333ea */
+  --c-indigo-300:  67  56 202; /* #4338ca · 8.1:1 */
+  --c-indigo-400:  79  70 229; /* #4f46e5 · 6.3:1 */
+  --c-indigo-500:  79  70 229; /* #4f46e5 */
+  --c-teal-400:   13 148 136;  /* #0d9488 · 3.7:1 */
+  --c-teal-500:   20 184 166;  /* #14b8a6 */
+  --c-sky-400:     2 132 199;  /* #0284c7 · 4.1:1 */
+  --c-rose-400:  225  29  72;  /* #e11d48 */
+  --c-rose-500:  244  63  94;  /* #f43f5e */
+  --c-cyan-400:    8 145 178;  /* #0891b2 */
+  --c-cyan-500:    6 182 212;  /* #06b6d4 */
+  --c-lime-400:  101 163  13;  /* #65a30d · lime escurecido pro fundo claro */
+  --c-emerald-400: 5 150 105;  /* #059669 */
+  /* Os dois extremos invertem: tinta clarissima de caixa de aviso vira tinta
+     escura, e lavagem de fundo escura vira lavagem clara. */
+  --c-yellow-100: 133  77  14; /* #854d0e */
+  --c-yellow-200: 113  63  18; /* #713f12 */
+  --c-yellow-700: 133  77  14; /* #854d0e */
+  --c-yellow-950: 254 249 195; /* #fef9c3 */
+  --c-green-900: 187 247 208;  /* #bbf7d0 */
+  --c-green-950: 240 253 244;  /* #f0fdf4 */
 }
 
-body {
-  min-height: 100vh;
+@layer utilities {
+  /*
+   * Todo `font-mono` do site ganha algarismo tabular.
+   *
+   * A familia `mono` deixou de ser JetBrains Mono e passou a ser Inter (ver
+   * tailwind.config.js). Inter e proporcional, entao sem esta regra o "1" fica
+   * mais estreito que o "8" e a coluna de odd, de percentual e de placar
+   * dançaria a cada digito que muda -- que era exatamente o motivo de existir
+   * uma monoespaçada ali.
+   *
+   * Fica em `utilities` pra vir depois da familia e nao brigar com ela.
+   */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+   * ENTRADA DO HERO, EM CSS E NAO EM FRAMER-MOTION.
+   *
+   * O PageSpeed de 04/09 apontou o paragrafo do hero como elemento de LCP, com
+   * 2,34 s de "atraso de renderizacao". Ele comecava em `opacity: 0` esperando
+   * o framer-motion montar, e so' entao esperava mais 300 ms de `delay` antes
+   * de comecar a aparecer · o Chrome nao conta um elemento invisivel como
+   * pintado, entao o LCP era literalmente o fim dessa espera.
+   *
+   * Em CSS a animacao ja esta correndo no primeiro quadro em que o elemento
+   * existe: nao depende de biblioteca montada, de estado do React nem de
+   * relogio de JS. O efeito visto e' o mesmo fade-up de antes, com a escada de
+   * atrasos encurtada (0 / 60 / 120 / 180 ms no lugar de 0 / 80 / 300 / 380).
+   *
+   * Fica em `utilities` pra poder ser sobreposto por classe de posicao, e o
+   * bloco global de prefers-reduced-motion la de cima ja' a desliga.
+   */
+  .entra {
+    animation: entra-suave 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .entra-1 { animation-delay: 60ms; }
+  .entra-2 { animation-delay: 120ms; }
+  .entra-3 { animation-delay: 180ms; }
+
+  @keyframes entra-suave {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-:focus-visible {
-  outline: 2px solid rgb(var(--info));
-  outline-offset: 2px;
+@layer base {
+  * { box-sizing: border-box; }
+
+  /* Rolagem por âncora (#produtos, #planos) parava com o título embaixo da
+     barra fixa de 64px do SiteHeader. O scroll-margin resolve no alvo, sem
+     JS e sem cada seção ter que lembrar de compensar. */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  /*
+   * Quem prefere menos movimento não deve levar rolagem animada · nem nenhuma
+   * outra.
+   *
+   * Antes isto só desligava o scroll suave, e o resto do site continuava
+   * animando: os `animate-pulse` dos esqueletos, os `animate-ping` de "ao vivo"
+   * e as transições do framer-motion. São animações INFINITAS, então enquanto
+   * uma estiver na tela o navegador não descansa entre quadros · no iPhone isso
+   * é bateria e é folga a menos pro scroll.
+   *
+   * 0.01ms em vez de 0s de propósito: um `animationend` que nunca dispara
+   * trava componente que espera o fim da animação pra seguir.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    @apply bg-surface-0 text-ink-2 antialiased;
+    font-family: Nunito, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+
+  /*
+   * Voz 1 · titulo.
+   *
+   * Nunito, a mesma do corpo. Uma familia so' no site inteiro: titulo se
+   * separa do texto por PESO e TAMANHO, nao por familia. Da' menos ruido e
+   * tira um arquivo de fonte do carregamento.
+   */
+  h1, h2, h3, .font-display {
+    font-family: Nunito, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    /* Nunito ja e uma fonte arredondada e de contraste baixo: o tracking
+       negativo que a Inter precisava aqui deixava as letras se tocando.
+       -0.01em segura a densidade do titulo sem colar. */
+    letter-spacing: -0.01em;
+    @apply text-ink-1;
+  }
+
+  /* Foco visivel consistente no site inteiro, em vez de outline do navegador */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/50 ring-offset-2 ring-offset-surface-0 rounded-sm;
+  }
+
+  /* Remove as setinhas nativas de incremento dos campos numéricos (todo o site) */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  ::selection {
+    @apply bg-accent/25 text-ink-1;
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
+@layer components {
+  /*
+   * Lista longa · o navegador pula o layout e a pintura do que está fora da
+   * tela.
+   *
+   * Para grades paginadas em 50 itens (histórico de alavancagem, resultados
+   * públicos), onde cada card tem escudo, bordas e sombra. Sem isto o celular
+   * calcula layout e pinta os 50 de uma vez no primeiro quadro, mesmo com 3
+   * visíveis, e é isso que aparece como travada ao entrar na aba.
+   *
+   * `contain-intrinsic-size` é obrigatório junto: é a altura que o navegador
+   * assume para o que ainda não pintou. Sem ela a barra de rolagem pularia
+   * enquanto o conteúdo real vai sendo medido. 260px é a altura típica de um
+   * card de pick; errar um pouco não quebra nada, só deixa a barra menos
+   * precisa até o item entrar em tela.
+   *
+   * Aplicar só onde a lista é comprovadamente longa. Em lista curta o ganho é
+   * zero e a altura assumida vira um custo à toa.
+   */
+  .lista-longa > * {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 260px;
+  }
+
+  /* --- superficie --- */
+  .card {
+    @apply bg-surface-1 border border-line rounded-lg;
+  }
+  .card-elevated {
+    @apply bg-surface-2 border border-line rounded-lg;
+  }
+  .stat-card {
+    @apply card p-5 flex flex-col gap-1;
+  }
+  .divider {
+    @apply border-t border-line;
+  }
+
+  /* --- ritmo de pagina ---------------------------------------------------
+     Vocabulario tirado da pagina de Resultados, que e' a referencia aprovada.
+     A Landing tinha 5 paddings verticais e 6 larguras de container; aqui vira
+     um par so'. */
+  /* Um degrau acima do que era (max-w-5xl). A Home e as páginas públicas já
+     seguem o padrão certo · faixa de fundo de ponta a ponta, texto preso na
+     medida de leitura · então aqui não se solta, só se abre um pouco. */
+  .shell {
+    @apply max-w-6xl mx-auto px-4;
+  }
+  /* Conteudo de leitura/placar, onde linha longa atrapalha em vez de ajudar */
+  .shell-narrow {
+    @apply max-w-2xl mx-auto px-4;
+  }
+  .section {
+    @apply py-16 md:py-24;
+  }
+  .section-tight {
+    @apply py-12 md:py-16;
+  }
+  /* Faixa alternada. Precisa existir porque pagina e secao agora compartilham
+     surface-0: sem isso o ritmo entre secoes some.
+     O tom fica ENTRE surface-0 e surface-1 de proposito: em surface-1 cheio,
+     todo .card dentro da faixa (que tambem e' surface-1) sumiria no fundo. */
+  .section-alt {
+    @apply bg-surface-1/60 border-y border-line;
+  }
+
+  .section-head {
+    @apply text-center mb-10;
+  }
+  /* 700 e o peso de titulo do site (o carregamento vai ate 800, reservado
+     pro numero grande). Nunito arredondada em 800 num titulo de secao ja
+     puxa pra banner promocional, que e' o que o produto nao e'. */
+  .section-title {
+    @apply font-display text-2xl md:text-3xl font-bold text-ink-1 mb-2.5 leading-tight;
+  }
+  /* Subtitulo um degrau abaixo do corpo (13px, nao 14px): Nunito tem altura
+     de x generosa e, no mesmo tamanho do texto normal, a linha de apoio
+     competia com o titulo em vez de servir de respiro. */
+  .section-sub {
+    @apply text-ink-2 text-[13px] max-w-lg mx-auto leading-relaxed;
+  }
+
+  /* --- painel delineado ---------------------------------------------------
+     A regua define bloco pela BORDA, nao pelo preenchimento: fundo do painel
+     e' o mesmo da pagina. E o que da o ar de terminal em vez de cartao. */
+  .panel {
+    @apply bg-surface-0 border border-line rounded-lg overflow-hidden;
+  }
+  .panel-head {
+    @apply px-5 py-3 border-b border-line flex items-center justify-between gap-3;
+  }
+  /* Sem caixa alta. Os rotulos aqui sao frases ("Aproveitamento por liga",
+     "Por que virou pick"), e frase em caixa alta o olho le letra por letra
+     em vez de reconhecer a palavra pelo contorno. */
+  .panel-label {
+    @apply text-xs font-bold text-ink-2;
+  }
+  .panel-meta {
+    @apply text-[10px] text-ink-4 shrink-0;
+  }
+  .panel-row {
+    @apply flex items-center gap-2 px-4 py-3;
+  }
+
+  /* Casca comum dos 6 tipos de card de pick (VIP, free, multipla, alavancagem,
+     faltas, defesas). Delineada como o resto do sistema, nao preenchida.
+     A COR da borda fica com quem chama, porque ela codifica o tipo do pick:
+     ver PICK_TYPE_BORDER em utils/resultStyle.ts, mesma convencao dos badges. */
+  /* Sem `group` aqui: e' marcador pro group-hover: dos filhos, nao tem estilo
+     proprio, e o Tailwind recusa @apply nele. Vai na classe de quem chama. */
+  /* Coluna de altura cheia: no grid, os cards de uma linha ja' esticavam pra
+     mesma altura, mas o conteudo empilhava a partir do topo e o rodape parava
+     onde o texto acabasse. Com quatro picks lado a lado, "Apostei" e
+     "Compartilhar" ficavam em quatro alturas diferentes -- o alinhamento
+     dependia do tamanho do nome do time e da analise. Com a coluna, o rodape
+     desce sozinho (ver mt-auto em PickCardParts). */
+  /* O CARD PRECISA PARECER UM CARD (2026-09-14, pedido do usuario).
+   *
+   * Ele nascia em `bg-surface-0`, o MESMO fundo da pagina: numa grade de
+   * quatro colunas, o que separava um pick do outro era so' um fio de borda a
+   * 20% de opacidade. A regra "delineado, nao preenchido" veio da pagina de
+   * Resultados, onde ela e' certa -- la' o bloco e' uma TABELA que ocupa a
+   * largura toda, e uma superficie propria so' criaria uma caixa em volta de
+   * outra. Aqui sao objetos soltos e repetidos numa grade, e objeto solto
+   * precisa de chao proprio pra existir.
+   *
+   * Entao o card sobe um degrau da pagina (surface-1, como todo `.card` do
+   * site) e ganha a sombra pequena do sistema. A borda colorida do produto
+   * continua sendo o que diz QUAL pick e'; a superficie diz que e' UM pick.
+   *
+   * `rounded-xl` e nao `lg`: com fundo proprio o canto passa a ser visivel de
+   * verdade, e 8px numa caixa de 400px de altura le' como canto mal cortado.
+   */
+  .pick-card {
+    @apply relative overflow-hidden bg-surface-1 border rounded-xl
+           flex flex-col h-full
+           transition-colors duration-1 ease-smooth;
+    box-shadow: var(--shadow-elev-sm);
+  }
+
+  /* --- as tres faixas do card de pick ------------------------------------
+   *
+   * As tres existiam desenhadas a mao, com a mesma cadeia de classes repetida
+   * em oito arquivos (VIP, free, multipla, alavancagem, boost, ao vivo, pick
+   * publico e o esqueleto de carregamento). Eram identicas por disciplina, e
+   * era so' questao de tempo ate' uma delas mudar sozinha.
+   *
+   * Agora que o card tem superficie propria, elas tambem carregam TOM, e nao
+   * so' geometria: a faixa de numeros e o rodape descem pro fundo da pagina
+   * (surface-0) e ficam encaixados no card, o cabecalho fica no nivel do card.
+   * E' o que separa "leia isto" de "aja aqui" sem precisar de mais uma borda.
+   */
+  .pick-head {
+    @apply flex items-center justify-between gap-2 px-5 pt-4 pb-3 border-b border-line/60;
+  }
+  /* A faixa dos numeros (odd, stake, lucro). `font-mono` vive aqui porque
+     numero do site e' sempre mono e a faixa nunca tem outra coisa.
+   *
+   * CAIXA, E NAO FAIXA (2026-09-14, pedido do usuario). Ela sangrava de ponta
+   * a ponta enquanto TODO o resto do card ja' era retangulo recuado: a caixa
+   * do jogo, as pernas do bilhete, o botao de analise. Era a unica peca com
+   * outra regra, e num bilhete de quatro selecoes isso ficava obvio -- o
+   * "Apostado" flutuava colado na borda e as pernas logo abaixo comecavam
+   * recuadas.
+   *
+   * Mesmo desenho da caixa do jogo (`caixaDoPick`): borda, canto e surface-2.
+   * O olho passa a ler o card como uma pilha de blocos do mesmo tipo. */
+  .pick-hero {
+    @apply font-mono flex items-stretch divide-x divide-line
+           mx-5 mt-3 rounded-md border border-line bg-surface-2/60 overflow-hidden;
+  }
+  /* Bandeja de acao: rodape do card e qualquer barra de botao encaixada. */
+  .pick-tray {
+    @apply border-t border-line/60 bg-surface-0/40;
+  }
+
+  /*
+   * A levantada do card no hover.
+   *
+   * A sombra vinha do `whileHover` do framer-motion, em preto fixo a 50% · o
+   * que e' o certo sobre #0a0a0c e um borrao sobre #ffffff. Aqui ela e' token,
+   * e o framer continua cuidando so' do deslocamento em Y.
+   *
+   * O `.cursor-pointer` na regra nao e' enfeite: e' ele que reproduz a
+   * condicao que existia antes. Nos quatro cards que usam isto, `cursor-pointer`
+   * so' entra quando ha `onClick` · card que nao clica nao levanta.
+   */
+  .hover-elev.cursor-pointer {
+    transition: box-shadow var(--dur-2) var(--ease), border-color var(--dur-1) var(--ease);
+  }
+  .hover-elev.cursor-pointer:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* Ladrilho de numero: valor em mono grande, rotulo minusculo em versalete. */
+  .stat-tile {
+    @apply bg-surface-0 border border-line rounded-lg p-4 text-center;
+  }
+  .stat-value {
+    @apply font-mono text-2xl font-black text-ink-1;
+  }
+  .stat-label {
+    @apply text-[11px] text-ink-3 mt-1;
+  }
+
+  /* Pilula de filtro */
+  .pill {
+    @apply text-[11px] px-2.5 py-1 rounded-lg border font-semibold border-line text-ink-3
+           hover:border-line-strong transition-colors duration-1 ease-smooth;
+  }
+  .pill-active {
+    @apply bg-accent/15 border-accent/40 text-green-400;
+  }
+
+  /* --- acao --- */
+  .btn-primary {
+    @apply bg-accent hover:bg-accent-hover active:bg-accent-press text-black font-bold
+           px-6 py-3 rounded-md transition-colors duration-1 ease-smooth disabled:opacity-40;
+  }
+  .btn-ghost {
+    @apply border border-line-strong hover:border-ink-4 text-ink-2 hover:text-ink-1 font-medium
+           px-4 py-2 rounded-md transition-colors duration-1 ease-smooth;
+  }
+  .btn-subtle {
+    @apply bg-surface-2 hover:bg-surface-3 text-ink-2 hover:text-ink-1 font-medium
+           px-4 py-2 rounded-md transition-colors duration-1 ease-smooth;
+  }
+
+  .input {
+    @apply w-full bg-surface-2 border border-line-strong rounded-md px-4 py-3 text-base text-ink-1
+           placeholder-ink-4 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30
+           transition-colors duration-1 ease-smooth;
+  }
+
+  /* --- navegacao por aba ---
+     Carrega so' a semantica de estado (cor + sublinhado). A geometria fica com
+     quem chama, porque aba de modal e aba de pagina tem densidade diferente e
+     nao adianta forcar as duas no mesmo padding. */
+  .tab {
+    @apply text-ink-3 hover:text-ink-1 border-b-2 border-transparent
+           transition-colors duration-1 ease-smooth whitespace-nowrap;
+  }
+  .tab-active {
+    @apply text-ink-1 border-accent;
+  }
+
+  /* Voz 2 · rotulo.
+   *
+   * Era mono em 10px com tracking-widest. Essa combinacao (monoespaçada,
+   * caixa alta, letra muito afastada, corpo minusculo) e o desenho padrao de
+   * "eyebrow" de template de landing: o leitor reconhece o carimbo antes de
+   * conseguir ler a palavra, e ler custa esforco em 10px.
+   *
+   * Agora e so a fonte do site em negrito, sem caixa alta e sem tracking:
+   * o que separa rotulo de conteudo passa a ser o peso e a cor, que e o
+   * suficiente e nao custa esforco de leitura. */
+  .label-micro {
+    @apply text-[11px] font-bold text-ink-3;
+  }
+
+  /* Voz 3 · evidencia = font-mono (hoje Inter + tnum). Nao existe helper aqui
+     de proposito:
+     A familia mono ja recebe tabular-nums pela regra em @layer utilities,
+     entao repetir tabular-nums em
+     cima seria no-op. Numero em fonte de UI (Inter) e' que precisa de
+     tabular-nums explicito, e ai o utilitario do Tailwind resolve no lugar. */
+
+  /* Tags em texto com borda, no lugar de pilulas coloridas.
+     Na fonte do site, nao em mono: o badge diz PALAVRA ('Multipla',
+     'Alavancagem'), e monoespaçada e' pra numero. Sem `uppercase` tambem --
+     quem decide a caixa e o texto, e PICK_TYPE_LABEL ja traz 'VIP' e 'Free'
+     e RESULT_STYLE ja traz 'GREEN'. */
+  .badge-vip, .badge-free, .badge-admin, .badge-trial, .badge-green, .badge-red {
+    @apply inline-flex items-center text-[10px] font-bold tracking-wide px-1.5 py-0.5 rounded-sm border;
+  }
+  .badge-vip {
+    @apply bg-yellow-400/5 text-yellow-400 border-yellow-400/30;
+  }
+  .badge-free {
+    @apply bg-transparent text-ink-3 border-line-strong;
+  }
+  .badge-admin {
+    @apply bg-purple-500/5 text-purple-400 border-purple-500/30;
+  }
+  .badge-trial {
+    @apply bg-amber-400/5 text-amber-400 border-amber-400/30;
+  }
+  .badge-green {
+    @apply bg-green-500/5 text-green-400 border-green-500/30;
+  }
+  .badge-red {
+    @apply bg-red-500/5 text-red-400 border-red-500/30;
   }
 }

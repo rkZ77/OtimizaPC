@@ -1,7 +1,36 @@
 import axios, { AxiosError } from 'axios'
+import { requisicaoIniciou, requisicaoTerminou } from './progressBus'
+import { notifyError } from './errorToast'
 
 // Cookie httpOnly de sessao vai e volta sozinho (withCredentials).
 const api = axios.create({ baseURL: '/api', withCredentials: true, timeout: 15000 })
+
+/* Mesmo desenho do Pickia: toda requisicao conta para a barra de progresso
+   do topo (so' conta, nenhuma decisao de UI acontece aqui), e falha de rede
+   ou 5xx em LEITURA vira aviso na tela em vez de sumir num .catch vazio.
+   Erro de formulario (4xx em POST/PUT) fica com a propria tela, que mostra a
+   mensagem no lugar certo. */
+api.interceptors.request.use((config) => {
+  requisicaoIniciou()
+  return config
+})
+
+api.interceptors.response.use(
+  (response) => {
+    requisicaoTerminou()
+    return response
+  },
+  (error: AxiosError) => {
+    requisicaoTerminou()
+    const leitura = (error.config?.method ?? 'get').toLowerCase() === 'get'
+    const falhaDeServidor = !error.response || error.response.status >= 500
+    const sessao = error.config?.url === '/auth/me'
+    if (leitura && falhaDeServidor && !sessao) {
+      notifyError(errorMessage(error), error.response?.headers?.['x-request-id'] as string | undefined)
+    }
+    return Promise.reject(error)
+  },
+)
 
 /**
  * Mensagem amigavel para qualquer erro de API. Erro tecnico (stack, 500,
