@@ -90,7 +90,7 @@ public sealed class GameplayViewModel : PageViewModel
     }
 
     public bool CanCompare => _host.Allows(Feature.Benchmark);
-    public string PlanNote => $"O antes e depois das partidas faz parte do plano {PlanFeatures.RequiredPlan(Feature.Benchmark)}. As partidas continuam sendo medidas e listadas.";
+    public string PlanNote => $"O antes e depois das partidas faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.Benchmark))}. As partidas continuam sendo medidas e listadas.";
 
     public PivotItem? SelectedPivot
     {

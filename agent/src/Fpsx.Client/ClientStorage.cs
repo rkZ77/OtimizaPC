@@ -10,7 +10,14 @@ public sealed record ClientSettings
     /// <summary>URL da API em produção. Atualizar aqui quando o domínio definitivo for configurado no Railway.</summary>
     public const string ProductionApiUrl = "https://otimizapc-production.up.railway.app";
 
-    public string ApiUrl { get; init; } = Environment.GetEnvironmentVariable("FPSX_API_URL") ?? ProductionApiUrl;
+    /// <summary>
+    /// Endereço da API. NÃO é salvo nas configurações: uma versão antiga
+    /// gravava o endereço provisório do projeto e todo PC que tinha esse
+    /// arquivo ficou sem conseguir entrar. Vem do app (ou de FPSX_API_URL em
+    /// desenvolvimento), e o valor salvo por versões antigas é ignorado.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string ApiUrl => Environment.GetEnvironmentVariable("FPSX_API_URL") ?? ProductionApiUrl;
 
     /// <summary>null = ainda não perguntado. Telemetria só sai com true (seção 40).</summary>
     public bool? TelemetryConsent { get; init; }

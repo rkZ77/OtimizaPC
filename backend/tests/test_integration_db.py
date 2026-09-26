@@ -278,3 +278,37 @@ def test_redefinir_senha_registro_de_email_e_avisos_de_plano(api, db, monkeypatc
     db.execute("""INSERT INTO licenses (user_id, plan_key, tier, status, max_devices, expires_at)
                   SELECT id, 'pro', 'pro', 'active', 3, now() + interval '30 days' FROM users WHERE email = 'renovou@fpsx.app'""")
     assert [c["email"] for c in emails.expiry_candidates()] == ["reset@fpsx.app"]
+
+def test_ataques_com_banco_real_idor_e_sql_injection(api, db):
+    """IDOR: a conta B tenta mexer no PC da conta A. SQL injection: texto de
+    ataque na busca do admin e no nome do cadastro vira texto, nunca SQL."""
+    a = _register(api, "vitima@fpsx.app")
+    assert _activate(api, a, H1).status_code == 200
+    pc_a = api.get("/api/account/overview", headers=a).json()["devices"][0]["id"]
+
+    b = _register(api, "atacante@fpsx.app")
+    r = api.post(f"/api/account/devices/{pc_a}/deactivate", headers=b)
+    assert r.status_code in (403, 404)
+    assert api.get("/api/account/overview", headers=a).json()["devices"][0]["id"] == pc_a  # continua ativo
+
+    # Usuario comum no admin.
+    assert api.get("/api/admin/users", headers=b).status_code == 403
+
+    # SQL injection no nome: fica gravado como texto.
+    evil = "Robert'); DROP TABLE users; --"
+    r = api.post("/api/auth/register", json={"email": "bobby@fpsx.app", "password": "senha-forte-1", "name": evil})
+    assert r.status_code == 200 and r.json()["user"]["name"] == evil
+    assert db.fetch_one("SELECT count(*) AS n FROM users")["n"] == 3
+
+    # SQL injection na busca do admin: nenhum resultado a mais, nenhuma tabela a menos.
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'vitima@fpsx.app'")
+    for q in ["' OR '1'='1", "%' OR 1=1 --", "'; DELETE FROM users; --"]:
+        found = api.get("/api/admin/users", params={"q": q}, headers=a).json()["users"]
+        assert found == [], q
+    assert db.fetch_one("SELECT count(*) AS n FROM users")["n"] == 3
+
+    # XSS no nome: a API devolve o texto como veio; quem escapa e' o React
+    # (nenhum dangerouslySetInnerHTML no site, conferido no teste do front).
+    xss = "<img src=x onerror=alert(1)>"
+    r = api.post("/api/auth/register", json={"email": "xss@fpsx.app", "password": "senha-forte-1", "name": xss})
+    assert r.json()["user"]["name"] == xss

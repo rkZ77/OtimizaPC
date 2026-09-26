@@ -132,7 +132,13 @@ public sealed class ApiClient(HttpClient http)
                 return root;
 
             // FastAPI manda {"detail": "texto"} ou {"detail": {"message": ..., ...}}.
-            string message = "Não foi possível concluir. Tente de novo em instantes.";
+            // Resposta que nao e' da API (pagina de erro do provedor, servidor
+            // errado) diz isso com o codigo: "tente de novo" escondia a causa.
+            string message = root.ValueKind == JsonValueKind.Object
+                ? "Não foi possível concluir. Tente de novo em instantes."
+                : $"O servidor do FPSX não respondeu como esperado (código {(int)response.StatusCode}). Confira sua internet e tente de novo; se continuar, fale com o suporte.";
+            if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
+                message = "Algum dado enviado está em formato inválido. Confira o e-mail e a senha.";
             JsonElement? detail = null;
             if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("detail", out var d))
             {

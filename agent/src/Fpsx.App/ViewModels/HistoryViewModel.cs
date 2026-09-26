@@ -32,7 +32,7 @@ public sealed class HistoryViewModel : PageViewModel
     public ICommand UndoAllCommand { get; }
     public ObservableCollection<SessionItem> Sessions { get; } = [];
     public bool FullHistory => _host.Allows(Feature.History);
-    public string PlanNote => FullHistory ? "" : $"Você pode desfazer qualquer alteração em qualquer plano. O histórico completo faz parte do plano {PlanFeatures.RequiredPlan(Feature.History)}.";
+    public string PlanNote => FullHistory ? "" : $"Você pode desfazer qualquer alteração em qualquer plano. O histórico completo faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.History))}.";
     public bool IsEmpty => Sessions.Count == 0;
 
     public override void OnShown() => Load();

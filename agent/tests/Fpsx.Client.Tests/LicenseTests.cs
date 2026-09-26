@@ -131,7 +131,8 @@ public class OverrideTests
         Assert.Equal(RiskLevel.Medium, hp.Risk);
         Assert.Equal("pro", hp.MinPlan);
         Assert.Null(catalog.Find("turbo-fps-magico"));
-        Assert.Equal("free", catalog.Find("game-mode-enable")!.MinPlan);
+        // Plano inventado no override não muda nada: fica o do catálogo.
+        Assert.Equal(Catalog().Find("game-mode-enable")!.MinPlan, catalog.Find("game-mode-enable")!.MinPlan);
         Assert.Equal(Catalog().Optimizations.Count, catalog.Optimizations.Count);
     }
 

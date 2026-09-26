@@ -8,8 +8,12 @@ import PublicNav from '../components/PublicNav'
 import { Alert, Button, Card, Input } from '../components/ui'
 
 // So' aceita caminho interno: um ?voltar=https://site-falso nao vira redirect aberto.
-function safeReturn(value: string | null, fallback: string): string {
-  return value && value.startsWith('/') && !value.startsWith('//') ? value : fallback
+// Barra invertida e caractere de controle ficam de fora: o navegador trata
+// "/\site-falso.com" como "//site-falso.com" (GHSA-wrjc-x8rr-h8h6 no React Router 6).
+export function safeReturn(value: string | null, fallback: string): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return fallback
+  if (/[\\\u0000-\u001f\u007f]/.test(value)) return fallback
+  return value
 }
 
 /* Na tela de login, os botoes "Entrar/Criar conta" apontariam para onde a

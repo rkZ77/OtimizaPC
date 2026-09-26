@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import settings
 from app.routers import account, admin, agent, auth, payments, public
+from app.security_headers import SecurityHeaders
 from app.services import emails
 
 logger = logging.getLogger("fpsx")
@@ -42,6 +43,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="FPSX API", version="0.1.0", lifespan=lifespan, docs_url="/api/docs" if not settings.IS_PRODUCTION else None)
 
+app.add_middleware(SecurityHeaders)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

@@ -55,7 +55,7 @@ public sealed class GamesViewModel : PageViewModel
     public ICommand ScanCommand { get; }
     public ObservableCollection<GameCard> Games { get; } = [];
     public bool CanFix => _host.Allows(Feature.GameProfiles);
-    public string PlanNote => CanFix ? "" : $"A correção automática das configurações do jogo faz parte do plano {PlanFeatures.RequiredPlan(Feature.GameProfiles)}. O diagnóstico continua disponível.";
+    public string PlanNote => CanFix ? "" : $"A correção automática das configurações do jogo faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.GameProfiles))}. O diagnóstico continua disponível.";
 
     private void Load()
     {
@@ -98,7 +98,7 @@ public sealed class GamesViewModel : PageViewModel
                 PresetId = preset is not null && CanFix ? preset.Id : null,
                 PresetTitle = preset is null ? null
                     : $"Configuração leve para PC fraco: {preset.Changes.Count} {(preset.Changes.Count == 1 ? "opção está" : "opções estão")} mais pesada{(preset.Changes.Count == 1 ? "" : "s")} do que este PC aguenta",
-                PresetDescription = preset is null ? null : CanFix ? preset.Rationale : $"{preset.Rationale} Disponível no plano {PlanFeatures.RequiredPlan(Feature.GameProfiles)}.",
+                PresetDescription = preset is null ? null : CanFix ? preset.Rationale : $"{preset.Rationale} Disponível no plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.GameProfiles))}.",
                 HasShaderCache = profile.Optimizations.Contains("shader-cache-clear-cs2"),
             });
         }

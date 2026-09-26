@@ -122,7 +122,7 @@ export default function Home() {
             <h2 className="font-display text-3xl font-bold text-ink-1">Como funciona</h2>
             <p className="mt-3 text-ink-3">Analisar, corrigir o que estiver errado e provar o resultado. Nessa ordem.</p>
           </div>
-          <Row title="1. Um diagnóstico que não chuta" img="/img/app-dashboard.png" alt="Diagnóstico do FPSX">
+          <Row title="1. Um diagnóstico que não chuta" img="/img/app-otimizacoes.png" alt="Tela de otimizações do FPSX, com o motivo de cada uma">
             <p>Ao abrir, o FPSX lê processador, placa de vídeo, memória, discos, energia, monitor, rede, inicialização e os jogos instalados. Só leitura: nada muda nessa etapa.</p>
             <p>Cada ponto diz o que foi encontrado e por que importa. Se o PC já está bem configurado, ele diz isso, e não inventa trabalho.</p>
           </Row>

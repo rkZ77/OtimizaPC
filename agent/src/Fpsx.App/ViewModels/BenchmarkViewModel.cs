@@ -70,7 +70,7 @@ public sealed class BenchmarkViewModel : PageViewModel
     public ICommand GetPresentMonCommand { get; }
 
     public bool Allowed => _host.Allows(Feature.Benchmark);
-    public string PlanNote => $"O FPSX Benchmark faz parte do plano {PlanFeatures.RequiredPlan(Feature.Benchmark)}.";
+    public string PlanNote => $"O FPSX Benchmark faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.Benchmark))}.";
     public string Method => _host.Ctx.GameProfiles.FirstOrDefault(g => g.Id == "cs2")?.Benchmark.Method ?? "";
     public ObservableCollection<RunItem> Runs { get; } = [];
     public string[] Labels { get; } = ["antes", "depois"];
