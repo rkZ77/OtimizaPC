@@ -43,4 +43,11 @@ public interface ISystemAccess
     string? ReadGameConfig(string gameId, string key);
 
     void WriteGameConfig(string gameId, string key, string value);
+
+    bool IsAppRunning(string appId);
+
+    /// <summary>Valor atual da opção, ou null quando o programa não está instalado.</summary>
+    string? ReadAppSetting(string appId, string key);
+
+    void WriteAppSetting(string appId, string key, string value);
 }

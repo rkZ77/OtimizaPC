@@ -457,6 +457,30 @@
         "user_need": "Quem tem PC de entrada e quer o Windows o mais leve possível."
       }
     },
+    {
+      "id": "discord-hardware-acceleration-off",
+      "name": "Discord sem disputar a placa de vídeo",
+      "category": "gaming",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "FPS",
+      "description": "Quando a placa de vídeo é o lado fraco do PC e o processador tem folga, desliga a aceleração de hardware do Discord para ele não usar a mesma GPU do jogo.",
+      "min_plan": "starter",
+      "requires_user_confirmation": false,
+      "measurement": true,
+      "justification": {
+        "problem": "Com aceleração de hardware, o Discord aberto durante a partida desenha a janela e decodifica vídeo na GPU, a mesma que o jogo usa.",
+        "works_on": "PCs com vídeo integrado ou placa com menos de 4 GB, processador com 6 threads ou mais e Discord com a aceleração ligada.",
+        "does_not_work_on": "Placa de vídeo com folga (não é oferecido) ou processador fraco, onde só troca um gargalo por outro (não é oferecido).",
+        "expected_benefit": "Baixo a moderado e dependente do uso: maior com chamada de vídeo ou transmissão aberta durante o jogo. Sem número prometido: a medição da partida mostra.",
+        "how_to_measure": "FPS médio e 1% low da partida com o Discord aberto, antes e depois, pela medição automática do FPSX.",
+        "risk": "Baixo. Vídeo e transmissão dentro do Discord passam a usar mais o processador.",
+        "rollback": "Restaura o valor anterior de enableHardwareAcceleration no settings.json do Discord, com cópia do arquivo original.",
+        "evidence": "Opção oficial do Discord (Configurações > Avançado > Aceleração de hardware), indicada pelo suporte do Discord para problemas de desempenho.",
+        "safer_alternative": "Desligar pela própria tela do Discord.",
+        "user_need": "Quem joga com o Discord aberto num PC de vídeo fraco."
+      }
+    },
 
     // ---- NOT_RECOMMENDED: ficam aqui para o produto explicar POR QUE não aplica.
     // Não têm handler: o Agent não sabe executá-las, por construção.
@@ -603,6 +627,7 @@
     { "id": "network-quality", "name": "Qualidade da rede", "category": "network" },
     { "id": "memory-integrity-status", "name": "Integridade de memória", "category": "security" },
     { "id": "game-settings", "name": "Configurações dos jogos", "category": "game" },
-    { "id": "hardware-tier", "name": "Nível do hardware", "category": "gpu" }
+    { "id": "hardware-tier", "name": "Nível do hardware", "category": "gpu" },
+    { "id": "discord", "name": "Discord", "category": "gaming" }
   ]
 }

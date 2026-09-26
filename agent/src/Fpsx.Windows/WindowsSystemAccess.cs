@@ -135,6 +135,19 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
         TextFiles.Write(path, updated, encoding);
     }
 
+    // ---- programas que rodam junto com o jogo ----
+
+    public bool IsAppRunning(string appId) => appId == "discord" && DiscordSettings.IsRunning();
+
+    public string? ReadAppSetting(string appId, string key) => appId == "discord" ? DiscordSettings.ReadValue(key) : null;
+
+    public void WriteAppSetting(string appId, string key, string value)
+    {
+        if (appId != "discord")
+            throw new InvalidOperationException($"Programa desconhecido: {appId}");
+        DiscordSettings.Write(key, value);
+    }
+
     private GameProfile Profile(string gameId) =>
         _games.FirstOrDefault(g => g.Id == gameId) ?? throw new InvalidOperationException($"Perfil de jogo desconhecido: {gameId}");
 

@@ -70,8 +70,25 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
             Network = net,
             Security = security,
             Games = games,
+            Discord = Discord(startup),
             SampleSeconds = options.SampleSeconds,
         };
+    }
+
+    private static DiscordInfo? Discord(IReadOnlyList<StartupEntry> startup)
+    {
+        try
+        {
+            return DiscordSettings.Read(startup);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     private static bool IsElevated()

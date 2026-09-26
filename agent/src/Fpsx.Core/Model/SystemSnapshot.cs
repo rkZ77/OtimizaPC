@@ -22,6 +22,9 @@ public sealed record SystemSnapshot
     public SecurityInfo? Security { get; init; }
     public IReadOnlyList<GameInstall> Games { get; init; } = [];
 
+    /// <summary>Discord, que quase todo jogador deixa aberto junto com o jogo. null = não instalado.</summary>
+    public DiscordInfo? Discord { get; init; }
+
     /// <summary>Tempo de amostragem de CPU/processos, para o relatório dizer "no momento do scan".</summary>
     public double SampleSeconds { get; init; }
 }
@@ -112,6 +115,17 @@ public sealed record PowerInfo
     public bool HasBattery { get; init; }
     public bool? OnAcPower { get; init; }
     public IReadOnlyList<PowerScheme> Schemes { get; init; } = [];
+}
+
+public sealed record DiscordInfo
+{
+    public bool Running { get; init; }
+
+    /// <summary>enableHardwareAcceleration do settings.json. Ausente no arquivo = ligada (padrão do Discord).</summary>
+    public bool HardwareAcceleration { get; init; } = true;
+
+    /// <summary>Vai abrir junto com o Windows (item ligado na inicialização).</summary>
+    public bool OpensWithWindows { get; init; }
 }
 
 public sealed record GamingFeatures

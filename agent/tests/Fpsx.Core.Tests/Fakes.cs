@@ -97,6 +97,20 @@ public sealed class FakeSystem : ISystemAccess
         Log.Add($"game {key}={value}");
         GameConfig[key] = value;
     }
+
+    public bool AppRunning { get; set; }
+
+    public Dictionary<string, string> AppSettings { get; } = new(StringComparer.Ordinal);
+
+    public bool IsAppRunning(string appId) => AppRunning;
+
+    public string? ReadAppSetting(string appId, string key) => AppSettings.GetValueOrDefault(key);
+
+    public void WriteAppSetting(string appId, string key, string value)
+    {
+        Log.Add($"app {key}={value}");
+        AppSettings[key] = value;
+    }
 }
 
 public static class Pc

@@ -17,6 +17,7 @@ public sealed class ChangeExecutor(ISystemAccess system)
         PowerSchemeChange => system.GetActivePowerScheme() is { } guid ? new PowerSchemeChange(guid, "plano anterior") : null,
         DisplayRefreshChange d => system.GetDisplayMode(d.DeviceName) is { } m ? new DisplayRefreshChange(d.DeviceName, m.Width, m.Height, m.RefreshHz) : null,
         GameConfigChange g => system.ReadGameConfig(g.GameId, g.Key) is { } prev ? g with { Value = prev } : null,
+        AppSettingChange a => system.ReadAppSetting(a.AppId, a.Key) is { } prevApp ? a with { Value = prevApp } : null,
         _ => null,
     };
 
@@ -65,6 +66,13 @@ public sealed class ChangeExecutor(ISystemAccess system)
                     throw new InvalidOperationException("Feche o jogo antes de aplicar esta correção.");
                 system.WriteGameConfig(g.GameId, g.Key, g.Value);
                 return "configuração do jogo gravada";
+            case AppSettingChange a:
+                // O Discord regrava o settings.json inteiro ao sair: editar com
+                // ele aberto (inclusive só na bandeja) seria desfeito em silêncio.
+                if (system.IsAppRunning(a.AppId))
+                    throw new InvalidOperationException("Feche o Discord antes, inclusive o ícone perto do relógio (botão direito > Sair do Discord).");
+                system.WriteAppSetting(a.AppId, a.Key, a.Value);
+                return "opção gravada";
             default:
                 throw new SafetyViolationException($"Tipo de alteração sem executor: {change.GetType().Name}");
         }
@@ -82,6 +90,9 @@ public sealed class ChangeExecutor(ISystemAccess system)
         GameConfigChange g => string.Equals(system.ReadGameConfig(g.GameId, g.Key), g.Value, StringComparison.Ordinal)
             ? new Verification(true, $"{g.Key} = {g.Value} confirmado no arquivo")
             : new Verification(false, $"{g.Key} não ficou com o valor {g.Value}"),
+        AppSettingChange a => string.Equals(system.ReadAppSetting(a.AppId, a.Key), a.Value, StringComparison.Ordinal)
+            ? new Verification(true, $"{a.Key} = {a.Value} confirmado no arquivo")
+            : new Verification(false, $"{a.Key} não ficou com o valor {a.Value}"),
         ProcessCloseChange p => !string.Equals(system.ProcessName(p.Pid), p.Name, StringComparison.OrdinalIgnoreCase)
             ? new Verification(true, "processo encerrado")
             : new Verification(false, "o processo continua aberto"),
@@ -96,6 +107,7 @@ public sealed class ChangeExecutor(ISystemAccess system)
         PowerSchemeChange p => string.Equals(system.GetActivePowerScheme(), p.SchemeGuid, StringComparison.OrdinalIgnoreCase),
         DisplayRefreshChange d => system.GetDisplayMode(d.DeviceName) is { } m && Math.Abs(m.RefreshHz - d.RefreshHz) <= 1,
         GameConfigChange g => string.Equals(system.ReadGameConfig(g.GameId, g.Key), g.Value, StringComparison.Ordinal),
+        AppSettingChange a => string.Equals(system.ReadAppSetting(a.AppId, a.Key), a.Value, StringComparison.Ordinal),
         _ => true,
     };
 

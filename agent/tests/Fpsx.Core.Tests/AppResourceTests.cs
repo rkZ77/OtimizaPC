@@ -9,9 +9,11 @@ namespace Fpsx.Core.Tests;
 /// </summary>
 public class AppResourceTests
 {
-    private static string AppDir()
+    // Parte da pasta deste arquivo-fonte, não da saída do build: o build pode
+    // sair fora do repositório (--artifacts-path).
+    private static string AppDir([System.Runtime.CompilerServices.CallerFilePath] string source = "")
     {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        var dir = new DirectoryInfo(Path.GetDirectoryName(source) ?? AppContext.BaseDirectory);
         while (dir is not null && !Directory.Exists(Path.Combine(dir.FullName, "src", "Fpsx.App")))
             dir = dir.Parent;
         return dir is null ? throw new DirectoryNotFoundException("src/Fpsx.App não encontrado") : Path.Combine(dir.FullName, "src", "Fpsx.App");

@@ -15,7 +15,7 @@
       "id": "gaming",
       "name": "Gaming",
       "description": "Otimizações específicas para jogos.",
-      "include": ["game-mode-enable", "power-plan-leave-power-saver", "display-refresh-rate-max", "game-capture-background-recording-disable", "game-gpu-high-performance", "windowed-game-optimizations"],
+      "include": ["game-mode-enable", "power-plan-leave-power-saver", "display-refresh-rate-max", "game-capture-background-recording-disable", "game-gpu-high-performance", "windowed-game-optimizations", "discord-hardware-acceleration-off"],
       "auto_classifications": ["PROVEN", "CONDITIONAL"],
       "max_risk": "LOW"
     },
@@ -23,7 +23,7 @@
       "id": "competitive",
       "name": "Competitive",
       "description": "Foco em FPS, 1% low, frametime e estabilidade.",
-      "include": ["game-mode-enable", "power-plan-leave-power-saver", "power-plan-high-performance", "display-refresh-rate-max", "game-capture-background-recording-disable", "game-gpu-high-performance", "windowed-game-optimizations"],
+      "include": ["game-mode-enable", "power-plan-leave-power-saver", "power-plan-high-performance", "display-refresh-rate-max", "game-capture-background-recording-disable", "game-gpu-high-performance", "windowed-game-optimizations", "discord-hardware-acceleration-off"],
       "auto_classifications": ["PROVEN", "CONDITIONAL"],
       "max_risk": "LOW"
     },
@@ -40,7 +40,7 @@
       "id": "low-end",
       "name": "Low-End",
       "description": "Reduzir processos e overhead. Programas de inicialização aparecem para escolha item a item.",
-      "include": ["game-mode-enable", "power-plan-leave-power-saver", "display-refresh-rate-max", "game-capture-background-recording-disable", "pagefile-restore-automatic", "game-gpu-high-performance", "windowed-game-optimizations", "windows-transparency-off"],
+      "include": ["game-mode-enable", "power-plan-leave-power-saver", "display-refresh-rate-max", "game-capture-background-recording-disable", "pagefile-restore-automatic", "game-gpu-high-performance", "windowed-game-optimizations", "windows-transparency-off", "discord-hardware-acceleration-off"],
       "auto_classifications": ["PROVEN", "CONDITIONAL"],
       "max_risk": "LOW"
     },

@@ -88,6 +88,16 @@ public static partial class SafetyPolicy
         },
     };
 
+    // Programas que rodam junto com o jogo: mesma ideia, whitelist compilada.
+    private static readonly Dictionary<string, Dictionary<string, Regex>> AllowedAppKeys = new()
+    {
+        // %APPDATA%\discord\settings.json
+        ["discord"] = new(StringComparer.Ordinal)
+        {
+            ["enableHardwareAcceleration"] = new("^(true|false)$"),
+        },
+    };
+
     [GeneratedRegex(@"^[A-Za-z?]:\\pagefile\.sys( \d+ \d+)?$", RegexOptions.IgnoreCase)]
     private static partial Regex PagingFileLine();
 
@@ -123,6 +133,12 @@ public static partial class SafetyPolicy
                     throw new SafetyViolationException($"Chave de configuração fora da whitelist: {g.GameId}/{g.Key}");
                 if (!format.IsMatch(g.Value))
                     throw new SafetyViolationException($"Valor fora do formato permitido para {g.Key}: {g.Value}");
+                break;
+            case AppSettingChange a:
+                if (!AllowedAppKeys.TryGetValue(a.AppId, out var appKeys) || !appKeys.TryGetValue(a.Key, out var appFormat))
+                    throw new SafetyViolationException($"Opção fora da whitelist: {a.AppId}/{a.Key}");
+                if (!appFormat.IsMatch(a.Value))
+                    throw new SafetyViolationException($"Valor fora do formato permitido para {a.Key}: {a.Value}");
                 break;
         }
     }

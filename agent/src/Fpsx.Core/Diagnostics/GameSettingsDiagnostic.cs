@@ -130,5 +130,6 @@ public static class DiagnosticRegistry
         new MemoryIntegrityDiagnostic(),
         new GameSettingsDiagnostic(),
         new HardwareTierDiagnostic(),
+        new DiscordDiagnostic(),
     ];
 }

@@ -15,6 +15,7 @@ namespace Fpsx.Core.Model;
 [JsonDerivedType(typeof(NetworkRepairChange), "network_repair")]
 [JsonDerivedType(typeof(ProcessCloseChange), "process_close")]
 [JsonDerivedType(typeof(GameConfigChange), "game_config")]
+[JsonDerivedType(typeof(AppSettingChange), "app_setting")]
 public abstract record Change
 {
     /// <summary>Texto curto em pt-BR para o usuário ver antes de confirmar.</summary>
@@ -93,6 +94,21 @@ public sealed record ProcessCloseChange(int Pid, string Name) : Change
 public sealed record GameConfigChange(string GameId, string Key, string Value) : Change
 {
     public override string Describe() => $"Definir {Key} = {Value} na configuração de {GameId}";
+}
+
+/// <summary>
+/// Altera uma opção no arquivo de configuração de um programa que roda junto
+/// com o jogo (hoje só o Discord). O programa precisa estar fechado: ele
+/// regrava o arquivo inteiro ao sair e desfaria a mudança.
+/// </summary>
+public sealed record AppSettingChange(string AppId, string Key, string Value) : Change
+{
+    public override string Describe() => (AppId, Key, Value) switch
+    {
+        ("discord", "enableHardwareAcceleration", "false") => "Desligar a aceleração de hardware do Discord",
+        ("discord", "enableHardwareAcceleration", "true") => "Ligar a aceleração de hardware do Discord",
+        _ => $"Definir {Key} = {Value} na configuração de {AppId}",
+    };
 }
 
 public sealed record NetworkRepairChange(NetworkRepairKind Repair) : Change

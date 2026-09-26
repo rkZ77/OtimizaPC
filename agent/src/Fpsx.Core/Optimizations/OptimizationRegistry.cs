@@ -27,6 +27,7 @@ public static class OptimizationRegistry
         new GameGpuPreferenceOptimization(),
         new WindowedGamesOptimization(),
         new TransparencyOptimization(),
+        new DiscordHardwareAccelerationOptimization(),
     ];
 }
 
