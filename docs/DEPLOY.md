@@ -9,8 +9,13 @@ Mesmo desenho do Pickia: uma imagem Docker (API + site) no Railway, banco no Sup
 | Produção | projeto `ample-energy`, serviço `OtimizaPC`, ambiente `production` | `main` | https://otimizapc-production.up.railway.app |
 | Staging (`noprod` do Pickia) | serviço `surprising-unity`, ambiente `dev` | `dev` | https://surprising-unity-dev.up.railway.app |
 
-Supabase: projeto `qntwjeeximnztzxwnejj`. As chaves da API REST (publishable/secret) não são usadas:
-o backend conecta direto no Postgres e precisa da **senha do banco** para montar as URLs do pooler.
+Supabase: projeto `qntwjeeximnztzxwnejj`, região **us-west-2**, Postgres 17. Pooler em
+`aws-0-us-west-2.pooler.supabase.com` (6543 transação para a API, 5432 sessão para as migrations),
+usuário `postgres.qntwjeeximnztzxwnejj`. Produção e staging usam o mesmo banco, como o `noprod` do Pickia.
+
+As chaves da API REST (publishable/secret) não são usadas pelo FPSX. A migration `0003_rls.sql` liga
+RLS em todas as tabelas: pela API REST pública do Supabase, nenhuma tabela é legível (401).
+Tabela nova precisa de `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` na própria migration.
 
 ## Desenvolvimento local
 
