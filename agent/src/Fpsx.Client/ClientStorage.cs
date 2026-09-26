@@ -8,7 +8,7 @@ namespace Fpsx.Client;
 public sealed record ClientSettings
 {
     /// <summary>URL da API em produção. Atualizar aqui quando o domínio definitivo for configurado no Railway.</summary>
-    public const string ProductionApiUrl = "https://fpsx-production.up.railway.app";
+    public const string ProductionApiUrl = "https://otimizapc-production.up.railway.app";
 
     public string ApiUrl { get; init; } = Environment.GetEnvironmentVariable("FPSX_API_URL") ?? ProductionApiUrl;
 
