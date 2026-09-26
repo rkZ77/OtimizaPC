@@ -10,7 +10,7 @@ import Planos from './pages/Planos'
 import Download from './pages/Download'
 import Conta from './pages/Conta'
 import Admin from './pages/admin/Admin'
-import { Cadastro, Entrar } from './pages/Auth'
+import { Cadastro, Entrar, RecuperarSenha } from './pages/Auth'
 import { NotFound, Privacidade, Termos } from './pages/Legal'
 
 /** Links como /#faq rolam ate' a secao; troca de pagina volta ao topo. */
@@ -48,6 +48,8 @@ export default function App() {
         <Route path="/download" element={<Download />} />
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/esqueci-senha" element={<RecuperarSenha etapa="pedir" />} />
+        <Route path="/redefinir-senha" element={<RecuperarSenha etapa="codigo" />} />
         <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/termos" element={<Termos />} />
         <Route path="/conta" element={<RequireAuth><Conta /></RequireAuth>} />

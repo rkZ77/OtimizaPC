@@ -2,8 +2,8 @@ import psycopg2
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr, Field
 
-from app import auth
-from app.services import licenses, users
+from app import auth, email_templates
+from app.services import app_settings, emails, licenses, password_reset, users
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -19,6 +19,16 @@ class LoginIn(BaseModel):
     password: str = Field(max_length=128)
 
 
+class ForgotIn(BaseModel):
+    email: EmailStr
+
+
+class ResetIn(BaseModel):
+    email: EmailStr
+    code: str = Field(pattern=r"^\d{6}$")
+    password: str = Field(min_length=8, max_length=128)
+
+
 def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "?"
 
@@ -32,7 +42,10 @@ def register(body: RegisterIn, request: Request, response: Response):
         raise HTTPException(409, "Já existe uma conta com este e-mail.")
     # Trial nasce com a conta, mas so' vale num PC que ainda nao usou trial
     # (conferido na ativacao do app).
-    licenses.create_trial(user["id"])
+    trial = licenses.create_trial(user["id"])
+    trial_days = int(app_settings.get("trial_days") or 0) if trial else 0
+    emails.send_later("welcome", user["email"], email_templates.boas_vindas(user["name"], emails.site_url(), trial_days),
+                      user_id=user["id"])
     token = auth.create_access_token(user["id"], user["role"])
     auth.set_session_cookie(response, token)
     return {"user": user, "access_token": token}
@@ -53,6 +66,34 @@ def login(body: LoginIn, request: Request, response: Response):
     return {"user": user, "access_token": token}
 
 
+@router.post("/forgot-password")
+def forgot_password(body: ForgotIn, request: Request):
+    # Dois limites: por IP freia varredura de e-mails, por e-mail impede
+    # encher a caixa de alguem com codigos.
+    auth.rate_limit("forgot-ip", _client_ip(request), limit=10, window_seconds=900)
+    auth.rate_limit("forgot-email", body.email.lower(), limit=3, window_seconds=900)
+    user = users.get_by_email(body.email)
+    # Resposta igual exista ou nao a conta: a tela nao revela quem e' cliente.
+    if user and user["active"]:
+        code = password_reset.create(user["id"])
+        emails.send_later("password_reset", user["email"],
+                          email_templates.codigo_senha(user["name"], code, emails.site_url(), user["email"], password_reset.CODE_MINUTES),
+                          user_id=user["id"])
+    return {"ok": True, "minutes": password_reset.CODE_MINUTES}
+
+
+@router.post("/reset-password")
+def reset_password(body: ResetIn, request: Request):
+    auth.rate_limit("reset", _client_ip(request), limit=15, window_seconds=900)
+    user = users.get_by_email(body.email)
+    if not user or not user["active"] or not password_reset.consume(user["id"], body.code):
+        raise HTTPException(400, "Código inválido ou expirado. Peça um novo.")
+    users.set_password(user["id"], auth.hash_password(body.password))
+    emails.send_later("password_changed", user["email"], email_templates.senha_alterada(user["name"], emails.site_url()),
+                      user_id=user["id"])
+    return {"ok": True}
+
+
 @router.post("/logout")
 def logout(response: Response):
     auth.clear_session_cookie(response)
@@ -61,4 +102,4 @@ def logout(response: Response):
 
 @router.get("/me")
 def me(user: dict = Depends(auth.current_user)):
-    return {"user": user}
+    return {"user": {k: v for k, v in user.items() if k != "password_changed_at"}}

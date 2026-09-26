@@ -24,6 +24,10 @@ public sealed class AccountViewModel : PageViewModel
         PlansCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/planos"));
         SiteCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/conta"));
         SignupCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/cadastro"));
+        // A troca de senha é no site: o código chega por e-mail e a tela de lá
+        // já sabe pedir, validar e avisar. Leva o e-mail digitado junto.
+        ForgotCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/esqueci-senha"
+            + (Email.Contains('@') ? "?email=" + Uri.EscapeDataString(Email.Trim()) : "")));
         _host.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppHost.License))
@@ -40,6 +44,7 @@ public sealed class AccountViewModel : PageViewModel
     public ICommand PlansCommand { get; }
     public ICommand SiteCommand { get; }
     public ICommand SignupCommand { get; }
+    public ICommand ForgotCommand { get; }
 
     public string Email
     {

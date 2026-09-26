@@ -30,11 +30,13 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(user_id: int, role: str) -> str:
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user_id),
         "role": role,
         "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(hours=ACCESS_HOURS),
+        "iat": int(now.timestamp()),
+        "exp": now + timedelta(hours=ACCESS_HOURS),
     }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=ALGORITHM)
 
@@ -79,7 +81,18 @@ def current_user(request: Request) -> dict:
     user = users.get_by_id(int(data["sub"]))
     if not user or not user["active"]:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Conta indisponível.")
+    if issued_before_password_change(data, user.get("password_changed_at")):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sua senha foi alterada. Entre de novo.")
     return user
+
+
+def issued_before_password_change(token_data: dict, changed_at: datetime | None) -> bool:
+    """Token emitido antes da troca de senha nao vale mais: quem trocou a senha
+    porque perdeu o PC nao pode continuar logado nele. Compara em segundos
+    inteiros, que e' a resolucao do iat: login no mesmo segundo da troca vale."""
+    if changed_at is None:
+        return False
+    return int(token_data.get("iat", 0)) < int(changed_at.timestamp())
 
 
 def require_admin(user: dict = Depends(current_user)) -> dict:

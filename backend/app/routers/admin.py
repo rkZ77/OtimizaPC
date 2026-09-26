@@ -4,8 +4,8 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app import auth, database
-from app.services import admin_insights, app_settings, catalog, licenses, payments, plans, telemetry, users
+from app import auth, database, email_templates, settings
+from app.services import admin_insights, app_settings, catalog, emails, licenses, payments, plans, telemetry, users
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(auth.require_admin)])
 
@@ -272,6 +272,25 @@ def publish_release(body: ReleaseIn, admin=Depends(auth.require_admin)):
         raise HTTPException(400, str(e))
     catalog.audit(admin["id"], "release.publish", f"{body.component}:{body.version}")
     return {"release": row}
+
+
+@router.get("/emails")
+def list_emails(page=Depends(_page)):
+    return {"configured": emails.configured(), "from": settings.RESEND_FROM,
+            "emails": emails.admin_log(*page)}
+
+
+@router.post("/emails/test")
+def test_email(admin=Depends(auth.require_admin)):
+    """Manda um e-mail para o proprio admin. Sincrono de proposito: a tela
+    mostra na hora se o Resend aceitou ou o motivo da recusa."""
+    status = emails.send("admin_test", admin["email"], email_templates.teste(emails.site_url()), user_id=admin["id"])
+    catalog.audit(admin["id"], "email.test", admin["email"], {"status": status})
+    if status == "skipped":
+        raise HTTPException(409, "Envio não configurado: defina RESEND_API_KEY e RESEND_FROM no Railway.")
+    if status == "failed":
+        raise HTTPException(502, "O Resend recusou o envio. O motivo está no registro de e-mails abaixo.")
+    return {"ok": True, "to": admin["email"]}
 
 
 @router.get("/errors")

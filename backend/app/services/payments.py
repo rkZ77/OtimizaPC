@@ -223,7 +223,27 @@ def apply_approved_payment(payment: NormalizedPayment, source: str) -> dict:
             cur.execute("UPDATE coupons SET used_count = used_count + 1 WHERE code = %s", (ref.coupon,))
 
     record_event(source, "applied", payment.provider_payment_id, f"user {ref.user_id} plano {plan['key']}")
+    _send_receipt(ref.user_id, plan, lic, payment)
     return {"applied": True, "license_id": lic["id"], "expires_at": lic["expires_at"].isoformat()}
+
+
+def _send_receipt(user_id: int, plan: dict, lic: dict, payment: NormalizedPayment) -> None:
+    """E-mail de pagamento aprovado. Sai DEPOIS do commit: e-mail de "tudo
+    certo" para uma transacao que depois voltou atras seria pior que nenhum.
+    A chave de dedupe e' o pagamento, entao webhook repetido nao manda de novo."""
+    from app import email_templates
+    from app.services import emails, users
+
+    try:
+        user = users.get_by_id(user_id)
+        if user is None:
+            return
+        email = email_templates.pagamento_aprovado(
+            user["name"], plan["name"], emails.data_br(lic["expires_at"]), emails.reais(payment.amount_cents), emails.site_url())
+        emails.send_later("payment_approved", user["email"], email, user_id=user_id,
+                          dedupe_key=f"payment:{payment.provider}:{payment.provider_payment_id}")
+    except Exception as e:  # recibo nunca desfaz a ativacao
+        logger.warning("[PAYMENTS] recibo nao enviado para user %s: %s", user_id, e)
 
 
 def handle_webhook(data_id: str, x_signature: str, x_request_id: str) -> dict:

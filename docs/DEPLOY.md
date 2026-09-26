@@ -69,6 +69,23 @@ cd backend
 2. Em **Webhooks**, cadastre `https://<seu-dominio>/api/payments/webhook`, evento **Pagamentos**,
    e copie a **assinatura secreta** para `MERCADOPAGO_WEBHOOK_SECRET`.
 
+## 5b. E-mail (Resend)
+
+O FPSX manda boas-vindas, código de redefinir senha, aviso de senha alterada, pagamento aprovado
+e avisos de plano (3 dias antes de vencer e logo depois de vencer), pelo Resend, como o Pickia.
+
+1. Crie a conta em resend.com. Em **Domains**, adicione o domínio (ex.: `fpsx.com.br`) e cadastre
+   no DNS os registros que ele mostrar (SPF, DKIM). Sem domínio verificado o Resend só entrega
+   para o próprio dono da conta.
+2. Em **API Keys**, crie uma chave com permissão de envio.
+3. No Railway, **só no serviço de produção**: `RESEND_API_KEY`, `RESEND_FROM`
+   (ex.: `FPSX <nao-responda@fpsx.com.br>`) e, se quiser receber respostas, `EMAIL_REPLY_TO`.
+   O staging usa o mesmo banco: deixe-o sem chave para ele nunca mandar e-mail a cliente real.
+4. No site, **Admin > E-mails > Enviar e-mail de teste para mim**. A aba mostra cada envio e o
+   motivo quando o Resend recusa.
+
+Sem a chave nada quebra: cadastro, senha e pagamento funcionam, e o registro marca "Não enviado".
+
 ## 6. Publicar o app
 
 ```powershell

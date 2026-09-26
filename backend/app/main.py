@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import settings
 from app.routers import account, admin, agent, auth, payments, public
+from app.services import emails
 
 logger = logging.getLogger("fpsx")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -27,7 +28,16 @@ async def lifespan(_app: FastAPI):
             # Sobe mesmo sem banco: /api/health responde e o log mostra o motivo,
             # em vez de o Railway ficar em loop de restart sem pista nenhuma.
             logger.error("[MIGRATION] falhou: %s", e)
+
+    # Avisos de vencimento so' onde o envio esta' configurado. O staging usa
+    # o banco de producao e fica sem RESEND_API_KEY: la' o agendador nem sobe.
+    scheduler = None
+    if emails.configured():
+        scheduler = emails.ExpiryScheduler()
+        scheduler.start()
     yield
+    if scheduler is not None:
+        scheduler.stop()
 
 
 app = FastAPI(title="FPSX API", version="0.1.0", lifespan=lifespan, docs_url="/api/docs" if not settings.IS_PRODUCTION else None)

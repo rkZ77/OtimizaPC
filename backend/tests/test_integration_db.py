@@ -43,9 +43,15 @@ def db(monkeypatch):
 
 
 @pytest.fixture
-def api(db):
+def api(db, monkeypatch):
+    from app import settings
     from app.main import app
+    from app.services import emails
 
+    # E-mail sincrono e sem Resend: a thread de envio nao pode sobreviver ao
+    # DROP SCHEMA do proximo teste, e nenhum teste manda e-mail de verdade.
+    monkeypatch.setattr(settings, "RESEND_API_KEY", "")
+    monkeypatch.setattr(emails, "send_later", lambda kind, to, email, **kw: emails.send(kind, to, email, **kw))
     app.dependency_overrides.clear()
     return TestClient(app)
 
@@ -210,3 +216,45 @@ def test_admin_planos_config_catalogo_e_auditoria(api, db):
 
     actions = [e["action"] for e in api.get("/api/admin/audit", headers=admin).json()["entries"]]
     assert {"plan.save", "setting.save", "catalog.override", "release.publish"} <= set(actions)
+
+
+def test_redefinir_senha_registro_de_email_e_avisos_de_plano(api, db, monkeypatch):
+    from app.services import emails, password_reset
+
+    headers = _register(api, "reset@fpsx.app")
+    monkeypatch.setattr(password_reset, "new_code", lambda: "111111")
+
+    assert api.post("/api/auth/forgot-password", json={"email": "reset@fpsx.app"}).status_code == 200
+    body = {"email": "reset@fpsx.app", "code": "222222", "password": "senha-nova-1"}
+    assert api.post("/api/auth/reset-password", json=body).status_code == 400
+    assert api.post("/api/auth/reset-password", json={**body, "code": "111111"}).status_code == 200
+    # Codigo usado nao vale de novo.
+    assert api.post("/api/auth/reset-password", json={**body, "code": "111111"}).status_code == 400
+
+    # Sessao de antes da troca cai; a senha nova entra.
+    db.execute("UPDATE users SET password_changed_at = password_changed_at + interval '2 seconds'")
+    assert api.get("/api/auth/me", headers=headers).status_code == 401
+    assert api.post("/api/auth/login", json={"email": "reset@fpsx.app", "password": "senha-forte-1"}).status_code == 401
+    assert api.post("/api/auth/login", json={"email": "reset@fpsx.app", "password": "senha-nova-1"}).status_code == 200
+
+    # Cinco chutes errados travam o codigo, mesmo que o sexto seja o certo.
+    api.post("/api/auth/forgot-password", json={"email": "reset@fpsx.app"})
+    for _ in range(password_reset.MAX_ATTEMPTS):
+        assert api.post("/api/auth/reset-password", json={**body, "code": "999999"}).status_code == 400
+    assert api.post("/api/auth/reset-password", json={**body, "code": "111111"}).status_code == 400
+
+    kinds = [r["kind"] for r in db.fetch_all("SELECT kind, status FROM email_log ORDER BY id") if r["status"] == "skipped"]
+    assert kinds == ["welcome", "password_reset", "password_changed", "password_reset"]
+
+    # Aviso de plano: trial vencendo em 2 dias sai uma vez so'.
+    db.execute("UPDATE licenses SET expires_at = now() + interval '2 days'")
+    assert emails.run_expiry_notices() == {"skipped": 1}
+    assert emails.run_expiry_notices() == {"duplicate": 1}
+
+    # Quem ja' tem outra licenca mais longa nao recebe "vai vencer".
+    other = _register(api, "renovou@fpsx.app")
+    assert other
+    db.execute("UPDATE licenses SET expires_at = now() + interval '1 day' WHERE user_id = (SELECT id FROM users WHERE email = 'renovou@fpsx.app')")
+    db.execute("""INSERT INTO licenses (user_id, plan_key, tier, status, max_devices, expires_at)
+                  SELECT id, 'pro', 'pro', 'active', 3, now() + interval '30 days' FROM users WHERE email = 'renovou@fpsx.app'""")
+    assert [c["email"] for c in emails.expiry_candidates()] == ["reset@fpsx.app"]

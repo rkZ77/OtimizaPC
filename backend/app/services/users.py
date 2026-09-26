@@ -4,7 +4,13 @@ _COLUMNS = "id, email, name, role, active, created_at"
 
 
 def get_by_id(user_id: int) -> dict | None:
-    return database.fetch_one(f"SELECT {_COLUMNS} FROM users WHERE id = %s", (user_id,))
+    # password_changed_at so' aqui: e' o que a sessao usa para recusar token
+    # emitido antes de uma troca de senha.
+    return database.fetch_one(f"SELECT {_COLUMNS}, password_changed_at FROM users WHERE id = %s", (user_id,))
+
+
+def get_by_email(email: str) -> dict | None:
+    return database.fetch_one(f"SELECT {_COLUMNS} FROM users WHERE email = %s", (normalize_email(email),))
 
 
 def get_with_password(email: str) -> dict | None:
@@ -20,6 +26,11 @@ def create(email: str, name: str, password_hash: str) -> dict:
         f"INSERT INTO users (email, name, password_hash) VALUES (%s, %s, %s) RETURNING {_COLUMNS}",
         (normalize_email(email), name.strip(), password_hash),
     )
+
+
+def set_password(user_id: int, password_hash: str) -> int:
+    return database.execute(
+        "UPDATE users SET password_hash = %s, password_changed_at = now() WHERE id = %s", (password_hash, user_id))
 
 
 def search(query: str, limit: int, offset: int) -> list[dict]:

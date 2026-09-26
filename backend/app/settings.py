@@ -30,6 +30,15 @@ CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", PUBLIC_URL).split("
 MERCADOPAGO_ACCESS_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN", "")
 MERCADOPAGO_WEBHOOK_SECRET = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "")
 
+#: E-mail pelo Resend, como no Pickia. Sem a chave nada sai, e o registro
+#: marca 'skipped': o staging aponta para o banco de producao e, sem chave
+#: la', nunca manda e-mail para cliente real por engano.
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+#: Remetente de dominio verificado no Resend, ex.: "FPSX <nao-responda@fpsx.com.br>".
+RESEND_FROM = os.getenv("RESEND_FROM", "")
+#: Endereco que recebe as respostas ("Responder" no e-mail). Opcional.
+EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "")
+
 #: Aplica as migrations no startup. Ligado no deploy, desligado quando
 #: alguem quer subir a API sem tocar no schema.
 AUTO_MIGRATE = os.getenv("AUTO_MIGRATE", "1") == "1"

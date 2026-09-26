@@ -6,6 +6,7 @@ import AdminUsuarios from './AdminUsuarios'
 import AdminFinanceiro from './AdminFinanceiro'
 import AdminFunil from './AdminFunil'
 import AdminUso from './AdminUso'
+import AdminEmails from './AdminEmails'
 import { AdminHead, Catalog, Coupons, Plans, ReadOnly, Releases, Settings } from './AdminConfig'
 
 /*
@@ -29,6 +30,7 @@ const ABAS = [
   { key: 'cupons', label: 'Cupons' },
   { key: 'config', label: 'Configurações' },
   { key: 'atualizacoes', label: 'Atualizações' },
+  { key: 'emails', label: 'E-mails' },
   { key: 'erros', label: 'Erros' },
   { key: 'auditoria', label: 'Auditoria' },
 ] as const
@@ -68,6 +70,7 @@ export default function Admin() {
       {aba === 'cupons' && <Coupons />}
       {aba === 'config' && <Settings />}
       {aba === 'atualizacoes' && <Releases />}
+      {aba === 'emails' && <AdminEmails />}
       {aba === 'erros' && (
         <>
           <AdminHead title="Erros reportados pelo app" sub="Falhas de otimização e erros do app, de quem permitiu o envio de dados." />
