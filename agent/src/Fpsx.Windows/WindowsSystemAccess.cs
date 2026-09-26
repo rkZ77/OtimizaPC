@@ -110,15 +110,20 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
 
     public string? ReadGameConfig(string gameId, string key)
     {
-        var path = GameConfigPath(gameId);
-        return path is null ? null : Fpsx.Core.Games.ValveFiles.ParseFlatKeyValues(File.ReadAllText(path)).GetValueOrDefault(key);
+        var (path, format) = GameConfig(gameId);
+        return path is null ? null : ConfigFiles.Parse(format, TextFiles.Read(path).Text).GetValueOrDefault(key);
     }
 
     public void WriteGameConfig(string gameId, string key, string value)
     {
-        var path = GameConfigPath(gameId) ?? throw new InvalidOperationException("Arquivo de configuração do jogo não encontrado.");
-        var text = File.ReadAllText(path);
-        var updated = Fpsx.Core.Games.ValveFiles.ReplaceValue(text, key, value)
+        var (path, format) = GameConfig(gameId);
+        if (path is null)
+            throw new InvalidOperationException("Arquivo de configuração do jogo não encontrado.");
+        if (new FileInfo(path).IsReadOnly)
+            throw new InvalidOperationException("O arquivo de configuração do jogo está marcado como somente leitura. Alguém travou as opções de propósito, e o FPSX não destrava.");
+
+        var (text, encoding) = TextFiles.Read(path);
+        var updated = ConfigFiles.Replace(format, text, key, value)
                       ?? throw new InvalidOperationException($"A chave {key} não existe no arquivo do jogo.");
 
         // Cópia do arquivo original, uma vez só, além do inverso por chave
@@ -127,18 +132,16 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
         if (!File.Exists(backup))
             File.Copy(path, backup);
 
-        var tmp = path + ".fpsx-tmp";
-        File.WriteAllText(tmp, updated);
-        File.Move(tmp, path, overwrite: true);
+        TextFiles.Write(path, updated, encoding);
     }
 
     private GameProfile Profile(string gameId) =>
         _games.FirstOrDefault(g => g.Id == gameId) ?? throw new InvalidOperationException($"Perfil de jogo desconhecido: {gameId}");
 
-    private string? GameConfigPath(string gameId)
+    private (string? Path, string Format) GameConfig(string gameId)
     {
         var source = Profile(gameId).Config;
-        return source is { Source: "steam_userdata", Format: "valve_kv" } ? SteamLocator.FindUserdataFile(source.RelativePath) : null;
+        return source is null ? (null, "") : (GameLocator.ConfigPath(source), source.Format);
     }
 
     public void DeleteRegistryValue(RegistryRoot root, string path, string name)

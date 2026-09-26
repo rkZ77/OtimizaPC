@@ -129,5 +129,6 @@ public static class DiagnosticRegistry
         new NetworkDiagnostic(),
         new MemoryIntegrityDiagnostic(),
         new GameSettingsDiagnostic(),
+        new HardwareTierDiagnostic(),
     ];
 }

@@ -7,7 +7,8 @@
   "version": "2026.09.1",
   "detect": {
     "steam_app_id": 730,
-    "processes": ["cs2.exe", "cs2"]
+    "processes": ["cs2.exe", "cs2"],
+    "executable": "game/bin/win64/cs2.exe"
   },
   "config": {
     "source": "steam_userdata",
@@ -23,7 +24,29 @@
     "startup-entry-disable",
     "background-process-close",
     "game-settings-fix",
+    "game-preset-low-end",
+    "game-gpu-high-performance",
     "shader-cache-clear-cs2"
+  ],
+  // Preset para PC de entrada. Fica de fora de proposito o que da'
+  // informacao de jogo: sombras dinamicas (mostram o inimigo pela sombra) e
+  // a resolucao, que o jogador escolhe pela nitidez.
+  "presets": [
+    {
+      "id": "pc-fraco",
+      "title": "configuração leve para PC fraco",
+      "description": "Sombras, texturas, partículas, oclusão de ambiente e antisserrilhado no mínimo. Resolução e sombras dinâmicas continuam como estão.",
+      "settings": {
+        "setting.msaa_samples": "0",
+        "setting.r_csgo_cmaa_enable": "0",
+        "setting.videocfg_shadow_quality": "0",
+        "setting.videocfg_texture_detail": "0",
+        "setting.videocfg_particle_detail": "0",
+        "setting.videocfg_ao_detail": "0",
+        "setting.shaderquality": "0",
+        "setting.r_texturefilteringquality": "0"
+      }
+    }
   ],
   "setting_checks": [
     {

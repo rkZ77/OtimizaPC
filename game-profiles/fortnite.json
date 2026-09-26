@@ -1,0 +1,66 @@
+{
+  // Perfil do Fortnite (Epic). Chaves no formato "Secao|Chave" do arquivo
+  // %LOCALAPPDATA%\FortniteGame\Saved\Config\WindowsClient\GameUserSettings.ini.
+  // Nao ha' pasta de instalacao conhecida (Epic): o jogo conta como instalado
+  // quando o arquivo existe, e a preferencia de GPU fica de fora.
+  "id": "fortnite",
+  "name": "Fortnite",
+  "version": "2026.09.1",
+  "detect": {
+    "processes": ["FortniteClient-Win64-Shipping.exe", "FortniteLauncher.exe"],
+    "by_config_file": true
+  },
+  "config": {
+    "source": "local_appdata",
+    "relative_path": "FortniteGame/Saved/Config/WindowsClient/GameUserSettings.ini",
+    "format": "ini"
+  },
+  "optimizations": [
+    "game-settings-fix",
+    "game-preset-low-end"
+  ],
+  "setting_checks": [
+    {
+      "key": "/Script/FortniteGame.FortGameUserSettings|bUseVSync",
+      "expect_any": ["False"],
+      "severity": "ATTENTION",
+      "fix_value": "False",
+      "title": "V-Sync ligado",
+      "why": "V-Sync segura cada quadro até a próxima atualização da tela. No Fortnite isso adiciona atraso na mira e na construção.",
+      "recommendation": "No Fortnite: Configurações > Vídeo > Sincronização vertical: Desligada. Se o tearing incomodar, use um limite de FPS igual à taxa do monitor."
+    }
+  ],
+  // Visao de distancia fica em Media, e nao no minimo: abaixo disso
+  // jogadores e construcoes distantes somem, o que atrapalha a partida.
+  "presets": [
+    {
+      "id": "pc-fraco",
+      "title": "configuração leve para PC fraco",
+      "description": "Sombras, iluminação global, reflexos, pós-processamento, efeitos, folhagem e antisserrilhado no mínimo. Distância de visão em Média, para jogadores distantes continuarem aparecendo. Resolução não muda.",
+      "settings": {
+        "ScalabilityGroups|sg.ViewDistanceQuality": "1",
+        "ScalabilityGroups|sg.AntiAliasingQuality": "0",
+        "ScalabilityGroups|sg.ShadowQuality": "0",
+        "ScalabilityGroups|sg.GlobalIlluminationQuality": "0",
+        "ScalabilityGroups|sg.ReflectionQuality": "0",
+        "ScalabilityGroups|sg.PostProcessQuality": "0",
+        "ScalabilityGroups|sg.TextureQuality": "0",
+        "ScalabilityGroups|sg.EffectsQuality": "0",
+        "ScalabilityGroups|sg.FoliageQuality": "0",
+        "ScalabilityGroups|sg.ShadingQuality": "0"
+      }
+    }
+  ],
+  "benchmark": {
+    "process": "FortniteClient-Win64-Shipping.exe",
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "method": "Use o Modo Criativo ou o Campo de Treino, sempre o mesmo percurso, com as mesmas opções de vídeo. Partida normal varia demais para comparar."
+  },
+  "recommended_settings": {
+    "bUseVSync": "Desligado: menor atraso de entrada",
+    "Modo de renderização": "DirectX 11 ou Desempenho em PC fraco (escolha no menu do jogo)",
+    "Distância de visão": "Média ou mais, para ver jogadores distantes",
+    "Limite de FPS": "Igual à taxa do monitor, ou um valor estável que o PC sustente"
+  }
+}

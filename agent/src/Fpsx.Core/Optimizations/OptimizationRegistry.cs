@@ -23,6 +23,10 @@ public static class OptimizationRegistry
         new BackgroundProcessCloseOptimization(),
         new TempCleanupOptimization(),
         new GameSettingsFixOptimization(),
+        new GamePresetOptimization(),
+        new GameGpuPreferenceOptimization(),
+        new WindowedGamesOptimization(),
+        new TransparencyOptimization(),
     ];
 }
 

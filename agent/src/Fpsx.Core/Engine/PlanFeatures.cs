@@ -64,7 +64,7 @@ public static class PlanFeatures
         Feature.Startup => "Programas de inicialização",
         Feature.Troubleshooting => "Ferramentas de troubleshooting",
         Feature.History => "Histórico de otimizações",
-        Feature.GameProfiles => "Perfis de jogo (CS2)",
+        Feature.GameProfiles => "Perfis de jogo (CS2, Fortnite, Minecraft) e configuração leve para PC fraco",
         Feature.Benchmark => "FPSX Benchmark",
         Feature.Reports => "Relatórios",
         _ => "Otimizações experimentais",

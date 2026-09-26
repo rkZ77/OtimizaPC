@@ -350,7 +350,7 @@
       "measurement": true,
       "justification": {
         "problem": "Opções de vídeo como V-Sync ligado ou taxa de atualização abaixo do monitor aumentam latência ou limitam os quadros exibidos.",
-        "works_on": "Jogos com perfil no FPSX (CS2) cujo arquivo de vídeo tem essas opções fora do recomendado.",
+        "works_on": "Jogos com perfil no FPSX (CS2, Fortnite, Minecraft Java) cujo arquivo de vídeo tem essas opções fora do recomendado.",
         "does_not_work_on": "Jogos sem perfil, ou já configurados: nada é alterado. Exige o jogo fechado.",
         "expected_benefit": "Moderado em latência; alto quando o jogo estava limitado a uma taxa abaixo do monitor.",
         "how_to_measure": "FPSX Benchmark antes e depois; leitura do arquivo confirma o valor gravado.",
@@ -359,6 +359,102 @@
         "evidence": "V-Sync adiciona espera pelo refresh (documentação NVIDIA Reflex / Valve); taxa do jogo abaixo do monitor descarta quadros.",
         "safer_alternative": "Ajustar pelo menu de vídeo do próprio jogo.",
         "user_need": "Jogadores do CS2 com o diagnóstico apontando essas opções."
+      }
+    },
+    {
+      "id": "game-preset-low-end",
+      "name": "Configuração leve do jogo para PC fraco",
+      "category": "game",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "FPS",
+      "description": "Em PC de entrada, baixa sombras, efeitos, texturas e antisserrilhado no arquivo de vídeo do jogo. Só reduz, nunca aumenta, e não mexe na resolução.",
+      "min_plan": "pro",
+      "requires_user_confirmation": true,
+      "measurement": true,
+      "justification": {
+        "problem": "Em PC com vídeo integrado, pouca RAM ou placa com pouca memória, o jogo roda com FPS baixo e travadas porque as opções gráficas passam do que o hardware entrega.",
+        "works_on": "PCs classificados como de entrada (RAM abaixo de 8 GB, só vídeo integrado, placa com menos de 3 GB ou processador de até 4 threads) com CS2, Fortnite ou Minecraft Java instalado e já aberto uma vez.",
+        "does_not_work_on": "PC intermediário ou forte: não é oferecido. Opção que já está no nível leve, ou abaixo dele, não é tocada. Exige o jogo fechado.",
+        "expected_benefit": "Alto quando a GPU é o gargalo, que é o caso típico de PC de entrada. O número só sai da medição antes e depois.",
+        "how_to_measure": "FPSX Benchmark no mesmo cenário, antes e depois: FPS médio, 1% low e frametime.",
+        "risk": "Baixo. Muda só a aparência do jogo. Chaves e valores numa whitelist compilada, com formato validado.",
+        "rollback": "Restaura o valor anterior de cada chave, e existe cópia do arquivo original ao lado dele.",
+        "evidence": "Sombras, oclusão de ambiente, antisserrilhado e efeitos são as opções de maior custo de GPU nos guias de desempenho dos próprios jogos e dos fabricantes de placa.",
+        "safer_alternative": "Baixar as mesmas opções pelo menu de vídeo do jogo.",
+        "user_need": "Quem tem PC fraco e quer jogar com FPS estável sem entender cada opção gráfica."
+      }
+    },
+    {
+      "id": "game-gpu-high-performance",
+      "name": "Rodar o jogo na placa de vídeo dedicada",
+      "category": "gpu",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "FPS",
+      "description": "Em PC com vídeo integrado e placa dedicada, grava a preferência do Windows para o jogo usar a dedicada.",
+      "min_plan": "starter",
+      "requires_user_confirmation": false,
+      "measurement": true,
+      "justification": {
+        "problem": "Com duas GPUs, o Windows pode rodar o jogo na integrada, que é várias vezes mais fraca. É comum em notebook.",
+        "works_on": "PCs com vídeo integrado e placa dedicada ativos ao mesmo tempo, para jogos com perfil e pasta de instalação conhecida (CS2).",
+        "does_not_work_on": "PC com uma GPU só, ou jogo já configurado para a dedicada. Jogos sem pasta conhecida (Fortnite pela Epic) ficam de fora.",
+        "expected_benefit": "Alto quando o jogo estava rodando na integrada; nenhum quando já usava a dedicada.",
+        "how_to_measure": "FPSX Benchmark antes e depois; o Gerenciador de Tarefas mostra em qual GPU o jogo roda.",
+        "risk": "Baixo. É a mesma opção de Configurações > Sistema > Tela > Gráficos. Em notebook, gasta mais bateria.",
+        "rollback": "Restaura o valor anterior da preferência, ou apaga quando não havia nenhuma.",
+        "evidence": "Documentação da Microsoft sobre preferência de GPU por aplicativo (UserGpuPreferences).",
+        "safer_alternative": "Escolher a GPU pela tela Gráficos do Windows ou pelo painel da NVIDIA ou AMD.",
+        "user_need": "Donos de notebook gamer com o jogo rodando no vídeo integrado sem saber."
+      }
+    },
+    {
+      "id": "windowed-game-optimizations",
+      "name": "Otimização para jogos em janela",
+      "category": "gaming",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "LATENCY",
+      "description": "Liga a opção do Windows 11 que faz jogos DirectX 10 e 11 em janela ou tela cheia sem borda usarem o modo de apresentação moderno.",
+      "min_plan": "free",
+      "requires_user_confirmation": false,
+      "measurement": true,
+      "justification": {
+        "problem": "Jogos DirectX 10 e 11 em janela ou sem borda usam um modo de apresentação antigo, com uma etapa a mais entre o quadro pronto e a tela.",
+        "works_on": "Windows 11 22H2 e 23H2 com a opção desligada, e 24H2 quando alguém a desligou.",
+        "does_not_work_on": "Windows 10, Windows 11 24H2 no padrão (já vem ligada), jogos em tela cheia exclusiva e jogos DirectX 12 ou Vulkan.",
+        "expected_benefit": "Moderado em latência nos jogos em janela ou sem borda; nenhum nos demais.",
+        "how_to_measure": "Latência com NVIDIA FrameView ou PresentMon (modo de apresentação muda para flip), antes e depois.",
+        "risk": "Baixo. É a opção de Configurações > Sistema > Tela > Gráficos. Um jogo raro pode se comportar diferente; aí basta desfazer.",
+        "rollback": "Restaura o valor anterior de DirectXUserGlobalSettings, ou apaga quando não existia.",
+        "evidence": "Anúncio e documentação da Microsoft sobre 'Optimizations for windowed games' no Windows 11.",
+        "safer_alternative": "Ligar pela própria tela de Gráficos do Windows.",
+        "user_need": "Quem joga em tela cheia sem borda para alternar janelas rápido."
+      }
+    },
+    {
+      "id": "windows-transparency-off",
+      "name": "Desligar os efeitos de transparência",
+      "category": "gaming",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "SYSTEM",
+      "description": "Em PC de entrada, desliga o efeito de vidro da barra de tarefas e dos menus, que usa a mesma GPU do jogo.",
+      "min_plan": "free",
+      "requires_user_confirmation": false,
+      "measurement": false,
+      "justification": {
+        "problem": "Com vídeo integrado fraco, o efeito de transparência do Windows disputa GPU com o que está na tela, inclusive jogo em janela.",
+        "works_on": "PCs classificados como de entrada, com a transparência ligada.",
+        "does_not_work_on": "PC intermediário ou forte: não é oferecido. Em tela cheia exclusiva o efeito nem é desenhado.",
+        "expected_benefit": "Baixo: Windows mais fluido e um pouco de folga para jogo em janela. Não é item de ganho de FPS em tela cheia.",
+        "how_to_measure": "Uso da GPU no Gerenciador de Tarefas com o Windows parado, antes e depois.",
+        "risk": "Baixo. Só aparência: barra de tarefas e menus ficam opacos.",
+        "rollback": "Restaura o valor anterior de EnableTransparency, ou apaga quando não existia.",
+        "evidence": "O Windows desliga transparência sozinho na economia de bateria justamente pelo custo de GPU.",
+        "safer_alternative": "Configurações > Personalização > Cores > Efeitos de transparência.",
+        "user_need": "Quem tem PC de entrada e quer o Windows o mais leve possível."
       }
     },
 
@@ -506,6 +602,7 @@
     { "id": "gpu-driver", "name": "GPU e driver", "category": "gpu" },
     { "id": "network-quality", "name": "Qualidade da rede", "category": "network" },
     { "id": "memory-integrity-status", "name": "Integridade de memória", "category": "security" },
-    { "id": "game-settings", "name": "Configurações dos jogos", "category": "game" }
+    { "id": "game-settings", "name": "Configurações dos jogos", "category": "game" },
+    { "id": "hardware-tier", "name": "Nível do hardware", "category": "gpu" }
   ]
 }

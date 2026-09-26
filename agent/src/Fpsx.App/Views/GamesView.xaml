@@ -8,13 +8,19 @@
                 <StackPanel>
                     <TextBlock Text="Jogos" Style="{StaticResource H1}" />
                     <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
-                               Text="O FPSX lê a configuração de vídeo do jogo e aponta o que aumenta latência ou limita os quadros exibidos. A correção grava no arquivo do jogo, com o jogo fechado, e pode ser desfeita." />
+                               Text="O FPSX lê a configuração de vídeo do jogo e aponta o que aumenta latência ou limita os quadros exibidos. Em PC fraco, oferece uma configuração leve que só reduz o que está pesado. Tudo grava no arquivo do jogo, com o jogo fechado, e pode ser desfeito." />
                 </StackPanel>
             </DockPanel>
             <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" Margin="0,0,0,10"
                        Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
             <Border Style="{StaticResource Card}" Background="{StaticResource Surface2}" Visibility="{Binding PlanNote, Converter={StaticResource Visible}}">
                 <TextBlock Text="{Binding PlanNote}" />
+            </Border>
+            <Border Style="{StaticResource Card}" Visibility="{Binding TierTitle, Converter={StaticResource Visible}}">
+                <StackPanel>
+                    <TextBlock Text="{Binding TierTitle}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding TierDetail}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                </StackPanel>
             </Border>
 
             <ItemsControl ItemsSource="{Binding Games}">
@@ -45,14 +51,29 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0" Visibility="{Binding Installed, Converter={StaticResource Visible}}">
-                                    <Button Content="Corrigir configurações" Style="{StaticResource Primary}" Margin="0,0,8,0"
+                                <Border Style="{StaticResource Card}" Background="{StaticResource Surface2}" Margin="0,12,0,0"
+                                        Visibility="{Binding PresetTitle, Converter={StaticResource Visible}}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding PresetTitle}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding PresetDescription}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+                                        <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,0"
+                                                   Text="Muda a aparência do jogo. Feche o jogo antes. Tudo volta com Desfazer." />
+                                    </StackPanel>
+                                </Border>
+
+                                <WrapPanel Margin="0,12,0,0" Visibility="{Binding Installed, Converter={StaticResource Visible}}">
+                                    <Button Content="Corrigir configurações" Style="{StaticResource Primary}" Margin="0,0,8,8"
                                             Command="{Binding DataContext.FixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             Visibility="{Binding HasFix, Converter={StaticResource Visible}}" />
-                                    <Button Content="Limpar cache de shaders"
+                                    <Button Content="Aplicar configuração leve" Style="{StaticResource Primary}" Margin="0,0,8,8"
+                                            CommandParameter="{Binding PresetId}"
+                                            Command="{Binding DataContext.PresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Visibility="{Binding PresetId, Converter={StaticResource Visible}}" />
+                                    <Button Content="Limpar cache de shaders" Margin="0,0,8,8"
                                             ToolTip="Só para stutter anormal ou erro gráfico depois de atualização. Não aumenta FPS."
-                                            Command="{Binding DataContext.ShaderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                                </StackPanel>
+                                            Command="{Binding DataContext.ShaderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            Visibility="{Binding HasShaderCache, Converter={StaticResource Visible}}" />
+                                </WrapPanel>
 
                                 <TextBlock Text="Configuração recomendada" FontWeight="SemiBold" Margin="0,16,0,6" />
                                 <ItemsControl ItemsSource="{Binding Recommended}">

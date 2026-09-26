@@ -34,12 +34,12 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         var memory = Memory();
         var disks = Disks();
         var power = Power();
-        var gaming = Gaming();
         var displays = Displays();
         var security = Security();
 
         progress?.Invoke("Procurando jogos");
         var games = Games();
+        var gaming = Gaming(games);
 
         var network = Task.Run(() => options.Network ? NetworkProbe() : null);
 
@@ -389,12 +389,34 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         }
     }
 
-    private static GamingFeatures Gaming() => new()
+    private static string? ReadString(RegistryKey hive, string path, string name)
+    {
+        try
+        {
+            using var key = hive.OpenSubKey(path);
+            return key?.GetValue(name) as string;
+        }
+        catch (System.Security.SecurityException)
+        {
+            return null;
+        }
+    }
+
+    private static GamingFeatures Gaming(IReadOnlyList<GameInstall> games) => new()
     {
         AutoGameModeValue = ReadDword(Registry.CurrentUser, RegistryPaths.GameBar, "AutoGameModeEnabled"),
         AppCaptureValue = ReadDword(Registry.CurrentUser, RegistryPaths.GameDvr, "AppCaptureEnabled"),
         BackgroundRecordingValue = ReadDword(Registry.CurrentUser, RegistryPaths.GameDvr, "HistoricalCaptureEnabled"),
         HagsValue = ReadDword(Registry.LocalMachine, RegistryPaths.GraphicsDrivers, "HwSchMode"),
+        TransparencyValue = ReadDword(Registry.CurrentUser, RegistryPaths.Personalize, "EnableTransparency"),
+        DirectXGlobalSettings = ReadString(Registry.CurrentUser, RegistryPaths.DirectXUserGpuPreferences, DirectXSettings.GlobalValueName),
+        // Só os executáveis dos jogos com perfil: a lista inteira diria que
+        // programas a pessoa usa, e isso não é da conta do FPSX.
+        GpuPreferences = games
+            .Where(g => g.ExecutablePath is not null)
+            .Select(g => (Exe: g.ExecutablePath!, Value: ReadString(Registry.CurrentUser, RegistryPaths.DirectXUserGpuPreferences, g.ExecutablePath!)))
+            .Where(x => x.Value is not null)
+            .ToDictionary(x => x.Exe, x => x.Value!, StringComparer.OrdinalIgnoreCase),
     };
 
     private static IReadOnlyList<DisplayInfo> Displays() =>
@@ -597,19 +619,39 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         var result = new List<GameInstall>();
         foreach (var profile in gameProfiles)
         {
-            if (profile.Detect.SteamAppId is not { } appId || SteamLocator.FindApp(appId) is not { } app)
+            var install = profile.Detect.SteamAppId is { } appId ? SteamLocator.FindApp(appId)?.InstallPath : null;
+            var configPath = profile.Config is { } source ? GameLocator.ConfigPath(source) : null;
+            // Jogo fora da Steam conta como instalado quando o arquivo de
+            // configuração existe (ver GameDetect.ByConfigFile).
+            if (install is null && !(profile.Detect.ByConfigFile && configPath is not null))
                 continue;
 
-            string? configPath = null;
             IReadOnlyDictionary<string, string> config = new Dictionary<string, string>();
-            if (profile.Config is { Source: "steam_userdata", Format: "valve_kv" } source)
+            if (configPath is not null)
             {
-                configPath = SteamLocator.FindUserdataFile(source.RelativePath);
-                if (configPath is not null)
-                    config = ValveFiles.ParseFlatKeyValues(File.ReadAllText(configPath));
+                try
+                {
+                    config = ConfigFiles.Parse(profile.Config!.Format, TextFiles.Read(configPath).Text);
+                }
+                catch (IOException)
+                {
+                    // Arquivo preso pelo jogo aberto: aparece como "configuração não lida".
+                }
             }
 
-            result.Add(new GameInstall { GameId = profile.Id, Name = profile.Name, InstallPath = app.InstallPath, ConfigPath = configPath, Config = config });
+            string? exe = null;
+            if (install is not null && profile.Detect.Executable is { } rel)
+            {
+                exe = Path.Combine(install, rel.Replace('/', '\\'));
+                if (!File.Exists(exe))
+                    exe = null;
+            }
+
+            result.Add(new GameInstall
+            {
+                GameId = profile.Id, Name = profile.Name, InstallPath = install ?? "",
+                ConfigPath = configPath, Config = config, ExecutablePath = exe,
+            });
         }
 
         return result;

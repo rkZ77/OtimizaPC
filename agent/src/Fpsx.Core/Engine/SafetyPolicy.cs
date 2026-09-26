@@ -26,7 +26,17 @@ public static partial class SafetyPolicy
         new(RegistryRoot.LocalMachine, RegistryPaths.StartupApproved + @"\Run32", false, null),
         new(RegistryRoot.LocalMachine, RegistryPaths.StartupApproved + @"\StartupFolder", false, null),
         new(RegistryRoot.LocalMachine, RegistryPaths.MemoryManagement, false, ["PagingFiles"]),
+        new(RegistryRoot.CurrentUser, RegistryPaths.Personalize, false, ["EnableTransparency"]),
+        // Nome do valor é o executável do jogo ou o global: conferido em ValidateDirectX.
+        new(RegistryRoot.CurrentUser, RegistryPaths.DirectXUserGpuPreferences, false, null),
     ];
+
+    [GeneratedRegex(@"^[A-Za-z]:\\[^<>""|?*\r\n]+\.exe$", RegexOptions.IgnoreCase)]
+    private static partial Regex ExePath();
+
+    // Só as chaves que o FPSX sabe o que significam, cada uma com valor numérico.
+    [GeneratedRegex(@"^((SwapEffectUpgradeEnable|GpuPreference|VRROptimizeEnable|AutoHDREnable)=[0-9]{1,6};)*$")]
+    private static partial Regex DirectXValue();
 
     // Chaves de configuração de jogo que o FPSX pode escrever, com o formato
     // aceito. Fica compilado aqui, e não no perfil JSON: um perfil adulterado
@@ -39,6 +49,42 @@ public static partial class SafetyPolicy
             ["setting.r_low_latency"] = new("^[012]$"),
             ["setting.refreshrate_numerator"] = new("^[1-9][0-9]{1,6}$"),
             ["setting.refreshrate_denominator"] = new("^[1-9][0-9]{0,3}$"),
+            // Preset leve.
+            ["setting.msaa_samples"] = new("^(0|2|4|8)$"),
+            ["setting.r_csgo_cmaa_enable"] = new("^[01]$"),
+            ["setting.videocfg_shadow_quality"] = new("^[0-3]$"),
+            ["setting.videocfg_texture_detail"] = new("^[0-3]$"),
+            ["setting.videocfg_particle_detail"] = new("^[0-3]$"),
+            ["setting.videocfg_ao_detail"] = new("^[0-3]$"),
+            ["setting.shaderquality"] = new("^[01]$"),
+            ["setting.r_texturefilteringquality"] = new("^[0-5]$"),
+        },
+        // GameUserSettings.ini: chave "Seção|Chave".
+        ["fortnite"] = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["/Script/FortniteGame.FortGameUserSettings|bUseVSync"] = new("^(True|False)$"),
+            ["ScalabilityGroups|sg.ViewDistanceQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.AntiAliasingQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.ShadowQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.GlobalIlluminationQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.ReflectionQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.PostProcessQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.TextureQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.EffectsQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.FoliageQuality"] = new("^[0-4]$"),
+            ["ScalabilityGroups|sg.ShadingQuality"] = new("^[0-4]$"),
+        },
+        // options.txt do Minecraft Java.
+        ["minecraft"] = new(StringComparer.Ordinal)
+        {
+            ["enableVsync"] = new("^(true|false)$"),
+            ["renderDistance"] = new("^([2-9]|[12][0-9]|3[0-2])$"),
+            ["simulationDistance"] = new("^([5-9]|[12][0-9]|3[0-2])$"),
+            ["graphicsMode"] = new("^[0-2]$"),
+            ["entityShadows"] = new("^(true|false)$"),
+            ["renderClouds"] = new("^\"(true|false|fast)\"$"),
+            ["particles"] = new("^[0-2]$"),
+            ["biomeBlendRadius"] = new("^[0-7]$"),
         },
     };
 
@@ -99,6 +145,21 @@ public static partial class SafetyPolicy
             throw new SafetyViolationException("O FPSX não fecha a si mesmo.");
     }
 
+    /// <summary>
+    /// UserGpuPreferences: nome é o global do DirectX ou o caminho de um .exe;
+    /// valor é texto com pares conhecidos. Apagar (Value null) só existe para
+    /// o rollback devolver o estado "sem preferência".
+    /// </summary>
+    private static void ValidateDirectX(RegistryValueChange r)
+    {
+        if (!string.Equals(r.Name, DirectXSettings.GlobalValueName, StringComparison.OrdinalIgnoreCase) && !ExePath().IsMatch(r.Name))
+            throw new SafetyViolationException($"Valor fora da whitelist: {r.FullPath}\\{r.Name}");
+        if (r.Value is null)
+            return;
+        if (r.Value.Kind != RegistryKind.String || r.Value.Data.Length > 256 || !DirectXValue().IsMatch(r.Value.Data))
+            throw new SafetyViolationException($"Preferência de GPU fora do formato permitido: {r.Value.Data}");
+    }
+
     private static void ValidateRegistry(RegistryValueChange r)
     {
         var path = r.Path.Trim('\\');
@@ -124,6 +185,12 @@ public static partial class SafetyPolicy
             if (r.Value.Kind != RegistryKind.Binary)
                 throw new SafetyViolationException("StartupApproved só aceita valor binário.");
         }
+
+        if (string.Equals(path, RegistryPaths.DirectXUserGpuPreferences, StringComparison.OrdinalIgnoreCase))
+            ValidateDirectX(r);
+        if (string.Equals(path, RegistryPaths.Personalize, StringComparison.OrdinalIgnoreCase)
+            && r.Value is not null && (r.Value.Kind != RegistryKind.DWord || r.Value.Data is not ("0" or "1")))
+            throw new SafetyViolationException("EnableTransparency só aceita 0 ou 1.");
 
         // PagingFiles só aceita linhas no formato do próprio Windows
         // ("?:\pagefile.sys" = gerenciado pelo sistema). Vazio é permitido só

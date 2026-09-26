@@ -127,6 +127,15 @@ public sealed record GamingFeatures
 
     /// <summary>HwSchMode: 2 = HAGS ligado, 1 = desligado, null = sem suporte ou chave ausente.</summary>
     public int? HagsValue { get; init; }
+
+    /// <summary>EnableTransparency do tema. null = valor ausente (padrão do Windows: ligado).</summary>
+    public int? TransparencyValue { get; init; }
+
+    /// <summary>Texto cru de DirectXUserGlobalSettings ("SwapEffectUpgradeEnable=1;..."). null = ausente.</summary>
+    public string? DirectXGlobalSettings { get; init; }
+
+    /// <summary>Preferência de GPU por executável de jogo detectado (caminho -> texto cru). Só dos jogos com perfil.</summary>
+    public IReadOnlyDictionary<string, string> GpuPreferences { get; init; } = new Dictionary<string, string>();
 }
 
 public sealed record StartupEntry
@@ -203,4 +212,7 @@ public sealed record GameInstall
     public string InstallPath { get; init; } = "";
     public string? ConfigPath { get; init; }
     public IReadOnlyDictionary<string, string> Config { get; init; } = new Dictionary<string, string>();
+
+    /// <summary>Executável do jogo quando a pasta de instalação é conhecida (usado na preferência de GPU).</summary>
+    public string? ExecutablePath { get; init; }
 }

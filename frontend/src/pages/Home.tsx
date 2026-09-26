@@ -81,7 +81,8 @@ const CHECKS = [
   { icon: Power, title: 'Energia', text: 'Plano de energia avaliado por tipo de PC.' },
   { icon: Network, title: 'Rede', text: 'Latência, jitter e perda, local e provedor.' },
   { icon: ListChecks, title: 'Inicialização', text: 'O que abre com o Windows e o que pesa.' },
-  { icon: Activity, title: 'Counter-Strike 2', text: 'V-Sync, Reflex e taxa do jogo.' },
+  { icon: Activity, title: 'Jogos', text: 'CS2, Fortnite e Minecraft: V-Sync, Reflex e taxa do jogo.' },
+  { icon: Gauge, title: 'PC fraco', text: 'Nível do hardware e configuração leve só quando precisa.' },
 ]
 
 function CheckChip({ icon: Icon, title, text }: (typeof CHECKS)[number]) {

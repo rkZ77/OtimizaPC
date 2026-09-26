@@ -191,6 +191,11 @@ def test_admin_planos_config_catalogo_e_auditoria(api, db):
 
     assert api.get("/api/admin/metrics", headers=admin).json()["users"] == 1
 
+    # 0005 atualiza o texto do seed para os jogos novos.
+    pro = next(p for p in api.get("/api/public/plans").json()["plans"] if p["key"] == "pro")
+    assert "Perfis de jogo (CS2, Fortnite, Minecraft) e configuração leve para PC fraco" in pro["features"]
+    assert pro["features"][0] == "Tudo do Starter"
+
     plan = {"key": "pro", "name": "Pro", "tier": "pro", "description": "x", "price_cents": 2990, "days": 30,
             "max_devices": 3, "features": ["a"], "active": True, "sort": 2}
     assert api.put("/api/admin/plans", json=plan, headers=admin).status_code == 200

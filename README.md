@@ -12,7 +12,7 @@ e mede antes e depois. Quando nada precisa mudar, ele diz isso.
 | `backend/` | API: contas, licenças assinadas, PCs, pagamentos, admin | FastAPI + psycopg2 (SQL na mão) |
 | `frontend/` | Site: divulgação, área do cliente e admin | Vite + React 18 + Tailwind |
 | `optimization-engine/catalog/` | Catálogo de otimizações e perfis de uso | JSON (com a justificativa de cada item) |
-| `game-profiles/` | Perfis de jogo (CS2 primeiro) | JSON |
+| `game-profiles/` | Perfis de jogo (CS2, Fortnite, Minecraft Java) | JSON |
 | `installer/` | Publicação do app e instalador | PowerShell + Inno Setup |
 | `docs/` | Arquitetura, deploy e decisões | Markdown |
 

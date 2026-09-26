@@ -1,0 +1,62 @@
+{
+  // Perfil do Minecraft Java Edition. Arquivo %APPDATA%\.minecraft\options.txt,
+  // formato chave:valor. O jogo regrava o arquivo ao fechar e ao mudar opcao.
+  "id": "minecraft",
+  "name": "Minecraft Java",
+  "version": "2026.09.1",
+  "detect": {
+    // javaw.exe tambem e' de outros programas Java: com ele aberto o FPSX so'
+    // pede para fechar antes de aplicar, o que e' o lado seguro do erro.
+    "processes": ["javaw.exe", "Minecraft.exe", "MinecraftLauncher.exe"],
+    "by_config_file": true
+  },
+  "config": {
+    "source": "roaming_appdata",
+    "relative_path": ".minecraft/options.txt",
+    "format": "colon_kv"
+  },
+  "optimizations": [
+    "game-settings-fix",
+    "game-preset-low-end"
+  ],
+  "setting_checks": [
+    {
+      "key": "enableVsync",
+      "expect_any": ["false"],
+      "severity": "INFO",
+      "fix_value": "false",
+      "title": "V-Sync ligado",
+      "why": "Com V-Sync o Minecraft espera a tela a cada quadro. Em PC fraco, qualquer queda abaixo da taxa do monitor vira travada visível.",
+      "recommendation": "No Minecraft: Opções > Configurações de vídeo > VSync: Desligado, e use o limite de FPS."
+    }
+  ],
+  // Particulas: 0 = todas, 1 = reduzidas, 2 = minimas (numero maior e' mais leve).
+  "presets": [
+    {
+      "id": "pc-fraco",
+      "title": "configuração leve para PC fraco",
+      "description": "Gráficos Rápidos, distância de renderização 8 e de simulação 6, sem nuvens e sem sombra de entidades, partículas reduzidas e sem mistura de biomas. Só reduz: quem já usa distância menor continua com a sua.",
+      "settings": {
+        "graphicsMode": "0",
+        "renderDistance": "8",
+        "simulationDistance": "6",
+        "entityShadows": "false",
+        "renderClouds": "\"false\"",
+        "particles": "1",
+        "biomeBlendRadius": "0"
+      },
+      "higher_is_lighter": ["particles"]
+    }
+  ],
+  "benchmark": {
+    "process": "javaw.exe",
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "method": "Use o mesmo mundo e a mesma posição (anote as coordenadas com F3), parado ou no mesmo percurso, com as mesmas opções de vídeo."
+  },
+  "recommended_settings": {
+    "enableVsync": "false: menos travadas quando o FPS oscila",
+    "Sodium": "Em PC fraco, o mod de desempenho Sodium (Fabric) costuma render mais que qualquer ajuste de opção. O FPSX não instala mods.",
+    "RAM do Java": "Deixe o padrão do launcher. Alocar RAM demais piora as pausas do coletor de lixo"
+  }
+}

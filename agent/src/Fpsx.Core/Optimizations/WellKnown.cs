@@ -17,4 +17,41 @@ public static class RegistryPaths
     public const string GraphicsDrivers = @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers";
     public const string StartupApproved = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved";
     public const string MemoryManagement = @"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management";
+
+    /// <summary>Mesma chave que Configurações > Sistema > Tela > Gráficos grava (por usuário).</summary>
+    public const string DirectXUserGpuPreferences = @"Software\Microsoft\DirectX\UserGpuPreferences";
+
+    public const string Personalize = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+}
+
+/// <summary>
+/// Texto de configuração do DirectX por usuário: pares "Chave=valor;" numa
+/// string só. O FPSX troca um par e preserva os outros, do mesmo jeito que a
+/// tela de Configurações do Windows faz.
+/// </summary>
+public static class DirectXSettings
+{
+    public const string GlobalValueName = "DirectXUserGlobalSettings";
+
+    public static Dictionary<string, string> Parse(string? raw)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var part in (raw ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var eq = part.IndexOf('=');
+            if (eq > 0)
+                result[part[..eq]] = part[(eq + 1)..];
+        }
+
+        return result;
+    }
+
+    public static string With(string? raw, string key, string value)
+    {
+        var parts = (raw ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(p => !p.StartsWith(key + "=", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        parts.Add($"{key}={value}");
+        return string.Join(";", parts) + ";";
+    }
 }

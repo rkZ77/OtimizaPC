@@ -52,6 +52,25 @@ public sealed record GamePreset
 
     /// <summary>Chave de configuração e valor aplicado. Chaves fora da whitelist compilada são recusadas.</summary>
     public IReadOnlyDictionary<string, string> Settings { get; init; } = new Dictionary<string, string>();
+
+    /// <summary>Chaves numéricas em que número MAIOR é mais leve (ex.: partículas "2 = mínimo" no Minecraft).</summary>
+    public IReadOnlyList<string> HigherIsLighter { get; init; } = [];
+
+    /// <summary>
+    /// O preset só deixa o jogo mais leve, nunca mais pesado: quem já jogava
+    /// com distância 4 não vai para 8 porque o preset diz 8. Valor numérico só
+    /// muda se o atual for mais pesado; valor de texto (true/false) muda se diferente.
+    /// </summary>
+    public bool ShouldApply(string key, string current)
+    {
+        if (!Settings.TryGetValue(key, out var target) || string.Equals(current, target, StringComparison.OrdinalIgnoreCase))
+            return false;
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        if (double.TryParse(current, System.Globalization.NumberStyles.Float, ci, out var cur)
+            && double.TryParse(target, System.Globalization.NumberStyles.Float, ci, out var want))
+            return HigherIsLighter.Contains(key, StringComparer.OrdinalIgnoreCase) ? cur < want : cur > want;
+        return true;
+    }
 }
 
 public sealed record SettingCheck
