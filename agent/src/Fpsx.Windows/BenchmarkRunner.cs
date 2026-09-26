@@ -80,8 +80,12 @@ internal sealed class SystemSampler : IDisposable
     private readonly List<double> _gpu = [];
     private readonly List<double> _ram = [];
 
-    public SystemSampler()
+    private readonly TimeSpan _interval;
+
+    /// <summary>Benchmark: a cada segundo. Partida longa: a cada 5 s, para o FPSX não pesar no jogo.</summary>
+    public SystemSampler(TimeSpan? interval = null)
     {
+        _interval = interval ?? TimeSpan.FromSeconds(1);
         _task = Task.Run(Loop);
     }
 
@@ -111,7 +115,7 @@ internal sealed class SystemSampler : IDisposable
 
             try
             {
-                await Task.Delay(1000, _cts.Token);
+                await Task.Delay(_interval, _cts.Token);
             }
             catch (TaskCanceledException)
             {

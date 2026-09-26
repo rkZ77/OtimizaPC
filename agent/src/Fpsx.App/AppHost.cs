@@ -147,6 +147,84 @@ public sealed class AppHost : ObservableObject
 
     public bool AutoMeasure => Ctx.Settings.AutoMeasure;
 
+    // ---- atualização do app ----
+
+    private SignedRelease? _update;
+    private System.Threading.Timer? _updateTimer;
+    private string? _notifiedVersion;
+
+    /// <summary>Versão nova, já com assinatura conferida. null = em dia.</summary>
+    public SignedRelease? Update
+    {
+        get => _update;
+        private set => Set(ref _update, value);
+    }
+
+    /// <summary>Avisa (uma vez por versão) quando surge atualização. Quem mostra é a bandeja.</summary>
+    public event Action<SignedRelease>? UpdateFound;
+
+    /// <summary>Confere agora e depois a cada 6 horas: quem deixa o app na bandeja também fica sabendo.</summary>
+    public void StartUpdateChecks() =>
+        _updateTimer ??= new System.Threading.Timer(_ => _ = CheckUpdateAsync(), null, TimeSpan.FromSeconds(20), TimeSpan.FromHours(6));
+
+    public async Task CheckUpdateAsync()
+    {
+        try
+        {
+            var found = Updater.Check(await Ctx.Api().SignedUpdateAsync(), AgentContext.Version);
+            OnUi(() =>
+            {
+                Update = found;
+                if (found is not null && _notifiedVersion != found.Version)
+                {
+                    _notifiedVersion = found.Version;
+                    UpdateFound?.Invoke(found);
+                }
+            });
+        }
+        catch (ApiException)
+        {
+            // Offline: tenta de novo na próxima volta.
+        }
+    }
+
+    /// <summary>Baixa, confere e instala. O instalador fecha e reabre o FPSX.</summary>
+    public async Task UpdateNowAsync(IProgress<int> percent)
+    {
+        if (Update is not { } release)
+            return;
+        var installer = await Updater.DownloadAsync(release, percent);
+        Updater.Install(installer);
+        ShutdownMonitor();
+        System.Windows.Application.Current.Shutdown();
+    }
+
+    // ---- modo simples / avançado e navegação entre telas ----
+
+    public bool AdvancedMode => Ctx.Settings.Mode == "advanced";
+
+    public void SetAdvancedMode(bool advanced)
+    {
+        if (advanced == AdvancedMode)
+            return;
+        Ctx.Storage.SaveSettings(Ctx.Settings with { Mode = advanced ? "advanced" : "simple" });
+        Raise(nameof(AdvancedMode));
+    }
+
+    /// <summary>Uma tela pede para abrir outra (atalhos da tela inicial). Quem escuta é a janela principal.</summary>
+    public event Action<Type>? NavigateRequested;
+
+    public void Navigate<T>() => NavigateRequested?.Invoke(typeof(T));
+
+    private string? _liveFps;
+
+    /// <summary>"Counter-Strike 2: 144 FPS agora" enquanto um jogo roda; null fora de partida.</summary>
+    public string? LiveFps
+    {
+        get => _liveFps;
+        private set => Set(ref _liveFps, value);
+    }
+
     public string MonitorStatus
     {
         get => _monitorStatus;
@@ -171,6 +249,7 @@ public sealed class AppHost : ObservableObject
             return;
         _monitor = new GameplayMonitor(Ctx.GameProfiles, Ctx.PresentMonPath, Path.Combine(Ctx.DataDir, "gameplay-tmp"), AgentContext.Version);
         _monitor.StatusChanged += s => OnUi(() => MonitorStatus = s);
+        _monitor.LiveFps += (game, fps) => OnUi(() => LiveFps = fps is { } f ? $"{game}: {f:0} FPS agora" : null);
         _monitor.Recorded += s =>
         {
             Ctx.Gameplay.Save(s);

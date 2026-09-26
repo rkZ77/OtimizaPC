@@ -62,6 +62,13 @@ public sealed class ApiClient(HttpClient http)
         return body.GetProperty("token").GetString() ?? "";
     }
 
+    /// <summary>Token assinado da versão mais nova do app (campo "update"), ou null.</summary>
+    public async Task<string?> SignedUpdateAsync(CancellationToken ct = default)
+    {
+        var body = await SendAsync(HttpMethod.Get, "api/agent/releases", null, null, null, ct);
+        return body.TryGetProperty("update", out var u) && u.ValueKind == JsonValueKind.String ? u.GetString() : null;
+    }
+
     public async Task<IReadOnlyList<ReleaseInfo>> ReleasesAsync(CancellationToken ct = default)
     {
         var body = await SendAsync(HttpMethod.Get, "api/agent/releases", null, null, null, ct);

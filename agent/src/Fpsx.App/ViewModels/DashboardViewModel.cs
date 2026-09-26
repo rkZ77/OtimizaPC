@@ -11,6 +11,21 @@ public abstract class PageViewModel : ObservableObject
 
     public abstract string Title { get; }
 
+    /// <summary>Ícone do menu (Segoe MDL2 Assets, que vem com o Windows 10 e 11).</summary>
+    public virtual string Icon => "";
+
+    /// <summary>Só aparece no modo avançado.</summary>
+    public virtual bool AdvancedOnly => false;
+
+    private bool _isCurrent;
+
+    /// <summary>Tela aberta agora: marca o item do menu, mesmo quando outra tela navegou até aqui.</summary>
+    public bool IsCurrent
+    {
+        get => _isCurrent;
+        set => Set(ref _isCurrent, value);
+    }
+
     public bool IsBusy
     {
         get => _busy;
@@ -56,12 +71,107 @@ public sealed class DashboardViewModel : PageViewModel
         OptimizeCommand = new AsyncCommand(() => Busy(Optimize), () => !IsBusy && AutoCount > 0);
         FixCommand = new AsyncCommand(p => Busy(() => Fix((FindingItem)p!)), p => !IsBusy && p is FindingItem);
         OpenUrlCommand = new RelayCommand(p => AppHost.OpenUrl((string)p!), p => p is string);
+        HeroCommand = new AsyncCommand(Hero, () => !IsBusy);
+        GoGamesCommand = new RelayCommand(() => _host.Navigate<GamesViewModel>());
+        GoGameplayCommand = new RelayCommand(() => _host.Navigate<GameplayViewModel>());
+        GoHistoryCommand = new RelayCommand(() => _host.Navigate<HistoryViewModel>());
         _host.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(AppHost.Scan))
+            if (e.PropertyName is nameof(AppHost.Scan) or nameof(AppHost.License))
                 Load();
+            if (e.PropertyName == nameof(AppHost.AdvancedMode))
+                Raise(nameof(IsAdvanced));
+        };
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(IsBusy) or nameof(Progress))
+                RaiseHero();
         };
         Load();
+    }
+
+    public ICommand HeroCommand { get; }
+    public ICommand GoGamesCommand { get; }
+    public ICommand GoGameplayCommand { get; }
+    public ICommand GoHistoryCommand { get; }
+    public bool IsAdvanced => _host.AdvancedMode;
+
+    /// <summary>Otimizações que resolveriam algo mas pedem plano (no Free).</summary>
+    public int BlockedCount { get; private set; }
+
+    // Cartão principal: a situação do PC numa frase e UM botão. É o que o
+    // usuário leigo precisa; os números ficam no modo avançado.
+    private enum HeroState { Scanning, Problem, CanFix, NeedsPlan, Good }
+
+    private HeroState State => IsBusy || !HasScan ? HeroState.Scanning
+        : ProblemCount > 0 && AutoCount == 0 && BlockedCount == 0 ? HeroState.Problem
+        : AutoCount > 0 ? HeroState.CanFix
+        : BlockedCount > 0 ? HeroState.NeedsPlan
+        : ProblemCount > 0 ? HeroState.Problem
+        : HeroState.Good;
+
+    public string HeroGlyph => State switch
+    {
+        HeroState.Scanning => "",
+        HeroState.Good => "",
+        HeroState.Problem => "",
+        _ => "",
+    };
+
+    public System.Windows.Media.Brush HeroBrush => (System.Windows.Media.Brush)System.Windows.Application.Current.Resources[State switch
+    {
+        HeroState.Good => "Accent",
+        HeroState.Problem => "Warn",
+        HeroState.Scanning => "Info",
+        _ => "Accent",
+    }];
+
+    public string HeroTitle => State switch
+    {
+        HeroState.Scanning => "Analisando o seu PC",
+        HeroState.Good => "Seu PC está bem configurado",
+        HeroState.CanFix => AutoCount == 1 ? "Encontramos 1 coisa para melhorar" : $"Encontramos {AutoCount} coisas para melhorar",
+        HeroState.NeedsPlan => BlockedCount == 1 ? "1 coisa pode melhorar no seu PC" : $"{BlockedCount} coisas podem melhorar no seu PC",
+        _ => ProblemCount == 1 ? "Encontramos 1 problema que precisa de você" : $"Encontramos {ProblemCount} problemas que precisam de você",
+    };
+
+    public string HeroText => State switch
+    {
+        HeroState.Scanning => Progress.Length > 0 ? Progress : "Só leitura: nada muda no PC nesta etapa.",
+        HeroState.Good => "Nada para mudar agora. Jogue com o FPSX aberto para medir o FPS das suas partidas.",
+        HeroState.CanFix => "O FPSX guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
+        HeroState.NeedsPlan => "Veja abaixo o que cada uma resolve. Para o FPSX corrigir, entre com um plano na tela Conta.",
+        _ => "Veja abaixo o que foi encontrado e o botão para resolver cada um.",
+    };
+
+    public string HeroButton => State switch
+    {
+        HeroState.Scanning => "Analisando...",
+        HeroState.CanFix => "Corrigir agora",
+        HeroState.NeedsPlan => "Ver planos",
+        _ => "Analisar de novo",
+    };
+
+    private async Task Hero()
+    {
+        switch (State)
+        {
+            case HeroState.CanFix:
+                await Busy(Optimize);
+                break;
+            case HeroState.NeedsPlan:
+                AppHost.OpenUrl(_host.SiteUrl + "/planos");
+                break;
+            default:
+                await Busy(() => _host.RunScanAsync(Reporter));
+                break;
+        }
+    }
+
+    private void RaiseHero()
+    {
+        foreach (var n in new[] { nameof(HeroGlyph), nameof(HeroBrush), nameof(HeroTitle), nameof(HeroText), nameof(HeroButton) })
+            Raise(n);
     }
 
     public override string Title => "Início";
@@ -109,11 +219,13 @@ public sealed class DashboardViewModel : PageViewModel
             RecommendedCount = report.Recommended;
             OptimalCount = report.AlreadyOptimal;
             AutoCount = scan.Optimizations.Count(o => o.AutoSelected);
+            BlockedCount = scan.Optimizations.Count(o => o.Decision == Decision.Blocked && o.Evaluation.Decision == Decision.Recommended);
             ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }
 
-        foreach (var name in new[] { nameof(HasScan), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(ScanInfo), nameof(Headline) })
+        foreach (var name in new[] { nameof(HasScan), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
             Raise(name);
+        RaiseHero();
     }
 
     private async Task Optimize()

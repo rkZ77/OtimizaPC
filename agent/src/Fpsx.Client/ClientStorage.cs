@@ -30,6 +30,12 @@ public sealed record ClientSettings
 
     /// <summary>A tela de entrada da primeira abertura já apareceu (entrou ou escolheu o Free).</summary>
     public bool LoginPromptDone { get; init; }
+
+    /// <summary>"simple" (padrão: o essencial, botões grandes) ou "advanced" (tudo, item a item).</summary>
+    public string Mode { get; init; } = "simple";
+
+    /// <summary>O tutorial da primeira abertura já foi visto (ou pulado).</summary>
+    public bool TutorialDone { get; init; }
 }
 
 /// <summary>Arquivos do app em %LOCALAPPDATA%\FPSX. Nada disso sai do PC sem ação do usuário.</summary>

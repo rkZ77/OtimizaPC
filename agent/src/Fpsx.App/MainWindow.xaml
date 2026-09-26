@@ -32,6 +32,12 @@
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Bottom" Margin="8,0">
+                    <Button Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="-6,0,0,12" Command="{Binding TutorialCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Info}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Text="Como usar o FPSX" Foreground="{StaticResource Info}" />
+                        </StackPanel>
+                    </Button>
                     <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">
                         <TextBlock Text="{Binding PlanLabel, StringFormat=Plano {0}}" FontSize="13" />
                     </Border>
@@ -44,9 +50,16 @@
                 <ItemsControl ItemsSource="{Binding Pages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <RadioButton GroupName="nav" Style="{StaticResource NavItem}" Content="{Binding Title}"
+                            <RadioButton GroupName="nav" Style="{StaticResource NavItem}" IsChecked="{Binding IsCurrent, Mode=TwoWay}"
                                          Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                         CommandParameter="{Binding}" Loaded="NavItem_Loaded" />
+                                         CommandParameter="{Binding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="16" Width="28" VerticalAlignment="Center"
+                                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                </StackPanel>
+                            </RadioButton>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -58,9 +71,17 @@
             <Border DockPanel.Dock="Top" Background="{StaticResource Info}" Padding="16,8"
                     Visibility="{Binding UpdateAvailable, Converter={StaticResource Visible}}">
                 <DockPanel>
-                    <Button DockPanel.Dock="Right" Content="Baixar" Command="{Binding UpdateCommand}" Padding="12,4" />
+                    <Button DockPanel.Dock="Right" Content="{Binding UpdateButton}" Command="{Binding UpdateCommand}" Padding="14,6" Margin="12,0,0,0" />
                     <TextBlock Text="{Binding UpdateAvailable}" Foreground="#06121F" VerticalAlignment="Center" />
                 </DockPanel>
+            </Border>
+            <!-- FPS ao vivo: aparece sozinho quando um jogo abre, em qualquer tela. -->
+            <Border DockPanel.Dock="Top" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1" Padding="20,10"
+                    Visibility="{Binding LiveFps, Converter={StaticResource Visible}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Accent}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding LiveFps}" FontWeight="SemiBold" FontSize="15" Foreground="{StaticResource Accent}" />
+                </StackPanel>
             </Border>
             <ContentControl Content="{Binding Current}" />
         </DockPanel>

@@ -122,4 +122,13 @@ def catalog_overrides(ctx=Depends(device_context)):
 
 @router.get("/releases")
 def releases():
-    return {"releases": catalog.latest_releases()}
+    rows = catalog.latest_releases()
+    agent_release = next((r for r in rows if r["component"] == "agent" and r.get("url") and r.get("sha256")), None)
+    # "update" vai ASSINADO com a mesma chave da licenca: o app so' baixa e
+    # instala se a assinatura bater. Banco adulterado ou conexao interceptada
+    # nao conseguem apontar o app para outro instalador.
+    update = signing.sign({
+        "component": "agent", "version": agent_release["version"], "url": agent_release["url"],
+        "sha256": agent_release["sha256"], "notes": agent_release.get("notes") or "",
+    }) if agent_release else None
+    return {"releases": rows, "update": update}

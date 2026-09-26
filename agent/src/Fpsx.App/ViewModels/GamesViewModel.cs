@@ -43,6 +43,8 @@ public sealed class GamesViewModel : PageViewModel
 
     public override string Title => "Jogos";
 
+    public override string Icon => "\uE7FC";
+
     public ICommand FixCommand { get; }
     public ICommand ShaderCommand { get; }
     public ICommand PresetCommand { get; }

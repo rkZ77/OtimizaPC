@@ -7,24 +7,38 @@ public sealed class MainViewModel : ObservableObject
 {
     private readonly AppHost _host = AppHost.Current;
     private PageViewModel _current;
-    private string? _update;
 
     public MainViewModel()
     {
-        Pages = [new DashboardViewModel(), new OptimizationsViewModel(), new GamesViewModel(), new GameplayViewModel(), new BenchmarkViewModel(), new HistoryViewModel(), new AccountViewModel(), new SettingsViewModel()];
-        _current = Pages[0];
+        AllPages = [new DashboardViewModel(), new OptimizationsViewModel(), new GamesViewModel(), new GameplayViewModel(), new BenchmarkViewModel(), new HistoryViewModel(), new AccountViewModel(), new SettingsViewModel()];
+        _current = AllPages[0];
 #if DEBUG
         // Só em desenvolvimento: abrir direto numa tela, para os prints de QA.
-        if (int.TryParse(Environment.GetEnvironmentVariable("FPSX_START_PAGE"), out var page) && page >= 0 && page < Pages.Count)
-            _current = Pages[page];
+        if (int.TryParse(Environment.GetEnvironmentVariable("FPSX_START_PAGE"), out var page) && page >= 0 && page < AllPages.Count)
+            _current = AllPages[page];
 #endif
+        RefreshPages();
+        _current.IsCurrent = true;
         NavigateCommand = new RelayCommand(p => Current = (PageViewModel)p!);
+        TutorialCommand = new RelayCommand(() => Tutorial.Show());
+        _host.NavigateRequested += type =>
+        {
+            if (AllPages.FirstOrDefault(p => p.GetType() == type) is { } target)
+            {
+                // Atalho para tela do modo avançado liga o avançado: quem
+                // clicou quer ver aquilo.
+                if (target.AdvancedOnly && !_host.AdvancedMode)
+                    _host.SetAdvancedMode(true);
+                Current = target;
+                Raise(nameof(Current));
+            }
+        };
         RelaunchCommand = new RelayCommand(() =>
         {
             if (AppHost.RelaunchAsAdmin())
                 System.Windows.Application.Current.Shutdown();
         });
-        UpdateCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/download"));
+        UpdateCommand = new AsyncCommand(RunUpdate, () => UpdateButton == "Atualizar agora");
         _host.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppHost.PlanLabel))
@@ -32,10 +46,33 @@ public sealed class MainViewModel : ObservableObject
                 Raise(nameof(PlanLabel));
                 Raise(nameof(PlanHint));
             }
+
+            if (e.PropertyName == nameof(AppHost.AdvancedMode))
+                RefreshPages();
+            if (e.PropertyName == nameof(AppHost.LiveFps))
+                Raise(nameof(LiveFps));
+            if (e.PropertyName == nameof(AppHost.Update))
+                Raise(nameof(UpdateAvailable));
         };
     }
 
-    public IReadOnlyList<PageViewModel> Pages { get; }
+    public IReadOnlyList<PageViewModel> AllPages { get; }
+
+    /// <summary>Telas do menu no modo atual. O simples esconde as de detalhe técnico.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<PageViewModel> Pages { get; } = [];
+
+    public ICommand TutorialCommand { get; }
+
+    public string? LiveFps => _host.LiveFps;
+
+    private void RefreshPages()
+    {
+        Pages.Clear();
+        foreach (var p in AllPages.Where(p => _host.AdvancedMode || !p.AdvancedOnly))
+            Pages.Add(p);
+        if (!Pages.Contains(_current))
+            Current = Pages[0];
+    }
 
     public PageViewModel Current
     {
@@ -44,6 +81,8 @@ public sealed class MainViewModel : ObservableObject
         {
             if (Set(ref _current, value))
                 value.OnShown();
+            foreach (var p in AllPages)
+                p.IsCurrent = p == value;
         }
     }
 
@@ -56,10 +95,31 @@ public sealed class MainViewModel : ObservableObject
     public string PlanHint => _host.License.Plan == "free" ? "No Free você vê tudo. Para aplicar, entre com um plano em Conta." : "";
     public bool IsElevated => _host.IsElevated;
 
-    public string? UpdateAvailable
+    /// <summary>Faixa do topo: versão nova e o que ela traz. null = app em dia.</summary>
+    public string? UpdateAvailable => _host.Update is { } u
+        ? $"Nova versão {u.Version} disponível. {u.Notes}".Trim()
+        : null;
+
+    private string _updateButton = "Atualizar agora";
+
+    public string UpdateButton
     {
-        get => _update;
-        private set => Set(ref _update, value);
+        get => _updateButton;
+        private set => Set(ref _updateButton, value);
+    }
+
+    private async Task RunUpdate()
+    {
+        try
+        {
+            UpdateButton = "Baixando...";
+            await _host.UpdateNowAsync(new Progress<int>(p => UpdateButton = $"Baixando {p}%"));
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Net.Http.HttpRequestException or System.IO.IOException)
+        {
+            UpdateButton = "Atualizar agora";
+            Dialogs.Info("Não foi possível atualizar", ex.Message + "\n\nO FPSX continua funcionando na versão atual. Você também pode baixar pelo site.");
+        }
     }
 
     /// <summary>Na abertura: licença local, depois sync e verificação de versão em segundo plano.</summary>
@@ -69,14 +129,12 @@ public sealed class MainViewModel : ObservableObject
         try
         {
             await _host.SyncAsync();
-            var releases = await _host.Ctx.Api().ReleasesAsync();
-            var agent = releases.FirstOrDefault(r => r.Component == "agent");
-            if (agent is not null && Version.TryParse(agent.Version, out var latest) && Version.TryParse(AgentContext.Version, out var mine) && latest > mine)
-                UpdateAvailable = $"Nova versão {agent.Version} disponível.";
         }
         catch (ApiException)
         {
             // Offline: o app funciona com a licença salva até o fim da carência.
         }
+
+        _host.StartUpdateChecks();
     }
 }

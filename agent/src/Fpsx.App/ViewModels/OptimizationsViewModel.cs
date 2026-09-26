@@ -27,6 +27,10 @@ public sealed class OptimizationsViewModel : PageViewModel
 
     public override string Title => "Otimizações";
 
+    public override string Icon => "\uE90F";
+
+    public override bool AdvancedOnly => true;
+
     public ICommand ApplyCommand { get; }
     public ICommand ScanCommand { get; }
     public ICommand UnlockCommand { get; }

@@ -78,6 +78,8 @@ public static class PresentMonCsv
         }
     }
 
+    internal static List<string> Split(string line) => SplitLine(line);
+
     // CSV do PresentMon não usa aspas com vírgula dentro, exceto em nomes de
     // processo raros. Tratar aspas aqui evita desalinhar colunas nesses casos.
     private static List<string> SplitLine(string line)

@@ -7,6 +7,15 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
+                    <TextBlock Text="Modo de uso" Style="{StaticResource H2}" />
+                    <CheckBox IsChecked="{Binding Advanced}" Content="Modo avançado" />
+                    <TextBlock Style="{StaticResource MutedText}" Margin="26,4,0,0" TextWrapping="Wrap"
+                               Text="Desligado (modo simples): só o essencial, com botões grandes. Ligado: mostra também cada otimização item a item, o benchmark, o teste de CPU e os detalhes técnicos do PC." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
                     <TextBlock Text="Perfil de otimização" Style="{StaticResource H2}" />
                     <TextBlock Style="{StaticResource MutedText}" Margin="0,0,0,10"
                                Text="O perfil decide o que o botão Otimizar agora seleciona sozinho. Tudo continua disponível para escolha item a item." />

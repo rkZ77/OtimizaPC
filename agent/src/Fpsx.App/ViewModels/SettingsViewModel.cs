@@ -22,6 +22,8 @@ public sealed class SettingsViewModel : PageViewModel
 
     public override string Title => "Configurações";
 
+    public override string Icon => "\uE713";
+
     public ICommand OpenDataCommand { get; }
     public ICommand PrivacyCommand { get; }
     public IReadOnlyList<ProfileDefinition> Profiles => _host.Ctx.Catalog.Profiles;
@@ -34,6 +36,16 @@ public sealed class SettingsViewModel : PageViewModel
         {
             if (Set(ref _profile, value) && value is not null)
                 Save(s => s with { Profile = value.Id });
+        }
+    }
+
+    public bool Advanced
+    {
+        get => _host.AdvancedMode;
+        set
+        {
+            _host.SetAdvancedMode(value);
+            Raise();
         }
     }
 

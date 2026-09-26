@@ -24,6 +24,9 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
     public event Action<GameplaySession>? Recorded;
     public event Action<string>? StatusChanged;
 
+    /// <summary>Uma vez por segundo durante a partida: jogo e FPS atual (null = acabou ou ainda sem quadros).</summary>
+    public event Action<string, double?>? LiveFps;
+
     public string Status
     {
         get => _status;
@@ -93,26 +96,43 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
 
     private (GameProfile Profile, Process Process)? FindGame()
     {
-        foreach (var profile in profiles)
+        // UMA lista de processos por rodada: GetProcessesByName para cada um
+        // dos ~30 executáveis dos perfis pediria a lista inteira ao Windows 30
+        // vezes a cada 5 segundos. O FPSX não pode pesar no PC que ele otimiza.
+        var running = Process.GetProcesses();
+        try
         {
-            // Todos os executáveis do jogo: o FC muda de nome a cada ano
-            // (FC26.exe, FC27.exe) e alguns jogos têm versão DX12 separada.
-            foreach (var name in profile.Benchmark.MeasuredProcesses(profile.Detect))
+            var byName = running.ToLookup(p => p.ProcessName, StringComparer.OrdinalIgnoreCase);
+            foreach (var profile in profiles)
             {
-                foreach (var p in Process.GetProcessesByName(name))
+                // Todos os executáveis do jogo: o FC muda de nome a cada ano
+                // (FC26.exe, FC27.exe) e alguns jogos têm versão DX12 separada.
+                foreach (var name in profile.Benchmark.MeasuredProcesses(profile.Detect))
                 {
-                    if (profile.Benchmark.WindowTitle is { } title && !SafeTitle(p).Contains(title, StringComparison.OrdinalIgnoreCase))
+                    foreach (var p in byName[name])
                     {
-                        p.Dispose();
-                        continue;
+                        if (profile.Benchmark.WindowTitle is { } title && !SafeTitle(p).Contains(title, StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        // Devolve um objeto novo e libera a lista inteira abaixo.
+                        try
+                        {
+                            return (profile, Process.GetProcessById(p.Id));
+                        }
+                        catch (ArgumentException)
+                        {
+                            // Fechou entre a lista e agora.
+                        }
                     }
-
-                    return (profile, p);
                 }
             }
-        }
 
-        return null;
+            return null;
+        }
+        finally
+        {
+            foreach (var p in running)
+                p.Dispose();
+        }
     }
 
     private static string SafeTitle(Process p)
@@ -129,29 +149,56 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
 
     private void Capture(GameProfile profile, Process game, CancellationToken ct)
     {
-        using var _ = game;
+        using var gameProcess = game;
         var startedAt = DateTimeOffset.Now;
         var csv = Path.Combine(workDir, $"{startedAt:yyyyMMdd-HHmmss}-{profile.Id}.csv");
         Status = $"Medindo {profile.Name}. Jogue normalmente: o resultado aparece quando o jogo fechar.";
 
         var pmLog = new System.Text.StringBuilder();
-        using var pm = StartPresentMon(game.Id, csv, pmLog);
-        using var sampler = new SystemSampler();
+        var live = new LiveFpsMeter(game.Id);
+        // O PresentMon entrega o CSV pela saída padrão e o FPSX grava o
+        // arquivo. Ler o arquivo que o PresentMon grava não dá: ele o trava
+        // enquanto escreve. Assim o mesmo fluxo alimenta o FPS ao vivo.
+        var sink = new CsvSink(csv, live);
+        var self = Process.GetCurrentProcess();
+        var previousPriority = self.PriorityClass;
         var foreground = new List<bool>();
-        var watch = Stopwatch.StartNew();
-        while (!ct.IsCancellationRequested && !HasExited(game) && watch.Elapsed < MaxCapture)
+        DateTimeOffset endedAt;
+        double? cpu, gpu;
+        using (var pm = StartPresentMon(game.Id, sink, pmLog))
         {
-            foreground.Add(IsForeground(game.Id));
-            ct.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
-        }
+            try
+            {
+                // Durante a partida o FPSX e o PresentMon ficam abaixo do normal:
+                // se o processador apertar, o jogo vem primeiro. E o uso de CPU e
+                // GPU (WMI, a consulta mais cara daqui) é lido a cada 5 s.
+                TrySetPriority(self, ProcessPriorityClass.BelowNormal);
+                TrySetPriority(pm, ProcessPriorityClass.BelowNormal);
+                using var sampler = new SystemSampler(TimeSpan.FromSeconds(5));
+                var watch = Stopwatch.StartNew();
+                while (!ct.IsCancellationRequested && !HasExited(game) && watch.Elapsed < MaxCapture)
+                {
+                    foreground.Add(IsForeground(game.Id));
+                    LiveFps?.Invoke(profile.Name, sink.CurrentFps);
+                    ct.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+                }
 
-        var endedAt = DateTimeOffset.Now;
-        var (cpu, gpu, _) = sampler.Stop();
-        StopPresentMon(pm);
+                endedAt = DateTimeOffset.Now;
+                (cpu, gpu, _) = sampler.Stop();
+            }
+            finally
+            {
+                // Mesmo com erro no meio, o PresentMon nunca fica rodando sozinho.
+                StopPresentMon(pm);
+                sink.Close();
+                TrySetPriority(self, previousPriority);
+                LiveFps?.Invoke(profile.Name, null);
+            }
+        }
 
         try
         {
-            if (!File.Exists(csv))
+            if (!sink.HasFrames)
             {
                 // Sem CSV pode ser permissão (o PresentMon diz) ou o jogo não
                 // ter desenhado nada. Mensagem de permissão sem ser permissão
@@ -189,7 +236,55 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
         }
     }
 
-    private Process StartPresentMon(int pid, string csv, System.Text.StringBuilder log)
+    /// <summary>Recebe as linhas do PresentMon: grava o CSV da partida e alimenta o FPS ao vivo.</summary>
+    private sealed class CsvSink(string path, LiveFpsMeter live)
+    {
+        private readonly object _lock = new();
+        private StreamWriter? _writer;
+        private bool _header;
+
+        public bool HasFrames { get; private set; }
+
+        public double? CurrentFps
+        {
+            get
+            {
+                lock (_lock)
+                    return live.Current;
+            }
+        }
+
+        /// <summary>true = era linha do CSV; false = texto de aviso do PresentMon.</summary>
+        public bool Offer(string line)
+        {
+            var isHeader = line.StartsWith("Application,", StringComparison.Ordinal);
+            if (!isHeader && (!_header || line.Count(c => c == ',') < 8))
+                return false;
+            lock (_lock)
+            {
+                _writer ??= new StreamWriter(path, append: false) { AutoFlush = false };
+                _writer.WriteLine(line);
+                live.Add(line);
+                if (isHeader)
+                    _header = true;
+                else
+                    HasFrames = true;
+            }
+
+            return true;
+        }
+
+        public void Close()
+        {
+            lock (_lock)
+            {
+                _writer?.Dispose();
+                _writer = null;
+            }
+        }
+    }
+
+    private Process StartPresentMon(int pid, CsvSink sink, System.Text.StringBuilder log)
     {
         var psi = new ProcessStartInfo(presentMonPath)
         {
@@ -203,7 +298,9 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
         foreach (var arg in new[]
                  {
                      "--process_id", pid.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                     "--output_file", csv, "--v1_metrics", "--no_console_stats", "--no_track_input",
+                     // Sem rastrear GPU, tela e entrada: o FPS sai do intervalo
+                     // entre apresentações, e cada rastreamento extra é custo à toa.
+                     "--output_stdout", "--v1_metrics", "--no_console_stats", "--no_track_input", "--no_track_gpu", "--no_track_display",
                      "--session_name", SessionName, "--stop_existing_session", "--terminate_on_proc_exit",
                  })
             psi.ArgumentList.Add(arg);
@@ -219,7 +316,11 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
                     log.AppendLine(e.Data);
         }
 
-        p.OutputDataReceived += Keep;
+        p.OutputDataReceived += (s, e) =>
+        {
+            if (e.Data is not null && !sink.Offer(e.Data))
+                Keep(s, e);
+        };
         p.ErrorDataReceived += Keep;
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
@@ -240,6 +341,17 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
             foreach (var arg in new[] { "--session_name", SessionName, "--stop_existing_session", "--timed", "1", "--terminate_after_timed", "--no_console_stats", "--no_csv" })
                 cleanup.ArgumentList.Add(arg);
             Process.Start(cleanup)?.WaitForExit(10_000);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+        }
+    }
+
+    private static void TrySetPriority(Process p, ProcessPriorityClass priority)
+    {
+        try
+        {
+            p.PriorityClass = priority;
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {

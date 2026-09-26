@@ -3,25 +3,65 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer>
         <StackPanel Margin="32,28">
-            <DockPanel Margin="0,0,0,6">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+            <!-- Cartão principal: a situação em uma frase e um botão (todo usuário) -->
+            <Border Style="{StaticResource Card}" Padding="26,24" Margin="0,0,0,16">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="{Binding HeroButton}" Style="{StaticResource Primary}" Command="{Binding HeroCommand}"
+                            FontSize="16" Padding="26,13" VerticalAlignment="Center" Margin="20,0,0,0" />
+                    <Border Width="58" Height="58" CornerRadius="29" Background="{StaticResource Surface2}" VerticalAlignment="Center" Margin="0,0,18,0">
+                        <TextBlock Text="{Binding HeroGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="26" Foreground="{Binding HeroBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding HeroTitle}" FontSize="22" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding HeroText}" Style="{StaticResource MutedText}" FontSize="14" Margin="0,6,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Atalhos -->
+            <UniformGrid Columns="3" Margin="0,0,0,6">
+                <Button Command="{Binding GoGamesCommand}" Margin="0,0,8,12" Padding="16,14" HorizontalContentAlignment="Left">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <StackPanel>
+                            <TextBlock Text="Meus jogos" FontWeight="SemiBold" />
+                            <TextBlock Text="Ajuste de cada jogo" Style="{StaticResource MutedText}" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding GoGameplayCommand}" Margin="4,0,4,12" Padding="16,14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <StackPanel>
+                            <TextBlock Text="FPS das partidas" FontWeight="SemiBold" />
+                            <TextBlock Text="Antes e depois" Style="{StaticResource MutedText}" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding GoHistoryCommand}" Margin="8,0,0,12" Padding="16,14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <StackPanel>
+                            <TextBlock Text="Desfazer" FontWeight="SemiBold" />
+                            <TextBlock Text="Voltar como estava" Style="{StaticResource MutedText}" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <!-- Modo avançado: ferramentas e números -->
+            <DockPanel Margin="0,0,0,12" Visibility="{Binding IsAdvanced, Converter={StaticResource Visible}}">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button Content="Teste de CPU" Command="{Binding CpuTestCommand}" Margin="0,0,8,0"
                             ToolTip="Coloca a CPU em carga por 15 s para detectar limitação térmica" />
-                    <Button Content="Analisar meu PC" Command="{Binding ScanCommand}" Margin="0,0,8,0" />
-                    <Button Content="Otimizar agora" Style="{StaticResource Primary}" Command="{Binding OptimizeCommand}"
-                            ToolTip="Aplica só as otimizações recomendadas pelo seu perfil, com backup" />
+                    <Button Content="Analisar de novo" Command="{Binding ScanCommand}" />
                 </StackPanel>
-                <StackPanel>
-                    <TextBlock Text="Seu PC" Style="{StaticResource H1}" />
-                    <TextBlock Text="{Binding Headline}" Style="{StaticResource MutedText}" FontSize="15" Margin="0,4,0,0" />
-                </StackPanel>
+                <TextBlock Text="{Binding ScanInfo}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
             </DockPanel>
-            <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" Margin="0,8,0,0"
-                       Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
-            <TextBlock Text="{Binding ScanInfo}" Style="{StaticResource MutedText}" Margin="0,8,0,18" />
 
             <!-- Resumo -->
-            <UniformGrid Columns="3" Margin="0,0,0,4" Visibility="{Binding HasScan, Converter={StaticResource Visible}}">
+            <UniformGrid Columns="3" Margin="0,0,0,4" Visibility="{Binding IsAdvanced, Converter={StaticResource Visible}}">
                 <Border Style="{StaticResource Card}" Margin="0,0,10,14">
                     <StackPanel>
                         <TextBlock Text="{Binding ProblemCount}" Style="{StaticResource Stat}" Foreground="{StaticResource Warn}" />
@@ -86,7 +126,7 @@
                 </StackPanel>
             </Border>
 
-            <Grid Visibility="{Binding HasScan, Converter={StaticResource Visible}}">
+            <Grid Visibility="{Binding IsAdvanced, Converter={StaticResource Visible}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="3*" />
                     <ColumnDefinition Width="14" />
@@ -95,7 +135,7 @@
 
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Text="Performance Readiness" Style="{StaticResource H2}" />
+                        <TextBlock Text="Como está cada parte do PC" Style="{StaticResource H2}" />
                         <ItemsControl ItemsSource="{Binding Readiness}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>

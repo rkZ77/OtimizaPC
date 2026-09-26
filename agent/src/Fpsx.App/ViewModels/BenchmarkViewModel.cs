@@ -64,6 +64,10 @@ public sealed class BenchmarkViewModel : PageViewModel
 
     public override string Title => "Benchmark";
 
+    public override string Icon => "\uE9D2";
+
+    public override bool AdvancedOnly => true;
+
     public ICommand BrowseCommand { get; }
     public ICommand RunCommand { get; }
     public ICommand CompareCommand { get; }

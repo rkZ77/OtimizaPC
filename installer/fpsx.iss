@@ -57,6 +57,9 @@ Name: "{group}\Desinstalar FPSX"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\FPSX"; Filename: "{app}\FPSX.exe"; Tasks: desktopicon
 
 [Run]
+; Atualização pelo próprio app roda o instalador em modo silencioso: no fim
+; ele reabre o FPSX na sessão do usuário, que é o que a pessoa espera ver.
+Filename: "{app}\FPSX.exe"; Flags: nowait runasoriginaluser; Check: WizardSilent
 Filename: "{app}\FPSX.exe"; Description: "Abrir o FPSX e analisar meu PC"; Flags: nowait postinstall skipifsilent
 
 [Messages]

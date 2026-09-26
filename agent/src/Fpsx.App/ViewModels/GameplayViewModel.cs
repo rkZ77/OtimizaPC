@@ -61,7 +61,9 @@ public sealed class GameplayViewModel : PageViewModel
         Load();
     }
 
-    public override string Title => "Partidas";
+    public override string Title => "Partidas e FPS";
+
+    public override string Icon => "\uEC4A";
 
     public ObservableCollection<GameplayItem> Sessions { get; } = [];
     public ObservableCollection<PivotItem> Pivots { get; } = [];

@@ -116,3 +116,19 @@ def test_login_limita_tentativas(client, monkeypatch):
     codes = [client.post("/api/auth/login", json={"email": "x@y.com", "password": "errada"}).status_code for _ in range(9)]
     assert codes[:8] == [401] * 8
     assert codes[8] == 429
+
+
+def test_versao_do_app_vai_assinada_para_o_atualizador(client, monkeypatch):
+    from app.services import catalog
+    row = {"component": "agent", "version": "0.4.0", "url": "https://github.com/rkZ77/OtimizaPC/releases/download/v0.4.0/FPSX-Setup-0.4.0.exe",
+           "sha256": "a" * 64, "notes": "Novidades", "published_at": None}
+    monkeypatch.setattr(catalog, "latest_releases", lambda: [row])
+    body = client.get("/api/agent/releases").json()
+    payload = signing.verify(body["update"])
+    assert payload["version"] == "0.4.0" and payload["sha256"] == "a" * 64 and payload["url"] == row["url"]
+
+
+def test_sem_versao_publicada_nao_ha_update(client, monkeypatch):
+    from app.services import catalog
+    monkeypatch.setattr(catalog, "latest_releases", lambda: [])
+    assert client.get("/api/agent/releases").json()["update"] is None

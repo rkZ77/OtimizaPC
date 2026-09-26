@@ -99,7 +99,12 @@ public partial class App : Application
         _tray = new Tray(ShowMain, ExitApp);
         AppHost.Current.GameplayRecorded += s => _tray?.Notify($"{s.GameName}: partida registrada",
             $"FPS médio {s.Stats.AvgFps:0}, 1% low {s.Stats.Low1Fps:0}. Veja o antes e depois em Partidas.");
+        AppHost.Current.UpdateFound += u => _tray?.Notify($"FPSX {u.Version} disponível",
+            (string.IsNullOrWhiteSpace(u.Notes) ? "Uma versão nova do FPSX saiu." : u.Notes) + " Clique para abrir e atualizar com um clique.");
         AppHost.Current.StartMonitor();
+        // Quem abre direto na bandeja (com o Windows) também recebe o aviso.
+        if (startInTray)
+            AppHost.Current.StartUpdateChecks();
 
         _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, instance == @"Local\FPSX.App.Single" ? ShowSignalName : instance + ".Show");
         new Thread(() =>

@@ -37,6 +37,13 @@ public sealed class Tray : IDisposable
         {
             if (e.PropertyName == nameof(AppHost.AutoMeasure))
                 _measure.Checked = AppHost.Current.AutoMeasure;
+            // FPS ao vivo no texto do ícone: passar o mouse perto do relógio
+            // mostra o número sem sair do jogo. Limite de 63 caracteres do Windows.
+            if (e.PropertyName == nameof(AppHost.LiveFps))
+            {
+                var text = AppHost.Current.LiveFps is { } fps ? "FPSX. " + fps : "FPSX";
+                _icon.Text = text.Length > 63 ? text[..63] : text;
+            }
         };
     }
 

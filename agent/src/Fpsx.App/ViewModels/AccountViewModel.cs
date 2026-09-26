@@ -38,6 +38,8 @@ public sealed class AccountViewModel : PageViewModel
 
     public override string Title => "Conta";
 
+    public override string Icon => "\uE77B";
+
     public ICommand LoginCommand { get; }
     public ICommand LogoutCommand { get; }
     public ICommand SyncCommand { get; }

@@ -25,7 +25,9 @@ public sealed class HistoryViewModel : PageViewModel
         Load();
     }
 
-    public override string Title => "Histórico";
+    public override string Title => "Histórico e desfazer";
+
+    public override string Icon => "\uE81C";
 
     public ICommand UndoSessionCommand { get; }
     public ICommand UndoChangeCommand { get; }

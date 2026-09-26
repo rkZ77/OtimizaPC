@@ -383,6 +383,16 @@ public static class Commands
         using var monitor = new GameplayMonitor(profiles, ctx.PresentMonPath, Path.Combine(ctx.DataDir, "gameplay-tmp"), AgentContext.Version);
         var store = ctx.Gameplay;
         monitor.StatusChanged += s => Ui.Muted($"  {DateTime.Now:HH:mm:ss}  {s}");
+        var lastLive = DateTime.MinValue;
+        monitor.LiveFps += (game, fps) =>
+        {
+            // No terminal, uma linha a cada 10 s basta para acompanhar.
+            if (fps is { } f && DateTime.Now - lastLive > TimeSpan.FromSeconds(10))
+            {
+                lastLive = DateTime.Now;
+                Ui.Line($"  {DateTime.Now:HH:mm:ss}  {game}: {f:0} FPS agora");
+            }
+        };
         monitor.Recorded += s =>
         {
             store.Save(s);
