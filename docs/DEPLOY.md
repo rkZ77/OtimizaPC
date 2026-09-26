@@ -2,6 +2,24 @@
 
 Mesmo desenho do Pickia: uma imagem Docker (API + site) no Railway, banco no Supabase.
 
+## Onde está hoje
+
+| Ambiente | Railway | Branch | URL |
+|---|---|---|---|
+| Produção | projeto `ample-energy`, serviço `OtimizaPC`, ambiente `production` | `main` | https://otimizapc-production.up.railway.app |
+| Staging (`noprod` do Pickia) | serviço `surprising-unity`, ambiente `dev` | `dev` | https://surprising-unity-dev.up.railway.app |
+
+Supabase: projeto `qntwjeeximnztzxwnejj`. As chaves da API REST (publishable/secret) não são usadas:
+o backend conecta direto no Postgres e precisa da **senha do banco** para montar as URLs do pooler.
+
+## Desenvolvimento local
+
+```powershell
+./scripts/dev-db.ps1        # Postgres portátil na porta 54329 (bancos fpsx e fpsx_test), sem Docker
+```
+
+O `.env` da raiz (fora do git) já aponta para esse banco, com `APP_ENV=development`.
+
 ## 1. Supabase (banco)
 
 1. Crie um projeto em supabase.com (região mais próxima dos clientes, ex.: São Paulo).
