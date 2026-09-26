@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app import auth, database
-from app.services import app_settings, catalog, licenses, payments, plans, telemetry, users
+from app.services import admin_insights, app_settings, catalog, licenses, payments, plans, telemetry, users
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(auth.require_admin)])
 
@@ -19,9 +19,61 @@ def metrics():
     return telemetry.metrics()
 
 
+Segment = Literal["subscriber", "trial", "free", "expired", "blocked", "admin", "expiring"]
+
+
+@router.get("/users/stats")
+def user_stats():
+    """Quebra da base: assinantes, teste, free, vencidos, bloqueados, admins."""
+    return admin_insights.user_stats()
+
+
 @router.get("/users")
-def list_users(q: str = "", page=Depends(_page)):
-    return {"users": users.search(q, *page)}
+def list_users(q: str = "", segment: Segment | None = None, page=Depends(_page)):
+    return admin_insights.list_users(q, segment, *page)
+
+
+@router.get("/users/{user_id}")
+def user_detail(user_id: int):
+    detail = admin_insights.user_detail(user_id)
+    if detail is None:
+        raise HTTPException(404, "Usuário não encontrado.")
+    return detail
+
+
+class RoleIn(BaseModel):
+    role: Literal["user", "admin"]
+
+
+@router.post("/users/{user_id}/role")
+def set_user_role(user_id: int, body: RoleIn, admin=Depends(auth.require_admin)):
+    # Tirar o proprio admin deixaria o painel sem dono se ele for o unico.
+    if user_id == admin["id"] and body.role != "admin":
+        raise HTTPException(400, "Você não pode remover o próprio acesso de admin.")
+    if admin_insights.set_role(user_id, body.role) == 0:
+        raise HTTPException(404, "Usuário não encontrado.")
+    catalog.audit(admin["id"], "user.role", str(user_id), body.model_dump())
+    return {"ok": True}
+
+
+@router.get("/finance")
+def finance():
+    return admin_insights.finance()
+
+
+@router.get("/funnel")
+def funnel(days: int = Query(30, ge=1, le=365)):
+    return admin_insights.funnel(days)
+
+
+@router.get("/engagement")
+def engagement():
+    return admin_insights.engagement()
+
+
+@router.get("/usage")
+def usage():
+    return admin_insights.usage()
 
 
 class ActiveIn(BaseModel):

@@ -1,13 +1,35 @@
+/*
+ * Secoes de configuracao do admin: planos, configuracoes, cupons, catalogo de
+ * otimizacoes, atualizacoes e listas somente leitura. Usadas por Admin.tsx.
+ */
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import api, { errorMessage } from '../services/api'
-import PageShell from '../components/PageShell'
-import { Alert, Badge, Button, Card, EmptyState, Input, Spinner, StatTile, Tabs } from '../components/ui'
-import { dateTime, money, STATUS_LABEL, TIER_LABEL } from '../lib/format'
+import api, { errorMessage } from '../../services/api'
+import { Alert, Badge, Button, Card, EmptyState, Input, Spinner } from '../../components/ui'
+import { dateTime, money, TIER_LABEL } from '../../lib/format'
 
-type Row = Record<string, unknown>
+export type Row = Record<string, unknown>
+
+/**
+ * Cabecalho de secao do admin: compacto e alinhado a' esquerda. O SectionHead
+ * do Pickia e' de vitrine (grande e centralizado) e, entre tabelas, deixava o
+ * titulo solto longe do conteudo que ele nomeia.
+ */
+export function AdminHead({ title, sub, className }: { title: string; sub?: string; className?: string }) {
+  return (
+    <div className={className ?? 'mb-3'}>
+      <h3 className="font-display text-base font-bold text-ink-1">{title}</h3>
+      {sub && <p className="text-xs text-ink-3 mt-0.5">{sub}</p>}
+    </div>
+  )
+}
+
+/** Status de pagamento em portugues (o provedor manda em ingles). */
+export const PAY_STATUS: Record<string, string> = {
+  approved: 'Aprovado', pending: 'Pendente', rejected: 'Recusado', refunded: 'Reembolsado', cancelled: 'Cancelado',
+}
 
 /** Carrega uma lista do admin com estado de erro e recarga. */
-function useList<T = Row>(path: string, key: string) {
+export function useList<T = Row>(path: string, key: string) {
   const [items, setItems] = useState<T[] | null>(null)
   const [error, setError] = useState('')
   const reload = useCallback(() => {
@@ -17,7 +39,7 @@ function useList<T = Row>(path: string, key: string) {
   return { items, error, reload, setError }
 }
 
-function Table({ head, children }: { head: string[]; children: ReactNode }) {
+export function Table({ head, children }: { head: string[]; children: ReactNode }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-line">
       <table className="w-full min-w-[720px] text-sm">
@@ -30,123 +52,17 @@ function Table({ head, children }: { head: string[]; children: ReactNode }) {
   )
 }
 
-function Loading<T>({ items, error, children }: { items: T[] | null; error: string; children: (items: T[]) => ReactNode }) {
+export function Loading<T>({ items, error, children }: { items: T[] | null; error: string; children: (items: T[]) => ReactNode }) {
   if (error) return <Alert>{error}</Alert>
   if (!items) return <Spinner />
   if (items.length === 0) return <EmptyState title="Nada por aqui ainda." />
   return <>{children(items)}</>
 }
 
-// ─── Métricas ───────────────────────────────────────────────────────────
-function Metrics() {
-  const [m, setM] = useState<Row | null>(null)
-  const [error, setError] = useState('')
-  useEffect(() => { api.get('/admin/metrics').then(({ data }) => setM(data)).catch((e) => setError(errorMessage(e))) }, [])
-  if (error) return <Alert>{error}</Alert>
-  if (!m) return <Spinner />
-  const cards: [string, string][] = [
-    ['Contas', String(m.users)],
-    ['Licenças ativas', String(m.active_licenses)],
-    ['Em teste', String(m.trials)],
-    ['PCs ativos', String(m.devices)],
-    ['PCs vistos em 7 dias', String(m.devices_7d)],
-    ['Receita em 30 dias', money(Number(m.revenue_30d_cents))],
-  ]
-  const opts = (m.optimizations_30d as Row[]) ?? []
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
-        {cards.map(([label, value]) => <StatTile key={label} label={label} value={value} />)}
-      </div>
-      <h3 className="font-semibold text-ink-1">Otimizações nos últimos 30 dias (telemetria consentida)</h3>
-      {opts.length === 0 ? <EmptyState title="Sem dados de telemetria ainda." /> : (
-        <Table head={['Otimização', 'Sucesso', 'Falha']}>
-          {opts.map((o) => (
-            <tr key={String(o.optimization_id)}><td className="p-3">{String(o.optimization_id)}</td><td className="p-3 text-accent-ink">{String(o.ok)}</td><td className="p-3 text-danger">{String(o.failed)}</td></tr>
-          ))}
-        </Table>
-      )}
-    </div>
-  )
-}
-
-// ─── Usuários ───────────────────────────────────────────────────────────
-function Users() {
-  const [q, setQ] = useState('')
-  const { items, error, reload, setError } = useList(`/admin/users?q=${encodeURIComponent(q)}`, 'users')
-  const [grant, setGrant] = useState<{ user_id: number; plan_key: string } | null>(null)
-  const toggle = async (u: Row) => {
-    try { await api.post(`/admin/users/${u.id}/active`, { active: !u.active }); reload() } catch (e) { setError(errorMessage(e)) }
-  }
-  const doGrant = async () => {
-    if (!grant) return
-    try { await api.post('/admin/licenses/grant', grant); setGrant(null); reload() } catch (e) { setError(errorMessage(e)) }
-  }
-  return (
-    <div className="space-y-4">
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por e-mail ou nome" className="w-full max-w-sm rounded-md border border-line bg-surface-2 px-3 py-2.5 min-h-[44px] text-ink-1" />
-      {grant && (
-        <Card className="flex flex-wrap items-end gap-3">
-          <p className="w-full text-sm text-ink-3">Licença cortesia para o usuário {grant.user_id}. Soma os dias do plano ao que ele já tem.</p>
-          <select value={grant.plan_key} onChange={(e) => setGrant({ ...grant, plan_key: e.target.value })} className="rounded-md border border-line bg-surface-2 px-3 py-2.5 text-ink-1">
-            {['starter', 'pro', 'ultimate'].map((p) => <option key={p} value={p}>{TIER_LABEL[p]}</option>)}
-          </select>
-          <Button size="sm" onClick={doGrant}>Conceder</Button>
-          <Button size="sm" variant="link" onClick={() => setGrant(null)}>Cancelar</Button>
-        </Card>
-      )}
-      <Loading items={items} error={error}>{(rows) => (
-        <Table head={['ID', 'E-mail', 'Nome', 'Papel', 'PCs', 'Desde', '']}>
-          {rows.map((u) => (
-            <tr key={String(u.id)}>
-              <td className="p-3">{String(u.id)}</td><td className="p-3 text-ink-1">{String(u.email)}</td><td className="p-3">{String(u.name)}</td>
-              <td className="p-3">{u.role === 'admin' ? <Badge tone="purple">admin</Badge> : 'cliente'}</td>
-              <td className="p-3">{String(u.devices)}</td><td className="p-3 text-ink-3">{dateTime(String(u.created_at))}</td>
-              <td className="p-3 flex gap-2">
-                <Button size="sm" variant="subtle" onClick={() => setGrant({ user_id: Number(u.id), plan_key: 'pro' })}>Licença</Button>
-                <Button size="sm" variant={u.active ? 'danger' : 'ghost'} onClick={() => toggle(u)}>{u.active ? 'Bloquear' : 'Reativar'}</Button>
-              </td>
-            </tr>
-          ))}
-        </Table>
-      )}</Loading>
-    </div>
-  )
-}
-
-// ─── Licenças ───────────────────────────────────────────────────────────
-function Licenses() {
-  const { items, error, reload, setError } = useList('/admin/licenses', 'licenses')
-  const act = async (fn: () => Promise<unknown>) => { try { await fn(); reload() } catch (e) { setError(errorMessage(e)) } }
-  return (
-    <Loading items={items} error={error}>{(rows) => (
-      <Table head={['ID', 'Conta', 'Plano', 'Status', 'Vence', 'PCs', '']}>
-        {rows.map((l) => (
-          <tr key={String(l.id)}>
-            <td className="p-3">{String(l.id)}</td><td className="p-3 text-ink-1">{String(l.email)}</td>
-            <td className="p-3">{TIER_LABEL[String(l.tier)] ?? String(l.plan_key)}</td>
-            <td className="p-3"><Badge tone={l.status === 'active' ? 'green' : l.status === 'trial' ? 'amber' : 'red'}>{STATUS_LABEL[String(l.status)] ?? String(l.status)}</Badge></td>
-            <td className="p-3 text-ink-3">{dateTime(String(l.expires_at))}</td><td className="p-3">{String(l.devices)}/{String(l.max_devices)}</td>
-            <td className="p-3 flex gap-2">
-              <Button size="sm" variant="subtle" onClick={() => act(() => api.post(`/admin/licenses/${l.id}/extend`, { days: 30 }))}>+30 dias</Button>
-              {l.status === 'blocked'
-                ? <Button size="sm" variant="ghost" onClick={() => act(() => api.post(`/admin/licenses/${l.id}/block`, { blocked: false }))}>Desbloquear</Button>
-                : <Button size="sm" variant="danger" onClick={() => {
-                    const reason = window.prompt('Motivo do bloqueio (aparece no registro de auditoria):')
-                    if (reason !== null) act(() => api.post(`/admin/licenses/${l.id}/block`, { blocked: true, reason }))
-                  }}>Bloquear</Button>}
-            </td>
-          </tr>
-        ))}
-      </Table>
-    )}</Loading>
-  )
-}
-
 // ─── Planos ─────────────────────────────────────────────────────────────
 interface PlanRow { key: string; name: string; tier: string; description: string; price_cents: number; days: number; max_devices: number; features: string[]; active: boolean; sort: number }
 
-function Plans() {
+export function Plans() {
   const { items, error, reload, setError } = useList<PlanRow>('/admin/plans', 'plans')
   const [edit, setEdit] = useState<PlanRow | null>(null)
   const [saved, setSaved] = useState('')
@@ -205,7 +121,7 @@ function Plans() {
 }
 
 // ─── Configurações ──────────────────────────────────────────────────────
-function Settings() {
+export function Settings() {
   const [s, setS] = useState<Row | null>(null)
   const [msg, setMsg] = useState<{ tone: 'ok' | 'danger'; text: string } | null>(null)
   useEffect(() => { api.get('/admin/settings').then(({ data }) => setS(data.settings)).catch((e) => setMsg({ tone: 'danger', text: errorMessage(e) })) }, [])
@@ -231,7 +147,7 @@ function Settings() {
 }
 
 // ─── Cupons ─────────────────────────────────────────────────────────────
-function Coupons() {
+export function Coupons() {
   const { items, error, reload, setError } = useList('/admin/coupons', 'coupons')
   const [form, setForm] = useState({ code: '', percent_off: 10, max_uses: '' })
   const save = async (e: FormEvent) => {
@@ -268,7 +184,7 @@ function Coupons() {
 interface Def { id: string; name: string; category: string; classification: string; risk: string; min_plan: string; enabled: boolean }
 interface Override { kind: string; id: string; enabled: boolean | null; risk: string | null; min_plan: string | null; description: string | null }
 
-function Catalog() {
+export function Catalog() {
   const [data, setData] = useState<{ overrides: Override[]; definitions: Def[] } | null>(null)
   const [error, setError] = useState('')
   const load = useCallback(() => { api.get('/admin/catalog').then(({ data }) => setData(data)).catch((e) => setError(errorMessage(e))) }, [])
@@ -314,7 +230,7 @@ function Catalog() {
 }
 
 // ─── Releases ───────────────────────────────────────────────────────────
-function Releases() {
+export function Releases() {
   const { items, error, reload, setError } = useList('/admin/releases', 'releases')
   const [form, setForm] = useState({ component: 'agent', version: '', url: '', sha256: '', notes: '' })
   const publish = async (e: FormEvent) => {
@@ -352,7 +268,7 @@ function Releases() {
 }
 
 // ─── Listas somente leitura ─────────────────────────────────────────────
-function ReadOnly({ path, keyName, head, row }: { path: string; keyName: string; head: string[]; row: (r: Row) => ReactNode[] }) {
+export function ReadOnly({ path, keyName, head, row }: { path: string; keyName: string; head: string[]; row: (r: Row) => ReactNode[] }) {
   const { items, error } = useList(path, keyName)
   return (
     <Loading items={items} error={error}>{(rows) => (
@@ -363,36 +279,3 @@ function ReadOnly({ path, keyName, head, row }: { path: string; keyName: string;
   )
 }
 
-type Tab = 'metricas' | 'usuarios' | 'licencas' | 'planos' | 'config' | 'cupons' | 'catalogo' | 'releases' | 'pagamentos' | 'eventos' | 'pcs' | 'erros' | 'auditoria'
-
-export default function Admin() {
-  const [tab, setTab] = useState<Tab>('metricas')
-  return (
-    <PageShell title="Admin" noindex width="full" bar={{ title: 'Admin', sub: 'Toda alteração feita aqui fica registrada na auditoria.' }}>
-      <Tabs<Tab> value={tab} onChange={setTab} items={[
-        { key: 'metricas', label: 'Métricas' }, { key: 'usuarios', label: 'Usuários' }, { key: 'licencas', label: 'Licenças' },
-        { key: 'planos', label: 'Planos' }, { key: 'config', label: 'Configurações' }, { key: 'cupons', label: 'Cupons' },
-        { key: 'catalogo', label: 'Otimizações' }, { key: 'releases', label: 'Atualizações' }, { key: 'pagamentos', label: 'Pagamentos' },
-        { key: 'eventos', label: 'Webhooks' }, { key: 'pcs', label: 'PCs' }, { key: 'erros', label: 'Erros' }, { key: 'auditoria', label: 'Auditoria' },
-      ]} />
-      {tab === 'metricas' && <Metrics />}
-      {tab === 'usuarios' && <Users />}
-      {tab === 'licencas' && <Licenses />}
-      {tab === 'planos' && <Plans />}
-      {tab === 'config' && <Settings />}
-      {tab === 'cupons' && <Coupons />}
-      {tab === 'catalogo' && <Catalog />}
-      {tab === 'releases' && <Releases />}
-      {tab === 'pagamentos' && <ReadOnly path="/admin/payments" keyName="payments" head={['ID', 'Conta', 'Plano', 'Valor', 'Status', 'Data']}
-        row={(p) => [String(p.id), String(p.email ?? ''), String(p.plan_key), money(Number(p.amount_cents)), String(p.status), dateTime(String(p.created_at))]} />}
-      {tab === 'eventos' && <ReadOnly path="/admin/payment-events" keyName="events" head={['Data', 'Origem', 'Status', 'Pagamento', 'Detalhe']}
-        row={(e) => [dateTime(String(e.created_at)), String(e.source), String(e.status), String(e.provider_payment_id), String(e.detail)]} />}
-      {tab === 'pcs' && <ReadOnly path="/admin/devices" keyName="devices" head={['Conta', 'PC', 'Windows', 'App', 'Visto', 'Status']}
-        row={(d) => [String(d.email), String(d.name), String(d.windows_build), String(d.agent_version), dateTime(String(d.last_seen_at)), d.deactivated_at ? 'desativado' : 'ativo']} />}
-      {tab === 'erros' && <ReadOnly path="/admin/errors" keyName="errors" head={['Data', 'PC', 'Evento', 'Otimização', 'Detalhe', 'Versão']}
-        row={(e) => [dateTime(String(e.created_at)), String(e.device_name ?? ''), String(e.event), String(e.optimization_id ?? ''), JSON.stringify(e.detail), String(e.agent_version)]} />}
-      {tab === 'auditoria' && <ReadOnly path="/admin/audit" keyName="entries" head={['Data', 'Admin', 'Ação', 'Alvo', 'Detalhe']}
-        row={(a) => [dateTime(String(a.created_at)), String(a.email ?? ''), String(a.action), String(a.target), JSON.stringify(a.detail)]} />}
-    </PageShell>
-  )
-}

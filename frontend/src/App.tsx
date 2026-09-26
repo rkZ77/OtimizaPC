@@ -9,7 +9,7 @@ import Home from './pages/Home'
 import Planos from './pages/Planos'
 import Download from './pages/Download'
 import Conta from './pages/Conta'
-import Admin from './pages/Admin'
+import Admin from './pages/admin/Admin'
 import { Cadastro, Entrar } from './pages/Auth'
 import { NotFound, Privacidade, Termos } from './pages/Legal'
 

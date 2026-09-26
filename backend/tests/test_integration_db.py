@@ -127,6 +127,56 @@ def test_ciclo_completo_trial_compra_dispositivos_telemetria(api, db):
     assert api.get("/api/account/benchmarks", headers=alice).json()["benchmarks"][0]["avg_fps"] == 142
 
 
+def test_admin_quebra_da_base_financeiro_funil_e_ficha(api, db):
+    from app.services import payments
+
+    admin = _register(api, "dono@fpsx.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'dono@fpsx.app'")
+
+    # Um de cada segmento.
+    _register(api, "teste@fpsx.app")                      # trial (cadastro ganha trial)
+    free = _register(api, "free@fpsx.app")
+    db.execute("DELETE FROM licenses WHERE user_id = (SELECT id FROM users WHERE email = 'free@fpsx.app')")
+    assinante = _register(api, "assinante@fpsx.app")
+    uid = api.get("/api/auth/me", headers=assinante).json()["user"]["id"]
+    payments.apply_approved_payment(payments.NormalizedPayment("mercadopago", "mp-9", "approved", 2490, f"{uid}:pro:"), "teste")
+    _activate(api, assinante, H1)
+    _register(api, "vencido@fpsx.app")
+    db.execute("UPDATE licenses SET expires_at = now() - interval '2 days' WHERE user_id = (SELECT id FROM users WHERE email = 'vencido@fpsx.app')")
+    _register(api, "bloqueado@fpsx.app")
+    db.execute("UPDATE users SET active = FALSE WHERE email = 'bloqueado@fpsx.app'")
+    assert free
+
+    stats = api.get("/api/admin/users/stats", headers=admin).json()
+    assert (stats["total"], stats["admins"], stats["subscribers"], stats["trial"], stats["free"], stats["expired"], stats["blocked"]) == (6, 1, 1, 1, 1, 1, 1)
+    assert stats["subscribers_by_tier"] == [{"tier": "pro", "n": 1}]
+
+    subs = api.get("/api/admin/users?segment=subscriber", headers=admin).json()
+    assert subs["total"] == 1 and subs["users"][0]["email"] == "assinante@fpsx.app"
+    assert subs["users"][0]["devices"] == 1
+    assert api.get("/api/admin/users?q=venc", headers=admin).json()["users"][0]["segment"] == "expired"
+
+    ficha = api.get(f"/api/admin/users/{uid}", headers=admin).json()
+    assert len(ficha["licenses"]) == 2 and len(ficha["devices"]) == 1 and len(ficha["payments"]) == 1
+
+    fin = api.get("/api/admin/finance", headers=admin).json()
+    assert fin["total_cents"] == 2490 and fin["count"] == 1 and fin["by_plan"][0]["plan_key"] == "pro"
+
+    funil = api.get("/api/admin/funnel?days=30", headers=admin).json()
+    assert funil["signed_up"] == 5 and funil["activated_pc"] == 1 and funil["paid"] == 1
+    assert funil["never_activated"] == 4
+
+    eng = api.get("/api/admin/engagement", headers=admin).json()
+    assert eng["active_7d"] == 1 and len(eng["lapsed_30d"]) == 1
+    assert api.get("/api/admin/usage", headers=admin).status_code == 200
+
+    # Promover e proteger o proprio acesso.
+    me = api.get("/api/auth/me", headers=admin).json()["user"]["id"]
+    assert api.post(f"/api/admin/users/{me}/role", json={"role": "user"}, headers=admin).status_code == 400
+    assert api.post(f"/api/admin/users/{uid}/role", json={"role": "admin"}, headers=admin).status_code == 200
+    assert api.get("/api/admin/users/stats", headers=admin).json()["admins"] == 2
+
+
 def test_admin_planos_config_catalogo_e_auditoria(api, db):
     from app import signing
 
