@@ -14,6 +14,8 @@ export default defineConfig({
           const p = id.replace(/\\/g, '/')
           if (!p.includes('/node_modules/')) return
           if (/\/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(p)) return 'vendor-react'
+          // Como no Pickia: motion-dom e motion-utils sao irmaos do framer.
+          if (/\/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(p)) return 'vendor-motion'
           if (/\/node_modules\/axios\//.test(p)) return 'vendor-net'
         },
       },
@@ -21,6 +23,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    proxy: { '/api': 'http://127.0.0.1:8000' },
+    // API_PROXY permite rodar o site local contra outra API (ex.: staging).
+    proxy: { '/api': { target: process.env.API_PROXY ?? 'http://127.0.0.1:8000', changeOrigin: true } },
   },
 })

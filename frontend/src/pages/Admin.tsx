@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import api, { errorMessage } from '../services/api'
-import { PageShell, PageTitle, Tabs } from '../components/Layout'
-import { Alert, Badge, Button, Card, EmptyState, Field, Spinner } from '../components/ui'
+import PageShell from '../components/PageShell'
+import { Alert, Badge, Button, Card, EmptyState, Input, Spinner, StatTile, Tabs } from '../components/ui'
 import { dateTime, money, STATUS_LABEL, TIER_LABEL } from '../lib/format'
 
 type Row = Record<string, unknown>
@@ -56,9 +56,7 @@ function Metrics() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
-        {cards.map(([label, value]) => (
-          <Card key={label}><p className="text-2xl font-bold text-ink-1">{value}</p><p className="text-sm text-ink-3">{label}</p></Card>
-        ))}
+        {cards.map(([label, value]) => <StatTile key={label} label={label} value={value} />)}
       </div>
       <h3 className="font-semibold text-ink-1">Otimizações nos últimos 30 dias (telemetria consentida)</h3>
       {opts.length === 0 ? <EmptyState title="Sem dados de telemetria ainda." /> : (
@@ -102,7 +100,7 @@ function Users() {
           {rows.map((u) => (
             <tr key={String(u.id)}>
               <td className="p-3">{String(u.id)}</td><td className="p-3 text-ink-1">{String(u.email)}</td><td className="p-3">{String(u.name)}</td>
-              <td className="p-3">{u.role === 'admin' ? <Badge tone="info">admin</Badge> : 'cliente'}</td>
+              <td className="p-3">{u.role === 'admin' ? <Badge tone="purple">admin</Badge> : 'cliente'}</td>
               <td className="p-3">{String(u.devices)}</td><td className="p-3 text-ink-3">{dateTime(String(u.created_at))}</td>
               <td className="p-3 flex gap-2">
                 <Button size="sm" variant="subtle" onClick={() => setGrant({ user_id: Number(u.id), plan_key: 'pro' })}>Licença</Button>
@@ -127,7 +125,7 @@ function Licenses() {
           <tr key={String(l.id)}>
             <td className="p-3">{String(l.id)}</td><td className="p-3 text-ink-1">{String(l.email)}</td>
             <td className="p-3">{TIER_LABEL[String(l.tier)] ?? String(l.plan_key)}</td>
-            <td className="p-3"><Badge tone={l.status === 'active' ? 'ok' : l.status === 'trial' ? 'info' : 'danger'}>{STATUS_LABEL[String(l.status)] ?? String(l.status)}</Badge></td>
+            <td className="p-3"><Badge tone={l.status === 'active' ? 'green' : l.status === 'trial' ? 'amber' : 'red'}>{STATUS_LABEL[String(l.status)] ?? String(l.status)}</Badge></td>
             <td className="p-3 text-ink-3">{dateTime(String(l.expires_at))}</td><td className="p-3">{String(l.devices)}/{String(l.max_devices)}</td>
             <td className="p-3 flex gap-2">
               <Button size="sm" variant="subtle" onClick={() => act(() => api.post(`/admin/licenses/${l.id}/extend`, { days: 30 }))}>+30 dias</Button>
@@ -170,18 +168,18 @@ function Plans() {
       {edit && (
         <Card>
           <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-            <Field label="Chave" value={edit.key} onChange={(e) => setEdit({ ...edit, key: e.target.value })} required pattern="[a-z0-9_-]{2,40}" hint="Minúsculas, sem espaço. Não mude a chave de plano já vendido." />
-            <Field label="Nome" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} required />
+            <Input label="Chave" value={edit.key} onChange={(e) => setEdit({ ...edit, key: e.target.value })} required pattern="[a-z0-9_-]{2,40}" hint="Minúsculas, sem espaço. Não mude a chave de plano já vendido." />
+            <Input label="Nome" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} required />
             <label className="block"><span className="mb-1.5 block text-sm font-medium text-ink-2">Nível</span>
               <select value={edit.tier} onChange={(e) => setEdit({ ...edit, tier: e.target.value })} className="w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 min-h-[44px] text-ink-1">
                 {['free', 'starter', 'pro', 'ultimate', 'custom'].map((t) => <option key={t} value={t}>{TIER_LABEL[t]}</option>)}
               </select>
             </label>
-            <Field label="Preço (R$)" type="number" step="0.01" min="0" value={(edit.price_cents / 100).toFixed(2)} onChange={(e) => setEdit({ ...edit, price_cents: Math.round(Number(e.target.value) * 100) })} />
-            <Field label="Dias" type="number" min="1" value={edit.days} onChange={(e) => setEdit({ ...edit, days: Number(e.target.value) })} />
-            <Field label="PCs" type="number" min="1" value={edit.max_devices} onChange={(e) => setEdit({ ...edit, max_devices: Number(e.target.value) })} />
-            <Field label="Descrição" value={edit.description} onChange={(e) => setEdit({ ...edit, description: e.target.value })} />
-            <Field label="Ordem" type="number" value={edit.sort} onChange={(e) => setEdit({ ...edit, sort: Number(e.target.value) })} />
+            <Input label="Preço (R$)" type="number" step="0.01" min="0" value={(edit.price_cents / 100).toFixed(2)} onChange={(e) => setEdit({ ...edit, price_cents: Math.round(Number(e.target.value) * 100) })} />
+            <Input label="Dias" type="number" min="1" value={edit.days} onChange={(e) => setEdit({ ...edit, days: Number(e.target.value) })} />
+            <Input label="PCs" type="number" min="1" value={edit.max_devices} onChange={(e) => setEdit({ ...edit, max_devices: Number(e.target.value) })} />
+            <Input label="Descrição" value={edit.description} onChange={(e) => setEdit({ ...edit, description: e.target.value })} />
+            <Input label="Ordem" type="number" value={edit.sort} onChange={(e) => setEdit({ ...edit, sort: Number(e.target.value) })} />
             <label className="sm:col-span-2 block"><span className="mb-1.5 block text-sm font-medium text-ink-2">Itens mostrados no site (um por linha)</span>
               <textarea rows={5} value={edit.features.join('\n')} onChange={(e) => setEdit({ ...edit, features: e.target.value.split('\n').map((f) => f.trim()).filter(Boolean) })} className="w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 text-ink-1" />
             </label>
@@ -196,7 +194,7 @@ function Plans() {
             <tr key={p.key}>
               <td className="p-3">{p.key}</td><td className="p-3 text-ink-1">{p.name}</td><td className="p-3">{TIER_LABEL[p.tier]}</td>
               <td className="p-3">{money(p.price_cents)}</td><td className="p-3">{p.days}</td><td className="p-3">{p.max_devices}</td>
-              <td className="p-3">{p.active ? <Badge tone="ok">sim</Badge> : <Badge>não</Badge>}</td>
+              <td className="p-3">{p.active ? <Badge tone="green">sim</Badge> : <Badge>não</Badge>}</td>
               <td className="p-3"><Button size="sm" variant="subtle" onClick={() => setEdit({ ...p, features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features })}>Editar</Button></td>
             </tr>
           ))}
@@ -219,13 +217,13 @@ function Settings() {
     <div className="max-w-lg space-y-5">
       {msg && <Alert tone={msg.tone}>{msg.text}</Alert>}
       <Card className="space-y-4">
-        <Field label="Dias de teste grátis (0 desliga)" type="number" min="0" max="90" defaultValue={Number(s.trial_days)} onBlur={(e) => save('trial_days', Number(e.target.value))} />
+        <Input label="Dias de teste grátis (0 desliga)" type="number" min="0" max="90" defaultValue={Number(s.trial_days)} onBlur={(e) => save('trial_days', Number(e.target.value))} />
         <label className="block"><span className="mb-1.5 block text-sm font-medium text-ink-2">Plano do teste</span>
           <select defaultValue={String(s.trial_plan)} onChange={(e) => save('trial_plan', e.target.value)} className="w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 min-h-[44px] text-ink-1">
             {['starter', 'pro', 'ultimate'].map((p) => <option key={p} value={p}>{TIER_LABEL[p]}</option>)}
           </select>
         </label>
-        <Field label="Dias que o app funciona offline" type="number" min="0" max="90" defaultValue={Number(s.offline_grace_days)} onBlur={(e) => save('offline_grace_days', Number(e.target.value))} />
+        <Input label="Dias que o app funciona offline" type="number" min="0" max="90" defaultValue={Number(s.offline_grace_days)} onBlur={(e) => save('offline_grace_days', Number(e.target.value))} />
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={Boolean(s.telemetry_enabled)} onChange={(e) => save('telemetry_enabled', e.target.checked)} /> Aceitar telemetria consentida</label>
       </Card>
     </div>
@@ -248,9 +246,9 @@ function Coupons() {
     <div className="space-y-4">
       <Card>
         <form onSubmit={save} className="grid gap-3 sm:grid-cols-4 sm:items-end">
-          <Field label="Código" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required pattern="[A-Z0-9_-]{3,40}" />
-          <Field label="Desconto (%)" type="number" min="1" max="100" value={form.percent_off} onChange={(e) => setForm({ ...form, percent_off: Number(e.target.value) })} />
-          <Field label="Máximo de usos" type="number" min="1" value={form.max_uses} onChange={(e) => setForm({ ...form, max_uses: e.target.value })} placeholder="sem limite" />
+          <Input label="Código" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required pattern="[A-Z0-9_-]{3,40}" />
+          <Input label="Desconto (%)" type="number" min="1" max="100" value={form.percent_off} onChange={(e) => setForm({ ...form, percent_off: Number(e.target.value) })} />
+          <Input label="Máximo de usos" type="number" min="1" value={form.max_uses} onChange={(e) => setForm({ ...form, max_uses: e.target.value })} placeholder="sem limite" />
           <Button type="submit">Salvar cupom</Button>
         </form>
       </Card>
@@ -332,9 +330,9 @@ function Releases() {
               <option value="agent">App (instalador)</option><option value="catalog">Catálogo</option><option value="game_profiles">Perfis de jogo</option><option value="engine">Motor</option>
             </select>
           </label>
-          <Field label="Versão" value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} required placeholder="0.2.0" />
-          <Field label="URL do download (https)" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://..." />
-          <Field label="SHA-256 do arquivo" value={form.sha256} onChange={(e) => setForm({ ...form, sha256: e.target.value.toLowerCase() })} pattern="[0-9a-f]{64}" />
+          <Input label="Versão" value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} required placeholder="0.2.0" />
+          <Input label="URL do download (https)" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://..." />
+          <Input label="SHA-256 do arquivo" value={form.sha256} onChange={(e) => setForm({ ...form, sha256: e.target.value.toLowerCase() })} pattern="[0-9a-f]{64}" />
           <label className="sm:col-span-2 block"><span className="mb-1.5 block text-sm font-medium text-ink-2">Notas da versão</span>
             <textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 text-ink-1" />
           </label>
@@ -370,13 +368,12 @@ type Tab = 'metricas' | 'usuarios' | 'licencas' | 'planos' | 'config' | 'cupons'
 export default function Admin() {
   const [tab, setTab] = useState<Tab>('metricas')
   return (
-    <PageShell>
-      <PageTitle title="Admin" subtitle="Toda alteração feita aqui fica registrada na auditoria." />
-      <Tabs<Tab> value={tab} onChange={setTab} tabs={[
-        { id: 'metricas', label: 'Métricas' }, { id: 'usuarios', label: 'Usuários' }, { id: 'licencas', label: 'Licenças' },
-        { id: 'planos', label: 'Planos' }, { id: 'config', label: 'Configurações' }, { id: 'cupons', label: 'Cupons' },
-        { id: 'catalogo', label: 'Otimizações' }, { id: 'releases', label: 'Atualizações' }, { id: 'pagamentos', label: 'Pagamentos' },
-        { id: 'eventos', label: 'Webhooks' }, { id: 'pcs', label: 'PCs' }, { id: 'erros', label: 'Erros' }, { id: 'auditoria', label: 'Auditoria' },
+    <PageShell title="Admin" noindex width="full" bar={{ title: 'Admin', sub: 'Toda alteração feita aqui fica registrada na auditoria.' }}>
+      <Tabs<Tab> value={tab} onChange={setTab} items={[
+        { key: 'metricas', label: 'Métricas' }, { key: 'usuarios', label: 'Usuários' }, { key: 'licencas', label: 'Licenças' },
+        { key: 'planos', label: 'Planos' }, { key: 'config', label: 'Configurações' }, { key: 'cupons', label: 'Cupons' },
+        { key: 'catalogo', label: 'Otimizações' }, { key: 'releases', label: 'Atualizações' }, { key: 'pagamentos', label: 'Pagamentos' },
+        { key: 'eventos', label: 'Webhooks' }, { key: 'pcs', label: 'PCs' }, { key: 'erros', label: 'Erros' }, { key: 'auditoria', label: 'Auditoria' },
       ]} />
       {tab === 'metricas' && <Metrics />}
       {tab === 'usuarios' && <Users />}

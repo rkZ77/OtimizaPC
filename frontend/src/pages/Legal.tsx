@@ -1,15 +1,15 @@
 import type { ReactNode } from 'react'
-import { PageShell, PageTitle } from '../components/Layout'
+import PageShell from '../components/PageShell'
 import { Button } from '../components/ui'
 
 function Prose({ children }: { children: ReactNode }) {
-  return <div className="max-w-3xl space-y-4 leading-relaxed text-ink-2 [&_h2]:mt-8 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-ink-1 [&_li]:ml-5 [&_li]:list-disc">{children}</div>
+  return <div className="space-y-4 leading-relaxed text-ink-2 [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-ink-1 [&_li]:ml-5 [&_li]:list-disc">{children}</div>
 }
 
 export function Privacidade() {
   return (
-    <PageShell>
-      <PageTitle title="Política de privacidade" subtitle="Coletamos o mínimo necessário para o produto funcionar, e nada sem você saber." />
+    <PageShell title="Política de privacidade" width="prose" revelacao={false}
+               bar={{ title: 'Política de privacidade', sub: 'Coletamos o mínimo necessário para o produto funcionar, e nada sem você saber.' }}>
       <Prose>
         <h2>O que fica só no seu PC</h2>
         <p>O resultado completo do diagnóstico, a lista de processos, os programas de inicialização, os backups e o histórico de alterações ficam na pasta de dados do FPSX no seu computador e não são enviados.</p>
@@ -21,6 +21,8 @@ export function Privacidade() {
         </ul>
         <h2>Dados de uso, só com permissão</h2>
         <p>Se você permitir no app, enviamos: quais otimizações foram aplicadas, se funcionaram, resultados de benchmark, versão do app e do Windows. Nunca enviamos arquivos, nomes de programas, caminhos de pasta ou conteúdo pessoal. Você pode desligar a qualquer momento em Configurações, e a fila local é apagada.</p>
+        <h2>Cookies</h2>
+        <p>O site usa só o cookie essencial de sessão (para manter você conectado) e guarda no navegador a sua escolha de tema.</p>
         <h2>Seus direitos</h2>
         <p>Você pode pedir acesso, correção ou exclusão dos seus dados pelo suporte. Ao excluir a conta, as licenças e os PCs vinculados são removidos.</p>
       </Prose>
@@ -30,8 +32,7 @@ export function Privacidade() {
 
 export function Termos() {
   return (
-    <PageShell>
-      <PageTitle title="Termos de uso" />
+    <PageShell title="Termos de uso" width="prose" revelacao={false} bar={{ title: 'Termos de uso' }}>
       <Prose>
         <h2>O que o FPSX faz</h2>
         <p>O FPSX analisa o seu PC e aplica, com a sua confirmação, apenas alterações de uma lista fechada, sempre com backup do estado anterior e opção de desfazer. Limpezas de cache e reparos de rede não têm estado anterior e são indicados como tal antes de aplicar.</p>
@@ -48,10 +49,10 @@ export function Termos() {
 
 export function NotFound() {
   return (
-    <PageShell narrow className="text-center">
-      <p className="text-5xl font-bold text-ink-1">404</p>
+    <PageShell title="Página não encontrada" noindex width="narrow" revelacao={false} mainClassName="text-center py-20">
+      <p className="font-display text-6xl font-extrabold text-ink-1">404</p>
       <p className="mt-3 text-ink-3">Esta página não existe.</p>
-      <Button className="mt-6" to="/">Voltar ao início</Button>
+      <div className="mt-6 flex justify-center"><Button to="/">Voltar ao início</Button></div>
     </PageShell>
   )
 }

@@ -1,20 +1,25 @@
 import { Check, Minus } from 'lucide-react'
-import { PageShell, PageTitle } from '../components/Layout'
+import PageShell from '../components/PageShell'
 import PlansGrid from '../components/PlansGrid'
+import { SectionHead } from '../components/ui'
 import { FEATURES, PLAN_ORDER, includes } from '../lib/features'
 import { TIER_LABEL } from '../lib/format'
 
 export default function Planos() {
   return (
-    <PageShell>
-      <PageTitle title="Planos" subtitle="Cada plano contém tudo do anterior. Desfazer alterações é liberado em todos os planos, sempre." />
+    <PageShell
+      title="Planos"
+      description="Planos do FPSX: do diagnóstico gratuito ao pacote completo. Cada plano contém o anterior, e desfazer é liberado em todos."
+      width="wide"
+      bar={{ title: 'Planos', sub: 'Cada plano contém tudo do anterior. Desfazer alterações é liberado em todos, sempre.' }}
+    >
       <PlansGrid />
 
-      <h2 className="mt-16 mb-4 text-xl font-bold text-ink-1">O que cada plano libera no app</h2>
-      <div className="overflow-x-auto rounded-xl border border-line">
+      <SectionHead className="mt-16" title="O que cada plano libera no app" sub="A mesma divisão que o app aplica com a sua licença." />
+      <div className="panel overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
-          <thead className="bg-surface-1 text-left">
-            <tr>
+          <thead className="text-left">
+            <tr className="border-b border-line">
               <th className="px-4 py-3 font-semibold text-ink-1">Recurso</th>
               {PLAN_ORDER.map((p) => <th key={p} className="px-3 py-3 text-center font-semibold text-ink-1">{TIER_LABEL[p]}</th>)}
             </tr>
@@ -36,7 +41,7 @@ export default function Planos() {
         </table>
       </div>
       <p className="mt-4 text-sm text-ink-3">
-        Pagamento por PIX ou cartão pelo Mercado Pago. Precisa de uma oferta para vários PCs ou para sua lan house? Fale com a gente pelo suporte.
+        Pagamento por PIX ou cartão pelo Mercado Pago. Precisa de uma oferta para vários PCs? Fale com o suporte.
       </p>
     </PageShell>
   )
