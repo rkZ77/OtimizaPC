@@ -151,6 +151,7 @@ class PlanIn(BaseModel):
     price_cents: int = Field(ge=0, le=10_000_000)
     days: int = Field(ge=1, le=3650)
     max_devices: int = Field(ge=1, le=100)
+    period: Literal["none", "monthly", "quarterly", "annual"] = "monthly"
     features: list[str] = Field(default_factory=list, max_length=20)
     active: bool = True
     sort: int = 0

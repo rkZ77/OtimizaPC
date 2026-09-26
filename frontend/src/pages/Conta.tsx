@@ -9,7 +9,7 @@ import {
   Alert, Badge, Button, EmptyState, ErrorState, Modal, ModalFooter, Panel, PanelHead, PanelList, PanelRow,
   PlanBadge, SkeletonRows, StatTile, Table, Tabs,
 } from '../components/ui'
-import { date, dateTime, money, STATUS_LABEL, TIER_LABEL } from '../lib/format'
+import { date, dateTime, money, planName, STATUS_LABEL, TIER_LABEL } from '../lib/format'
 
 interface Payment { id: number; plan_key: string; status: string; amount_cents: number; coupon_code: string | null; created_at: string }
 interface Bench { id: number; device_name: string; game_id: string; label: string; avg_fps: number; low1_fps: number; low01_fps: number; frametime_ms: number; created_at: string }
@@ -152,7 +152,7 @@ export default function Conta() {
                 rows={payments}
                 rowKey={(p) => String(p.id)}
                 columns={[
-                  { key: 'plano', header: 'Plano', cell: (p) => <span className="text-ink-1">{TIER_LABEL[p.plan_key] ?? p.plan_key}{p.coupon_code ? `, cupom ${p.coupon_code}` : ''}</span> },
+                  { key: 'plano', header: 'Plano', cell: (p) => <span className="text-ink-1">{planName(p.plan_key)}{p.coupon_code ? `, cupom ${p.coupon_code}` : ''}</span> },
                   { key: 'data', header: 'Data', cell: (p) => dateTime(p.created_at), hideOnMobile: true },
                   { key: 'valor', header: 'Valor', align: 'right', cell: (p) => <span className="font-mono">{money(p.amount_cents)}</span> },
                   { key: 'status', header: 'Status', align: 'right', cell: (p) => <Badge tone={p.status === 'approved' ? 'green' : 'amber'}>{p.status === 'approved' ? 'Aprovado' : p.status}</Badge> },

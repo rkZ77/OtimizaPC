@@ -6,19 +6,21 @@
 export const PLAN_ORDER = ['free', 'starter', 'pro', 'ultimate'] as const
 
 export const FEATURES: { label: string; plan: (typeof PLAN_ORDER)[number] }[] = [
-  { label: 'Scan completo do PC', plan: 'free' },
-  { label: 'Correções básicas comprovadas (Game Mode, energia, monitor, jogos em janela)', plan: 'free' },
+  { label: 'Diagnóstico completo do PC', plan: 'free' },
+  { label: 'O que cada otimização resolveria no seu PC', plan: 'free' },
+  { label: 'FPS medido automaticamente nas suas partidas', plan: 'free' },
   { label: 'Desfazer qualquer alteração', plan: 'free' },
-  { label: 'Resolver problemas encontrados (processos, pagefile, espaço)', plan: 'starter' },
-  { label: 'Jogo na placa de vídeo dedicada em notebook com duas GPUs', plan: 'starter' },
-  { label: 'Programas de inicialização', plan: 'starter' },
-  { label: 'Ferramentas de troubleshooting (shader cache, rede)', plan: 'starter' },
-  { label: 'Histórico de otimizações', plan: 'starter' },
-  { label: 'Perfis de jogo com correção automática (CS2, Fortnite, Minecraft)', plan: 'pro' },
+  { label: 'Aplicar as correções comprovadas do Windows', plan: 'starter' },
+  { label: 'Resolver problemas: processos, memória, disco e rede', plan: 'starter' },
+  { label: 'Driver de vídeo e backup: leva direto à ferramenta oficial', plan: 'starter' },
+  { label: 'Programas de inicialização e histórico', plan: 'starter' },
+  { label: 'Perfis de jogo: CS2, Fortnite e Minecraft', plan: 'pro' },
   { label: 'Configuração leve do jogo para PC fraco', plan: 'pro' },
-  { label: 'FPSX Benchmark antes e depois', plan: 'pro' },
-  { label: 'Relatórios', plan: 'pro' },
+  { label: 'Antes e depois do FPS nas suas partidas', plan: 'pro' },
+  { label: 'FPSX Benchmark e relatórios', plan: 'pro' },
   { label: 'Otimizações experimentais, com medição', plan: 'ultimate' },
+  { label: 'Novos jogos e otimizações em acesso antecipado', plan: 'ultimate' },
+  { label: 'Suporte prioritário', plan: 'ultimate' },
 ]
 
 export function includes(plan: string, feature: (typeof PLAN_ORDER)[number]): boolean {

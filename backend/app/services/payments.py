@@ -173,11 +173,15 @@ def quote(plan_key: str, coupon_code: str | None) -> dict:
     }
 
 
+PERIOD_LABEL = {"monthly": "mensal", "quarterly": "trimestral", "annual": "anual"}
+
+
 def create_checkout(user: dict, plan_key: str, coupon_code: str | None) -> dict:
     q = quote(plan_key, coupon_code)
     ref = make_reference(user["id"], plan_key, q["coupon"])
     url = provider().create_checkout(
-        title=f"FPSX {q['plan']['name']}", amount_cents=q["amount_cents"], reference=ref, payer_email=user["email"])
+        title=f"FPSX {q['plan']['name']} {PERIOD_LABEL.get(q['plan'].get('period', 'monthly'), '')}".strip(),
+        amount_cents=q["amount_cents"], reference=ref, payer_email=user["email"])
     return {"checkout_url": url, "amount_cents": q["amount_cents"]}
 
 
@@ -238,8 +242,9 @@ def _send_receipt(user_id: int, plan: dict, lic: dict, payment: NormalizedPaymen
         user = users.get_by_id(user_id)
         if user is None:
             return
+        label = f"{plan['name']} {PERIOD_LABEL.get(plan.get('period', 'monthly'), '')}".strip()
         email = email_templates.pagamento_aprovado(
-            user["name"], plan["name"], emails.data_br(lic["expires_at"]), emails.reais(payment.amount_cents), emails.site_url())
+            user["name"], label, emails.data_br(lic["expires_at"]), emails.reais(payment.amount_cents), emails.site_url())
         emails.send_later("payment_approved", user["email"], email, user_id=user_id,
                           dedupe_key=f"payment:{payment.provider}:{payment.provider_payment_id}")
     except Exception as e:  # recibo nunca desfaz a ativacao

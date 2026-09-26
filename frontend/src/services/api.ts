@@ -71,6 +71,11 @@ export interface Plan {
   days: number
   max_devices: number
   features: string[]
+  /** none (Free), monthly, quarterly, annual. */
+  period: 'none' | 'monthly' | 'quarterly' | 'annual'
+  /** Calculados no servidor: o front nao calcula preco. */
+  per_month_cents: number
+  savings_percent: number
 }
 
 export interface PlansResponse {

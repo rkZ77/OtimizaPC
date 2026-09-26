@@ -39,7 +39,7 @@ export function Termos() {
         <h2>Sem promessa de desempenho</h2>
         <p>Resultados dependem do hardware, do jogo e da configuração de cada PC. O FPSX não promete aumento de FPS ou redução de latência: ele mede antes e depois e informa o resultado real, inclusive quando não há ganho.</p>
         <h2>Licença</h2>
-        <p>Cada plano permite um número de PCs ativos ao mesmo tempo. Você pode trocar de PC desativando um na sua conta. A licença é pessoal e não pode ser revendida.</p>
+        <p>Cada assinatura vale para 1 PC ativo por vez. Você pode trocar de PC desativando o anterior em Minha conta. A licença é pessoal: não pode ser dividida, emprestada nem revendida.</p>
         <h2>Cancelamento</h2>
         <p>Planos não renovam sozinhos. Ao vencer, o app volta ao plano Free e todas as alterações já feitas continuam podendo ser desfeitas.</p>
       </Prose>

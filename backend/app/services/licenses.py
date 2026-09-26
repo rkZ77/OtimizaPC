@@ -144,7 +144,9 @@ def grant(cur, user_id: int, plan: dict, at: datetime) -> dict:
         (user_id,),
     )
     existing = [dict(r) for r in cur.fetchall()]
-    paid = [l for l in existing if l["status"] == "active" and l["plan_key"] == plan["key"]]
+    # Mesmo tier, qualquer periodo: quem tem o Pro mensal e compra o Pro anual
+    # soma os dias na mesma licenca, em vez de ficar com duas.
+    paid = [l for l in existing if l["status"] == "active" and l["tier"] == plan["tier"]]
     current_lic = best_license(paid, at)
     expires = extended_expiration(current_lic, plan["days"], at)
 

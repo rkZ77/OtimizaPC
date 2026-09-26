@@ -17,6 +17,19 @@ export function dateTime(iso: string | null | undefined): string {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+export const PERIOD_LABEL: Record<string, string> = {
+  monthly: 'mensal',
+  quarterly: 'trimestral',
+  annual: 'anual',
+}
+
+/** Nome do plano a partir da chave: "pro-anual" vira "Pro anual". */
+export function planName(key: string): string {
+  const [tier, suffix] = key.split('-')
+  const base = TIER_LABEL[tier] ?? key
+  return suffix ? `${base} ${suffix}` : base
+}
+
 export const TIER_LABEL: Record<string, string> = {
   free: 'Free',
   starter: 'Starter',

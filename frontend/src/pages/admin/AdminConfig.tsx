@@ -60,7 +60,9 @@ export function Loading<T>({ items, error, children }: { items: T[] | null; erro
 }
 
 // ─── Planos ─────────────────────────────────────────────────────────────
-interface PlanRow { key: string; name: string; tier: string; description: string; price_cents: number; days: number; max_devices: number; features: string[]; active: boolean; sort: number }
+interface PlanRow { key: string; name: string; tier: string; period: string; description: string; price_cents: number; days: number; max_devices: number; features: string[]; active: boolean; sort: number }
+
+const PERIOD_OPTIONS: Record<string, string> = { none: 'Sem cobrança (Free)', monthly: 'Mensal', quarterly: 'Trimestral', annual: 'Anual' }
 
 export function Plans() {
   const { items, error, reload, setError } = useList<PlanRow>('/admin/plans', 'plans')
@@ -76,7 +78,7 @@ export function Plans() {
       reload()
     } catch (err) { setError(errorMessage(err)) }
   }
-  const blank: PlanRow = { key: '', name: '', tier: 'custom', description: '', price_cents: 0, days: 30, max_devices: 1, features: [], active: true, sort: 10 }
+  const blank: PlanRow = { key: '', name: '', tier: 'custom', period: 'monthly', description: '', price_cents: 0, days: 30, max_devices: 1, features: [], active: true, sort: 10 }
   return (
     <div className="space-y-4">
       {saved && <Alert tone="ok">{saved}</Alert>}
@@ -89,6 +91,11 @@ export function Plans() {
             <label className="block"><span className="mb-1.5 block text-sm font-medium text-ink-2">Nível</span>
               <select value={edit.tier} onChange={(e) => setEdit({ ...edit, tier: e.target.value })} className="w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 min-h-[44px] text-ink-1">
                 {['free', 'starter', 'pro', 'ultimate', 'custom'].map((t) => <option key={t} value={t}>{TIER_LABEL[t]}</option>)}
+              </select>
+            </label>
+            <label className="block"><span className="mb-1.5 block text-sm font-medium text-ink-2">Período</span>
+              <select value={edit.period} onChange={(e) => setEdit({ ...edit, period: e.target.value })} className="w-full rounded-md border border-line bg-surface-2 px-3 py-2.5 min-h-[44px] text-ink-1">
+                {Object.entries(PERIOD_OPTIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </label>
             <Input label="Preço (R$)" type="number" step="0.01" min="0" value={(edit.price_cents / 100).toFixed(2)} onChange={(e) => setEdit({ ...edit, price_cents: Math.round(Number(e.target.value) * 100) })} />
@@ -105,10 +112,11 @@ export function Plans() {
         </Card>
       )}
       <Loading items={items} error={error}>{(rows) => (
-        <Table head={['Chave', 'Nome', 'Nível', 'Preço', 'Dias', 'PCs', 'Ativo', '']}>
+        <Table head={['Chave', 'Nome', 'Nível', 'Período', 'Preço', 'Dias', 'PCs', 'Ativo', '']}>
           {rows.map((p) => (
             <tr key={p.key}>
               <td className="p-3">{p.key}</td><td className="p-3 text-ink-1">{p.name}</td><td className="p-3">{TIER_LABEL[p.tier]}</td>
+              <td className="p-3">{PERIOD_OPTIONS[p.period] ?? p.period}</td>
               <td className="p-3">{money(p.price_cents)}</td><td className="p-3">{p.days}</td><td className="p-3">{p.max_devices}</td>
               <td className="p-3">{p.active ? <Badge tone="green">sim</Badge> : <Badge>não</Badge>}</td>
               <td className="p-3"><Button size="sm" variant="subtle" onClick={() => setEdit({ ...p, features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features })}>Editar</Button></td>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import api, { errorMessage } from '../../services/api'
 import { Alert, ErrorState, SkeletonRows, StatTile, Table } from '../../components/ui'
-import { dateTime, money, TIER_LABEL } from '../../lib/format'
+import { dateTime, money, planName, TIER_LABEL } from '../../lib/format'
 import { AdminHead, PAY_STATUS, ReadOnly } from './AdminConfig'
 
 /*
@@ -65,7 +65,7 @@ export default function AdminFinanceiro() {
             rowKey={(r) => r.plan_key}
             minWidth={320}
             columns={[
-              { key: 'p', header: 'Plano', cell: (r) => TIER_LABEL[r.plan_key] ?? r.plan_key },
+              { key: 'p', header: 'Plano', cell: (r) => planName(r.plan_key) },
               { key: 'n', header: 'Vendas', align: 'right', cell: (r) => <span className="font-mono">{r.count}</span> },
               { key: 'v', header: 'Receita', align: 'right', cell: (r) => <span className="font-mono text-ink-1">{money(r.total_cents)}</span> },
             ]}
@@ -81,7 +81,7 @@ export default function AdminFinanceiro() {
       <div>
         <AdminHead title="Pagamentos" />
         <ReadOnly path="/admin/payments" keyName="payments" head={['ID', 'Conta', 'Plano', 'Valor', 'Status', 'Data']}
-          row={(p) => [String(p.id), String(p.email ?? ''), TIER_LABEL[String(p.plan_key)] ?? String(p.plan_key), money(Number(p.amount_cents)), PAY_STATUS[String(p.status)] ?? String(p.status), dateTime(String(p.created_at))]} />
+          row={(p) => [String(p.id), String(p.email ?? ''), planName(String(p.plan_key)), money(Number(p.amount_cents)), PAY_STATUS[String(p.status)] ?? String(p.status), dateTime(String(p.created_at))]} />
       </div>
       <div>
         <AdminHead title="Webhooks e eventos de pagamento" sub="Toda notificação do Mercado Pago, aceita ou recusada." />

@@ -6,7 +6,7 @@ import {
   Alert, Badge, Button, Drawer, EmptyState, ErrorState, Pagination, Panel, PanelHead, PanelList, PanelRow,
   PillGroup, SearchInput, SkeletonRows, StatTile, Table, type BadgeTone,
 } from '../../components/ui'
-import { date, dateTime, money, STATUS_LABEL, TIER_LABEL } from '../../lib/format'
+import { date, dateTime, money, planName, STATUS_LABEL, TIER_LABEL } from '../../lib/format'
 
 /*
  * Usuarios, no desenho da aba do Pickia: a QUEBRA DA BASE em cartoes em cima
@@ -294,7 +294,7 @@ function FichaUsuario({ id, onClose, onChanged }: { id: number; onClose: () => v
               {f.payments.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Nenhum pagamento.</span></PanelRow> : f.payments.map((p) => (
                 <PanelRow key={p.id}>
                   <div className="flex-1 min-w-0 text-sm">
-                    <p className="text-ink-1">{TIER_LABEL[p.plan_key] ?? p.plan_key}{p.coupon_code ? `, cupom ${p.coupon_code}` : ''}</p>
+                    <p className="text-ink-1">{planName(p.plan_key)}{p.coupon_code ? `, cupom ${p.coupon_code}` : ''}</p>
                     <p className="text-xs text-ink-3">{dateTime(p.created_at)}</p>
                   </div>
                   <span className="font-mono text-sm text-ink-1">{money(p.amount_cents)}</span>

@@ -91,34 +91,44 @@ def test_ciclo_completo_trial_compra_dispositivos_telemetria(api, db):
 
     # Compra do Pro (webhook simulado pelo caminho unico de ativacao).
     uid = api.get("/api/auth/me", headers=alice).json()["user"]["id"]
-    paid = payments.NormalizedPayment("mercadopago", "mp-1", "approved", 2490, f"{uid}:pro:")
+    # Valor abaixo do preco atual (R$ 29,90) e' recusado: checkout adulterado.
+    cheap = payments.NormalizedPayment("mercadopago", "mp-0", "approved", 2490, f"{uid}:pro:")
+    assert payments.apply_approved_payment(cheap, "teste")["reason"] == "amount_mismatch"
+    paid = payments.NormalizedPayment("mercadopago", "mp-1", "approved", 2990, f"{uid}:pro:")
     result = payments.apply_approved_payment(paid, "teste")
     assert result["applied"] is True
     assert payments.apply_approved_payment(paid, "teste")["reason"] == "already_applied"
 
     overview = api.get("/api/account/overview", headers=alice).json()
-    assert overview["license"]["status"] == "active" and overview["license"]["max_devices"] == 2
-
-    # Pro: 2 PCs. O terceiro recebe 409 com a lista para trocar.
-    assert _activate(api, alice, H2).status_code == 200
-    third = _activate(api, alice, H3)
-    assert third.status_code == 409
-    devices = third.json()["detail"]["devices"]
-    assert len(devices) == 2
-
-    # "Trocar PC": desativa o PC 2 pelo site e o terceiro entra.
-    pc2 = next(d for d in devices if d["name"] == "PC-2")
-    assert api.post(f"/api/account/devices/{pc2['id']}/deactivate", headers=alice).status_code == 200
-    assert _activate(api, alice, H3).status_code == 200
-
-    # O PC 2 desativado perde acesso na hora.
-    pc2_token = signing.sign({"uid": uid, "device": H2})
-    assert api.post("/api/agent/refresh", json={"device_hash": H2}, headers={"X-Device-Token": pc2_token}).status_code == 401
+    assert overview["license"]["status"] == "active" and overview["license"]["max_devices"] == 1
 
     # O PC 1 continua ativo: refresh traz o plano novo (trial -> pro ativo).
     refreshed = api.post("/api/agent/refresh", json={"device_hash": H1}, headers={"X-Device-Token": token})
     assert refreshed.status_code == 200, refreshed.text
     assert signing.verify(refreshed.json()["token"])["status"] == "active"
+
+    # Pro anual em cima do mensal: soma na MESMA licenca, nao cria outra.
+    lic_before = overview["license"]
+    annual = payments.NormalizedPayment("mercadopago", "mp-2", "approved", 26910, f"{uid}:pro-anual:")
+    assert payments.apply_approved_payment(annual, "teste")["license_id"] == lic_before["id"]
+    lic_after = api.get("/api/account/overview", headers=alice).json()["license"]
+    from datetime import datetime, timedelta
+    gained = datetime.fromisoformat(lic_after["expires_at"]) - datetime.fromisoformat(lic_before["expires_at"])
+    assert gained == timedelta(days=365)
+
+    # Todo plano vale 1 PC: o segundo recebe 409 com a lista para trocar.
+    second = _activate(api, alice, H2)
+    assert second.status_code == 409
+    devices = second.json()["detail"]["devices"]
+    assert [d["name"] for d in devices] == ["PC-1"]
+
+    # "Trocar PC": desativa o PC 1 pelo site e o PC 2 entra.
+    assert api.post(f"/api/account/devices/{devices[0]['id']}/deactivate", headers=alice).status_code == 200
+    r2 = _activate(api, alice, H2)
+    assert r2.status_code == 200
+    # O PC 1 desativado perde acesso na hora.
+    assert api.post("/api/agent/refresh", json={"device_hash": H1}, headers={"X-Device-Token": token}).status_code == 401
+    token = r2.json()["token"]
 
     # Telemetria aceita so' o que reconhece.
     t = api.post("/api/agent/telemetry", headers={"X-Device-Token": token}, json={"events": [
@@ -145,7 +155,7 @@ def test_admin_quebra_da_base_financeiro_funil_e_ficha(api, db):
     db.execute("DELETE FROM licenses WHERE user_id = (SELECT id FROM users WHERE email = 'free@fpsx.app')")
     assinante = _register(api, "assinante@fpsx.app")
     uid = api.get("/api/auth/me", headers=assinante).json()["user"]["id"]
-    payments.apply_approved_payment(payments.NormalizedPayment("mercadopago", "mp-9", "approved", 2490, f"{uid}:pro:"), "teste")
+    payments.apply_approved_payment(payments.NormalizedPayment("mercadopago", "mp-9", "approved", 2990, f"{uid}:pro:"), "teste")
     _activate(api, assinante, H1)
     _register(api, "vencido@fpsx.app")
     db.execute("UPDATE licenses SET expires_at = now() - interval '2 days' WHERE user_id = (SELECT id FROM users WHERE email = 'vencido@fpsx.app')")
@@ -166,7 +176,7 @@ def test_admin_quebra_da_base_financeiro_funil_e_ficha(api, db):
     assert len(ficha["licenses"]) == 2 and len(ficha["devices"]) == 1 and len(ficha["payments"]) == 1
 
     fin = api.get("/api/admin/finance", headers=admin).json()
-    assert fin["total_cents"] == 2490 and fin["count"] == 1 and fin["by_plan"][0]["plan_key"] == "pro"
+    assert fin["total_cents"] == 2990 and fin["count"] == 1 and fin["by_plan"][0]["plan_key"] == "pro"
 
     funil = api.get("/api/admin/funnel?days=30", headers=admin).json()
     assert funil["signed_up"] == 5 and funil["activated_pc"] == 1 and funil["paid"] == 1
@@ -191,10 +201,15 @@ def test_admin_planos_config_catalogo_e_auditoria(api, db):
 
     assert api.get("/api/admin/metrics", headers=admin).json()["users"] == 1
 
-    # 0005 atualiza o texto do seed para os jogos novos.
-    pro = next(p for p in api.get("/api/public/plans").json()["plans"] if p["key"] == "pro")
-    assert "Perfis de jogo (CS2, Fortnite, Minecraft) e configuração leve para PC fraco" in pro["features"]
-    assert pro["features"][0] == "Tudo do Starter"
+    # 0006: 1 PC em todos, precos novos, trimestral e anual com economia
+    # calculada no servidor.
+    catalog = {p["key"]: p for p in api.get("/api/public/plans").json()["plans"]}
+    assert {k: catalog[k]["price_cents"] for k in ("starter", "pro", "ultimate")} == {"starter": 1990, "pro": 2990, "ultimate": 3990}
+    assert all(p["max_devices"] == 1 for p in catalog.values())
+    assert (catalog["pro-trimestral"]["days"], catalog["pro-trimestral"]["savings_percent"]) == (90, 10)
+    assert (catalog["pro-anual"]["days"], catalog["pro-anual"]["savings_percent"]) == (365, 25)
+    assert catalog["free"]["period"] == "none"
+    assert "Perfis de jogo: CS2, Fortnite e Minecraft" in catalog["pro"]["features"]
 
     plan = {"key": "pro", "name": "Pro", "tier": "pro", "description": "x", "price_cents": 2990, "days": 30,
             "max_devices": 3, "features": ["a"], "active": True, "sort": 2}
