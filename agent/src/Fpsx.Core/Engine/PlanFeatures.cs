@@ -5,6 +5,9 @@ public enum Feature
     /// <summary>Scan completo e relatório de diagnóstico.</summary>
     Scan,
 
+    /// <summary>Medir o FPS das partidas e listar. É o que mostra ao Free o que o PC entrega hoje.</summary>
+    GameplayMeasure,
+
     /// <summary>Correções comprovadas de configuração (Game Mode, energia, monitor).</summary>
     BasicFixes,
 
@@ -34,10 +37,14 @@ public enum Feature
 /// </summary>
 public static class PlanFeatures
 {
+    // Free só enxerga: diagnóstico, o que cada otimização melhoraria e o FPS
+    // das partidas. Aplicar qualquer coisa começa no Starter. Desfazer fica
+    // livre em todos: quem deixou de assinar ainda consegue voltar tudo.
     private static readonly Dictionary<Feature, string> MinPlan = new()
     {
         [Feature.Scan] = "free",
-        [Feature.BasicFixes] = "free",
+        [Feature.GameplayMeasure] = "free",
+        [Feature.BasicFixes] = "starter",
         [Feature.Rollback] = "free",
         [Feature.ProblemFixes] = "starter",
         [Feature.Startup] = "starter",
@@ -58,14 +65,15 @@ public static class PlanFeatures
     public static string Label(Feature f) => f switch
     {
         Feature.Scan => "Scan completo do PC",
-        Feature.BasicFixes => "Correções básicas comprovadas",
+        Feature.GameplayMeasure => "Medição automática do FPS das partidas",
+        Feature.BasicFixes => "Correções comprovadas do Windows",
         Feature.Rollback => "Desfazer qualquer alteração",
         Feature.ProblemFixes => "Resolver problemas encontrados",
         Feature.Startup => "Programas de inicialização",
         Feature.Troubleshooting => "Ferramentas de troubleshooting",
         Feature.History => "Histórico de otimizações",
         Feature.GameProfiles => "Perfis de jogo (CS2, Fortnite, Minecraft) e configuração leve para PC fraco",
-        Feature.Benchmark => "FPSX Benchmark",
+        Feature.Benchmark => "Antes e depois das partidas e FPSX Benchmark",
         Feature.Reports => "Relatórios",
         _ => "Otimizações experimentais",
     };

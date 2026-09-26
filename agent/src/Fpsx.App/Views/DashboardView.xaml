@@ -55,9 +55,15 @@
                                             <Button Content="{Binding FixLabel}" Style="{StaticResource Primary}"
                                                     CommandParameter="{Binding}"
                                                     Command="{Binding DataContext.FixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Visibility="{Binding HasFix, Converter={StaticResource Visible}}" />
-                                            <Button Content="Abrir site oficial" Style="{StaticResource Ghost}"
-                                                    CommandParameter="{Binding ActionUrl}"
-                                                    Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Visibility="{Binding ActionUrl, Converter={StaticResource Visible}}" />
+                                            <ItemsControl ItemsSource="{Binding Actions}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="{Binding Label}" Margin="0,6,0,0" HorizontalAlignment="Stretch"
+                                                                CommandParameter="{Binding Target}"
+                                                                Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </StackPanel>
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal">

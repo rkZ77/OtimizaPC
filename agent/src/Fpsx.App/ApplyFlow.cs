@@ -39,30 +39,37 @@ public static class ApplyFlow
                 "Meça com o FPSX Benchmark antes e depois, e desfaça pelo Histórico se não houver ganho.", "Entendo, continuar"))
             return null;
 
-        if (!Dialogs.Confirm("Confirmar alterações", Describe(items), "Aplicar com backup"))
+        var elevated = items.Where(i => i.Result.RequiresElevation).ToList();
+        var confirm = Describe(items) + (elevated.Count > 0
+            ? "\nO Windows vai pedir sua permissão para as alterações de sistema. Isso é normal: o FPSX usa a permissão só para elas e fecha em seguida."
+            : "");
+        if (!Dialogs.Confirm("Confirmar alterações", confirm, "Aplicar com backup"))
             return null;
 
-        var session = await host.ApplyAsync(items.Select(i => i.Proposal.Id).ToList(), experimental, progress);
-        Dialogs.Info("Resultado", Summary(session));
-        return session;
+        var normal = items.Where(i => !i.Result.RequiresElevation).Select(i => i.Proposal.Id).ToList();
+        var sessions = new List<SessionRecord>();
+        if (normal.Count > 0)
+            sessions.Add(await host.ApplyAsync(normal, experimental, progress));
+        if (elevated.Count > 0)
+        {
+            var admin = await host.ApplyElevatedAsync(elevated.Select(i => i.Proposal.Id).ToList(), experimental, progress);
+            if (admin is null)
+                Dialogs.Info("Permissão recusada", "Sem a permissão do Windows, as alterações de sistema não foram aplicadas. Nada foi mudado nelas.");
+            else
+                sessions.Add(admin);
+        }
+
+        if (sessions.Count > 0)
+            Dialogs.Info("Resultado", string.Join("\n\n", sessions.Select(Summary)));
+        return sessions.LastOrDefault();
     }
 
-    /// <summary>Explica o bloqueio e oferece a saída: reabrir como admin ou ver planos.</summary>
+    /// <summary>Só plano bloqueia: permissão de administrador é pedida na hora de aplicar.</summary>
     private static bool ResolveBlocked(IReadOnlyList<OptimizationResult> results)
     {
         var blocked = results.Where(r => r.Decision == Decision.Blocked).ToList();
         if (blocked.Count == 0)
             return true;
-
-        var admin = blocked.FirstOrDefault(b => b.Reason.Contains("administrador"));
-        if (admin is not null)
-        {
-            if (Dialogs.Show("Permissão de administrador",
-                    $"\"{admin.Definition.Name}\" altera uma configuração do sistema e exige abrir o FPSX como administrador.",
-                    "Reabrir como administrador", "Agora não") == 0 && AppHost.RelaunchAsAdmin())
-                System.Windows.Application.Current.Shutdown();
-            return false;
-        }
 
         var plan = blocked.First();
         if (Dialogs.Show("Disponível em outro plano", $"\"{plan.Definition.Name}\": {plan.Reason}", "Ver planos", "Fechar") == 0)

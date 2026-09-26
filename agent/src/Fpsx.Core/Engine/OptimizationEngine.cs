@@ -66,6 +66,14 @@ public sealed class OptimizationEngine(ISystemAccess system, SessionStore store)
                 continue;
             }
 
+            // Sem administrador a escrita falharia no meio da sessão: melhor
+            // pular com o motivo. O app roda estas pelo processo elevado.
+            if (result.RequiresElevation)
+            {
+                skipped.Add(new SkippedItem(id, "Precisa da permissão de administrador do Windows."));
+                continue;
+            }
+
             if (result.Definition.Classification == Classification.Experimental && !options.AllowExperimental)
             {
                 skipped.Add(new SkippedItem(id, "Experimental: exige autorização explícita."));

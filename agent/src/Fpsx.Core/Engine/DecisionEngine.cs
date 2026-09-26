@@ -15,6 +15,14 @@ public static class Plans
         var i = Array.FindIndex(Order, p => string.Equals(p, plan, StringComparison.OrdinalIgnoreCase));
         return i < 0 ? 0 : i;
     }
+
+    public static string Label(string plan) => plan.ToLowerInvariant() switch
+    {
+        "starter" => "Starter",
+        "pro" => "Pro",
+        "ultimate" => "Ultimate",
+        _ => "Free",
+    };
 }
 
 public sealed record OptimizationResult
@@ -29,6 +37,12 @@ public sealed record OptimizationResult
 
     /// <summary>Selecionada pelo perfil sem precisar de pergunta individual.</summary>
     public bool AutoSelected { get; init; }
+
+    /// <summary>
+    /// Altera configuração do sistema e o FPSX está sem administrador. Não é
+    /// bloqueio: o app pede a permissão do Windows na hora de aplicar.
+    /// </summary>
+    public bool RequiresElevation { get; init; }
 }
 
 public sealed record ScanResult
@@ -127,10 +141,12 @@ public sealed class DecisionEngine(
         // Ordem importa: o motivo de bloqueio mostrado é o primeiro que pega.
         if (!def.Enabled)
             return result with { Decision = Decision.Blocked, Reason = "Desativada pelo administrador do FPSX." };
+        // O motivo do handler fica: no Free a pessoa vê o problema e o que a
+        // otimização resolveria, e só a aplicação depende do plano.
         if (Plans.Rank(plan) < Plans.Rank(def.MinPlan))
-            return result with { Decision = Decision.Blocked, Reason = $"Disponível a partir do plano {def.MinPlan}." };
+            return result with { Decision = Decision.Blocked, Reason = $"{evaluation.Reason} Para aplicar: plano {Plans.Label(def.MinPlan)}." };
         if (!context.Snapshot.IsElevated && evaluation.Proposals.SelectMany(p => p.Changes).Any(c => c.RequiresAdmin))
-            return result with { Decision = Decision.Blocked, Reason = "Exige executar o FPSX como administrador." };
+            result = result with { RequiresElevation = true };
 
         // EXPERIMENTAL e TROUBLESHOOTING nunca são "recomendadas": ficam
         // disponíveis por escolha, sem entrar em seleção automática.

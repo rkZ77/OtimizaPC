@@ -13,7 +13,7 @@
       "risk": "LOW",
       "impact_area": "STUTTER",
       "description": "Reativa o Game Mode quando ele foi desligado.",
-      "min_plan": "free",
+      "min_plan": "starter",
       "measurement": true,
       "justification": {
         "problem": "Game Mode desligado deixa o Windows Update e notificações competirem com o jogo, e o agendador não prioriza o jogo em primeiro plano.",
@@ -36,7 +36,7 @@
       "risk": "LOW",
       "impact_area": "FPS",
       "description": "Desliga apenas o 'Gravar o que aconteceu' contínuo. A captura manual continua funcionando.",
-      "min_plan": "free",
+      "min_plan": "starter",
       "requires_user_confirmation": true,
       "measurement": true,
       "justification": {
@@ -60,7 +60,7 @@
       "risk": "LOW",
       "impact_area": "FPS",
       "description": "Troca 'Economia de energia' por 'Equilibrado' quando o PC está na tomada.",
-      "min_plan": "free",
+      "min_plan": "starter",
       "measurement": true,
       "justification": {
         "problem": "O plano Economia de energia reduz o estado máximo do processador, limitando o clock sob carga.",
@@ -106,7 +106,7 @@
       "risk": "LOW",
       "impact_area": "DISPLAY",
       "description": "Coloca o monitor na maior taxa de atualização suportada na resolução atual.",
-      "min_plan": "free",
+      "min_plan": "starter",
       "measurement": false,
       "justification": {
         "problem": "Monitores de alta taxa (120/144/165/240 Hz) frequentemente ficam em 60 Hz depois de instalar o Windows ou trocar o cabo. A tela descarta os quadros extras.",
@@ -225,7 +225,7 @@
       "risk": "LOW",
       "impact_area": "NETWORK",
       "description": "Executa ipconfig /flushdns.",
-      "min_plan": "free",
+      "min_plan": "starter",
       "measurement": false,
       "justification": {
         "problem": "Registro de DNS antigo em cache faz um site ou serviço apontar para um endereço que mudou.",
@@ -417,7 +417,7 @@
       "risk": "LOW",
       "impact_area": "LATENCY",
       "description": "Liga a opção do Windows 11 que faz jogos DirectX 10 e 11 em janela ou tela cheia sem borda usarem o modo de apresentação moderno.",
-      "min_plan": "free",
+      "min_plan": "starter",
       "requires_user_confirmation": false,
       "measurement": true,
       "justification": {
@@ -441,7 +441,7 @@
       "risk": "LOW",
       "impact_area": "SYSTEM",
       "description": "Em PC de entrada, desliga o efeito de vidro da barra de tarefas e dos menus, que usa a mesma GPU do jogo.",
-      "min_plan": "free",
+      "min_plan": "starter",
       "requires_user_confirmation": false,
       "measurement": false,
       "justification": {

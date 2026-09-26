@@ -41,6 +41,34 @@ public sealed record Finding
 
     /// <summary>Link oficial quando a solução é externa (ex.: driver no site do fabricante).</summary>
     public string? ActionUrl { get; init; }
+
+    /// <summary>
+    /// Botões que levam a pessoa a resolver o que o FPSX não resolve sozinho
+    /// (driver, backup, espaço). Cada destino é site oficial ou tela do Windows
+    /// de uma lista fechada (FindingAction.IsAllowed).
+    /// </summary>
+    public IReadOnlyList<FindingAction> Actions { get; init; } = [];
+}
+
+public sealed record FindingAction(string Label, string Target)
+{
+    // Telas do Windows que um achado pode abrir. Nada de protocolo livre:
+    // um catálogo adulterado não transforma o botão em "abrir qualquer coisa".
+    private static readonly HashSet<string> WindowsScreens = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ms-settings:windowsupdate",
+        "ms-settings:windowsupdate-optionalupdates",
+        "ms-settings:backup",
+        "ms-settings:storagesense",
+        "ms-settings:disksandvolumes",
+        "ms-settings:display-advancedgraphics",
+    };
+
+    public bool IsAllowed =>
+        WindowsScreens.Contains(Target)
+        || (Uri.TryCreate(Target, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps);
+
+    public static FindingAction WindowsUpdateDrivers => new("Drivers pelo Windows Update", "ms-settings:windowsupdate-optionalupdates");
 }
 
 public interface IDiagnostic

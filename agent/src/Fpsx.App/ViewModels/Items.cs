@@ -45,6 +45,9 @@ public sealed class FindingItem
     public bool HasFix => FixId is not null;
     public string FixLabel => FixBlockedReason is null ? "Resolver" : "Resolver (bloqueado)";
     public string? ActionUrl => Finding.ActionUrl;
+
+    /// <summary>Ações externas (driver, backup, espaço). Só as permitidas viram botão.</summary>
+    public IReadOnlyList<FindingAction> Actions => Finding.Actions.Where(a => a.IsAllowed).ToList();
 }
 
 public sealed class ProposalItem(Proposal p, bool actionable) : ObservableObject

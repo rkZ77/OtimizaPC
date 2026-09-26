@@ -51,10 +51,12 @@ public class FixTests
     }
 
     [Fact]
-    public void Pagefile_sem_admin_fica_bloqueado()
+    public void Pagefile_sem_admin_pede_permissao_em_vez_de_bloquear()
     {
         var s = Pc.Healthy() with { Memory = new MemoryInfo { TotalBytes = 16 * Gb, AvailableBytes = 8 * Gb, PagefilePresent = false } };
-        Assert.Equal(Decision.Blocked, Result(TestData.Engine().Evaluate(s, "gaming", "ultimate"), "pagefile-restore-automatic").Decision);
+        var r = Result(TestData.Engine().Evaluate(s, "gaming", "ultimate"), "pagefile-restore-automatic");
+        Assert.Equal(Decision.Recommended, r.Decision);
+        Assert.True(r.RequiresElevation);
     }
 
     [Fact]

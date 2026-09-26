@@ -145,22 +145,40 @@ public class DecisionTests
     public void Experimental_nunca_e_automatico_e_exige_admin_quando_escreve_em_HKLM()
     {
         var engine = TestData.Engine();
+        // Sem administrador continua disponível, marcada para o app pedir a
+        // permissão do Windows na hora de aplicar (antes ficava bloqueada).
         var notAdmin = Result(engine.Evaluate(Pc.Misconfigured(), "competitive", "ultimate"), "hags-enable");
-        Assert.Equal(Decision.Blocked, notAdmin.Decision);
-        Assert.Contains("administrador", notAdmin.Reason);
+        Assert.Equal(Decision.Optional, notAdmin.Decision);
+        Assert.True(notAdmin.RequiresElevation);
 
         var admin = Result(engine.Evaluate(Pc.Misconfigured() with { IsElevated = true }, "competitive", "ultimate"), "hags-enable");
         Assert.Equal(Decision.Optional, admin.Decision);
+        Assert.False(admin.RequiresElevation);
         Assert.False(admin.AutoSelected);
     }
 
     [Fact]
-    public void Plano_free_bloqueia_otimizacoes_pagas_mas_mantem_diagnostico()
+    public void Motor_sem_administrador_pula_o_que_exige_permissao_com_motivo()
+    {
+        var scan = TestData.Engine().Evaluate(Pc.Misconfigured(), "competitive", "ultimate");
+        var session = new OptimizationEngine(new FakeSystem(), new SessionStore(TestData.TempDir()))
+            .Apply(scan, ["hags-enable"], new ApplyOptions { AllowExperimental = true });
+        Assert.Empty(session.Changes);
+        Assert.Contains("administrador", Assert.Single(session.Skipped).Reason);
+    }
+
+    [Fact]
+    public void Plano_free_so_enxerga_e_mostra_o_que_cada_otimizacao_resolveria()
     {
         var scan = TestData.Engine().Evaluate(Pc.Misconfigured(), "gaming", "free");
-        Assert.Equal(Decision.Blocked, Result(scan, "startup-entry-disable").Decision);
-        Assert.Equal(Decision.Recommended, Result(scan, "game-mode-enable").Decision);
+        Assert.DoesNotContain(scan.Optimizations, o => o.Decision is Decision.Recommended or Decision.Optional);
+        var gameMode = Result(scan, "game-mode-enable");
+        Assert.Equal(Decision.Blocked, gameMode.Decision);
+        Assert.Contains("Game Mode foi desativado", gameMode.Reason);
+        Assert.Contains("plano Starter", gameMode.Reason);
+        Assert.NotEmpty(gameMode.Evaluation.Proposals);
         Assert.NotEmpty(scan.Findings);
+        Assert.Equal(Decision.Recommended, Result(TestData.Engine().Evaluate(Pc.Misconfigured(), "gaming", "starter"), "game-mode-enable").Decision);
     }
 
     [Fact]

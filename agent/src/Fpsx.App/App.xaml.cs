@@ -15,6 +15,30 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Processo elevado (UAC) aberto pelo próprio app para uma tarefa só:
+        // usa a mesma pasta de dados de quem pediu e fecha ao terminar.
+        var dataDir = Array.IndexOf(e.Args, "--data-dir");
+        if (dataDir >= 0 && dataDir + 1 < e.Args.Length)
+            Environment.SetEnvironmentVariable("FPSX_DATA_DIR", e.Args[dataDir + 1]);
+        if (e.Args.Length >= 2 && e.Args[0] == ElevatedHelper.Flag)
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            int code;
+            try
+            {
+                code = ElevatedHelper.Execute(e.Args[1]);
+            }
+            catch (Exception ex)
+            {
+                Dialogs.Log(ex);
+                Dialogs.Error(ex);
+                code = 1;
+            }
+
+            Shutdown(code);
+            return;
+        }
+
         // Uma instância só: duas aplicando alterações ao mesmo tempo
         // disputariam o mesmo backup, e dois monitores mediriam a mesma partida.
         _single = new Mutex(true, @"Local\FPSX.App.Single", out var first);
@@ -46,7 +70,10 @@ public partial class App : Application
 
         var startInTray = e.Args.Contains("--tray", StringComparer.OrdinalIgnoreCase);
         if (!startInTray)
+        {
+            LoginPrompt.ShowIfNeeded();
             AskTelemetryOnce();
+        }
 
         var main = new MainWindow();
         MainWindow = main;

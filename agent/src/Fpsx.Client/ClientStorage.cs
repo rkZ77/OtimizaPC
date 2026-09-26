@@ -20,6 +20,9 @@ public sealed record ClientSettings
 
     /// <summary>Medir o FPS das partidas sozinho, com o app aberto ou na bandeja.</summary>
     public bool AutoMeasure { get; init; } = true;
+
+    /// <summary>A tela de entrada da primeira abertura já apareceu (entrou ou escolheu o Free).</summary>
+    public bool LoginPromptDone { get; init; }
 }
 
 /// <summary>Arquivos do app em %LOCALAPPDATA%\FPSX. Nada disso sai do PC sem ação do usuário.</summary>

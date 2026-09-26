@@ -56,12 +56,35 @@ public class DiagnosticsTests
     }
 
     [Fact]
-    public void Driver_com_mais_de_um_ano_sugere_site_oficial()
+    public void Driver_com_mais_de_um_ano_leva_ao_atualizador_oficial()
     {
         var s = Pc.Healthy() with { Gpus = [Pc.Healthy().Gpus[0] with { DriverDate = new DateTime(2024, 1, 1) }] };
         var f = Assert.Single(Run(s), f => f.Area == Areas.Driver);
         Assert.Equal(HealthStatus.Attention, f.Status);
-        Assert.Contains("nvidia.com", f.Recommendation);
+        Assert.Collection(f.Actions,
+            a => Assert.StartsWith("https://www.nvidia.com/", a.Target),
+            a => Assert.Equal("ms-settings:windowsupdate-optionalupdates", a.Target));
+        Assert.All(f.Actions, a => Assert.True(a.IsAllowed));
+    }
+
+    [Theory]
+    [InlineData("https://www.nvidia.com/pt-br/drivers/", true)]
+    [InlineData("ms-settings:backup", true)]
+    [InlineData("http://site-sem-tls.com", false)]
+    [InlineData("ms-settings:developers", false)]
+    [InlineData("file:///C:/Windows/System32/cmd.exe", false)]
+    [InlineData("calc.exe", false)]
+    public void Botao_de_acao_so_abre_site_https_ou_tela_do_Windows_permitida(string target, bool allowed)
+    {
+        Assert.Equal(allowed, new FindingAction("x", target).IsAllowed);
+    }
+
+    [Fact]
+    public void Disco_com_falha_leva_ao_backup()
+    {
+        var s = Pc.Healthy() with { Disks = [Pc.Healthy().Disks[0] with { Health = "Warning", OperationalStatus = "Predictive Failure" }] };
+        var f = Assert.Single(Run(s), f => f.Title.Contains("alerta de saúde"));
+        Assert.Contains(f.Actions, a => a.Target == "ms-settings:backup");
     }
 
     [Fact]

@@ -105,8 +105,32 @@ public sealed class AppHost : ObservableObject
         return session;
     }
 
+    /// <summary>Aplica pelo processo elevado. null = o usuário recusou a permissão.</summary>
+    public async Task<SessionRecord?> ApplyElevatedAsync(IReadOnlyList<string> ids, bool allowExperimental, IProgress<string> progress)
+    {
+        progress.Report("Aguardando a permissão do Windows");
+        var id = await ElevatedHelper.RunAsync(Ctx, new ElevatedRequest { Action = "apply", Ids = ids, Experimental = allowExperimental });
+        if (id is null)
+            return null;
+        await RunScanAsync(progress, network: false);
+        return Ctx.Store.Load(id);
+    }
+
     public async Task<SessionRecord> RollbackAsync(string sessionId, string? changeId, bool force)
     {
+        // Desfazer alteração de sistema também precisa da permissão: vai pelo
+        // mesmo processo elevado que aplicou.
+        var original = Ctx.Store.Load(sessionId);
+        var needsAdmin = !IsElevated && original is not null && original.Changes
+            .Where(c => changeId is null || c.Id == changeId)
+            .Any(c => c.Status == ChangeStatus.Applied && c.Applied.RequiresAdmin);
+        if (needsAdmin)
+        {
+            var id = await ElevatedHelper.RunAsync(Ctx, new ElevatedRequest { Action = "rollback", SessionId = sessionId, ChangeId = changeId, Force = force });
+            return (id is null ? null : Ctx.Store.Load(id))
+                   ?? throw new InvalidOperationException("Sem a permissão de administrador, as alterações de sistema desta sessão não foram desfeitas.");
+        }
+
         var manager = new RollbackManager(new WindowsSystemAccess(Ctx.GameProfiles), Ctx.Store);
         var result = await Task.Run(() => changeId is null ? manager.RollbackSession(sessionId, force) : manager.RollbackChange(sessionId, changeId, force));
         Ctx.RecordSession(result);
@@ -193,8 +217,11 @@ public sealed class AppHost : ObservableObject
 
     public static void OpenUrl(string url)
     {
-        // Só http(s): link vindo de catálogo/servidor nunca abre executável local.
+        // Só http(s) ou uma tela do Windows da lista fechada: link vindo de
+        // catálogo/servidor nunca abre executável local.
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp))
             Process.Start(new ProcessStartInfo(uri.ToString()) { UseShellExecute = true });
+        else if (new Core.Diagnostics.FindingAction("", url).IsAllowed)
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 }

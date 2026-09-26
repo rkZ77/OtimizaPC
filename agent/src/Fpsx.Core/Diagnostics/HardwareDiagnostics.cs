@@ -285,8 +285,13 @@ public sealed class StorageDiagnostic : IDiagnostic
                     Detail = d.OperationalStatus.Contains("Predictive", StringComparison.OrdinalIgnoreCase)
                         ? $"O disco {d.Model} reporta falha prevista pelo SMART: ele mesmo está avisando que pode parar de funcionar."
                         : $"O Windows reporta o disco {d.Model} como \"{d.Health}\" ({d.OperationalStatus}).",
-                    Recommendation = "Faça backup dos arquivos desse disco agora e planeje a troca. Isso é prioridade sobre qualquer otimização.",
+                    Recommendation = "Faça backup dos arquivos desse disco agora e planeje a troca. Nenhum programa conserta um disco que está falhando: o que salva seus arquivos é a cópia.",
                     Evidence = evidence,
+                    Actions =
+                    [
+                        new FindingAction("Fazer backup agora", "ms-settings:backup"),
+                        new FindingAction("Ver saúde dos discos", "ms-settings:disksandvolumes"),
+                    ],
                 };
             }
 
@@ -304,6 +309,7 @@ public sealed class StorageDiagnostic : IDiagnostic
                         : $"Pouco espaço no disco dos jogos ({string.Join(", ", games)}). Atualizações podem falhar.",
                     Recommendation = "Use Configurações > Sistema > Armazenamento > Recomendações de limpeza, ou remova jogos que não usa.",
                     Evidence = evidence,
+                    Actions = [new FindingAction("Abrir limpeza do Windows", "ms-settings:storagesense")],
                 };
             }
 
@@ -338,13 +344,23 @@ public sealed class GpuDriverDiagnostic : IDiagnostic
 {
     public string Id => "gpu-driver";
 
-    // Links oficiais. O FPSX nunca baixa nem executa instalador de driver.
+    // Links oficiais. O FPSX nunca baixa nem executa instalador de driver:
+    // driver de fonte errada é o jeito mais fácil de quebrar ou infectar um
+    // PC. O atualizador do próprio fabricante detecta o modelo e instala certo.
     private static string VendorUrl(GpuVendor v) => v switch
     {
         GpuVendor.Nvidia => "https://www.nvidia.com/pt-br/drivers/",
         GpuVendor.Amd => "https://www.amd.com/pt/support/download/drivers.html",
-        GpuVendor.Intel => "https://www.intel.com.br/content/www/br/pt/download-center/home.html",
+        GpuVendor.Intel => "https://www.intel.com.br/content/www/br/pt/support/detect.html",
         _ => "o site do fabricante da placa",
+    };
+
+    private static FindingAction? VendorUpdater(GpuVendor v) => v switch
+    {
+        GpuVendor.Nvidia => new FindingAction("Atualizar com o NVIDIA App", "https://www.nvidia.com/pt-br/software/nvidia-app/"),
+        GpuVendor.Amd => new FindingAction("Atualizar com o AMD Adrenalin", "https://www.amd.com/pt/support/download/drivers.html"),
+        GpuVendor.Intel => new FindingAction("Atualizar com o assistente da Intel", "https://www.intel.com.br/content/www/br/pt/support/detect.html"),
+        _ => null,
     };
 
     public IEnumerable<Finding> Run(EvaluationContext context)
@@ -387,8 +403,9 @@ public sealed class GpuDriverDiagnostic : IDiagnostic
                 Title = "Driver da GPU potencialmente desatualizado",
                 ActionUrl = main.Vendor == GpuVendor.Unknown ? null : VendorUrl(main.Vendor),
                 Detail = $"O driver instalado é de {date:dd/MM/yyyy}, há mais de um ano. Drivers novos costumam trazer correções e perfis para jogos recentes.",
-                Recommendation = $"Atualize pelo site oficial: {VendorUrl(main.Vendor)}. O FPSX não baixa drivers.",
+                Recommendation = "Atualize pelo programa oficial do fabricante: ele identifica sua placa e instala o driver certo. Depois, rode a análise de novo para confirmar.",
                 Evidence = evidence,
+                Actions = new[] { VendorUpdater(main.Vendor), FindingAction.WindowsUpdateDrivers }.OfType<FindingAction>().ToList(),
             };
         }
         else
