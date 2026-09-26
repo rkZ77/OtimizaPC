@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Fpsx.Client;
 using Fpsx.Core.Benchmark;
 using Fpsx.Core.Engine;
 using Fpsx.Core.Json;
@@ -63,6 +64,7 @@ public static class Commands
         var engine = new DecisionEngine(ctx.Catalog, ctx.GameProfiles);
         var scan = engine.Evaluate(snapshot, args.Get("profile") ?? "gaming", ctx.License().Plan);
         File.WriteAllText(ctx.LastScanPath, JsonSerializer.Serialize(ReportBuilder.Build(scan), FpsxJson.Options));
+        ctx.RecordScan(scan);
         return scan;
     }
 
@@ -246,6 +248,7 @@ public static class Commands
             },
         });
 
+        ctx.RecordSession(session);
         PrintSession(session);
         if (session.Changes.Any(c => c.Status == ChangeStatus.Applied && c.Applied.RequiresReboot))
             Ui.Warn("Reinicie o PC para concluir as alterações marcadas como 'exige reinício'.");
@@ -511,9 +514,77 @@ public static class Commands
     {
         var l = ctx.License();
         Ui.Title("Licença");
-        Ui.Line($"  Plano:   {l.Plan}");
-        Ui.Line($"  Validade: {(l.ExpiresAt is { } e ? e.ToString("dd/MM/yyyy", Inv) : "sem licença ativa")}");
-        Ui.Muted("  A ativação online chega com a API do FPSX. Sem licença, o Agent roda o diagnóstico completo e as otimizações do plano Free.");
+        Ui.Line($"  Conta:    {l.Email ?? "não conectada (fpsx login <email>)"}");
+        Ui.Line($"  Plano:    {l.Plan} ({l.Status})");
+        Ui.Line($"  Validade: {(l.ExpiresAt is { } e ? e.ToLocalTime().ToString("dd/MM/yyyy", Inv) : "sem vencimento")}");
+        if (l.ValidUntil is { } v)
+            Ui.Muted($"  Funciona offline até {v.ToLocalTime():dd/MM/yyyy HH:mm}.");
+        if (l.Notice is { } n)
+            Ui.Warn($"  {n}");
+        Ui.Line();
+        Ui.Line("  Liberado no seu plano:");
+        foreach (var f in Enum.GetValues<Feature>())
+            Ui.Line($"    {(PlanFeatures.Allows(l.Plan, f) ? "[x]" : "[ ]")} {PlanFeatures.Label(f)}{(PlanFeatures.Allows(l.Plan, f) ? "" : $" (plano {PlanFeatures.RequiredPlan(f)})")}");
         return 0;
+    }
+
+    public static async Task<int> Login(AgentContext ctx, Args args)
+    {
+        var email = args.Positional.Skip(1).FirstOrDefault() ?? throw new ArgumentException("Use: fpsx login <email>");
+        Console.Write("Senha: ");
+        var password = ReadHidden();
+        try
+        {
+            var l = await ctx.LoginAsync(email, password, Environment.OSVersion.Version.Build);
+            Ui.Ok($"Conectado como {l.Email}. Plano {l.Plan}.");
+            return 0;
+        }
+        catch (ApiException ex) when (ex.Detail is { } d && d.TryGetProperty("devices", out var devices))
+        {
+            Ui.Error(ex.Message);
+            foreach (var dev in devices.EnumerateArray())
+                Ui.Line($"  - {dev.GetProperty("name").GetString()} (visto em {dev.GetProperty("last_seen_at").GetString()})");
+            Ui.Muted("  Desative um PC em fpsx.app/conta e rode o login de novo.");
+            return 1;
+        }
+    }
+
+    public static async Task<int> Logout(AgentContext ctx)
+    {
+        await ctx.LogoutAsync();
+        Ui.Ok("Desconectado. Este PC liberou a vaga na sua conta e voltou ao plano Free.");
+        return 0;
+    }
+
+    public static async Task<int> Sync(AgentContext ctx)
+    {
+        var r = await ctx.SyncAsync(Environment.OSVersion.Version.Build);
+        if (r.Message is { } m)
+            Ui.Warn(m);
+        else if (r.Online)
+            Ui.Ok("Licença, catálogo e telemetria sincronizados.");
+        else
+            Ui.Muted("Nenhuma conta conectada neste PC.");
+        return 0;
+    }
+
+    private static string ReadHidden()
+    {
+        // Via pipe (instalador, scripts), o PowerShell 5.1 manda um BOM invisível
+        // na frente: sem tirar, a senha certa vira "senha incorreta".
+        if (Console.IsInputRedirected)
+            return (Console.ReadLine() ?? "").Trim('﻿', '​', '\r', '\n');
+        var sb = new System.Text.StringBuilder();
+        ConsoleKeyInfo key;
+        while ((key = Console.ReadKey(intercept: true)).Key != ConsoleKey.Enter)
+        {
+            if (key.Key == ConsoleKey.Backspace && sb.Length > 0)
+                sb.Length--;
+            else if (!char.IsControl(key.KeyChar))
+                sb.Append(key.KeyChar);
+        }
+
+        Console.WriteLine();
+        return sb.ToString();
     }
 }

@@ -1,5 +1,6 @@
 using System.Text;
 using Fpsx.Agent;
+using Fpsx.Client;
 
 Console.OutputEncoding = Encoding.UTF8;
 
@@ -34,10 +35,13 @@ try
         "benchmark" => Commands.Benchmark(ctx, cli),
         "catalog" => Commands.CatalogList(ctx, cli),
         "license" => Commands.License(ctx),
+        "login" => await Commands.Login(ctx, cli),
+        "logout" => await Commands.Logout(ctx),
+        "sync" => await Commands.Sync(ctx),
         _ => Commands.Unknown(command),
     };
 }
-catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException or ArgumentException or InvalidOperationException or Fpsx.Core.Engine.SafetyViolationException)
+catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException or ArgumentException or InvalidOperationException or Fpsx.Core.Engine.SafetyViolationException or ApiException)
 {
     // Erro esperado (catálogo inválido, PresentMon ausente, sessão que não
     // existe): mensagem limpa, sem stack trace.

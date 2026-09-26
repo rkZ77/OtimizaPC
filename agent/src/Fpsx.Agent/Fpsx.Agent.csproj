@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Fpsx.Core\Fpsx.Core.csproj" />
     <ProjectReference Include="..\Fpsx.Windows\Fpsx.Windows.csproj" />
+    <ProjectReference Include="..\Fpsx.Client\Fpsx.Client.csproj" />
   </ItemGroup>
   <!-- O catalogo de otimizacoes e os perfis de jogo vivem fora do Agent, na
        raiz do monorepo, porque o admin vai publicar versoes deles sem
