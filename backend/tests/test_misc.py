@@ -29,6 +29,13 @@ def test_override_de_catalogo_validado():
         catalog.validate_override({"kind": "script", "id": "x"})
 
 
+def test_admin_le_o_catalogo_real_com_comentarios():
+    defs = catalog.definitions()
+    ids = {d["id"] for d in defs}
+    assert {"game-mode-enable", "game-settings-fix", "disable-windows-defender"} <= ids
+    assert next(d for d in defs if d["id"] == "hags-enable")["min_plan"] == "ultimate"
+
+
 def test_release_so_por_https():
     with pytest.raises(ValueError):
         catalog.publish_release({"component": "agent", "version": "1.0", "url": "http://x/fpsx.exe"})

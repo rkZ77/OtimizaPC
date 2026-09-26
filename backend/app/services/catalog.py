@@ -4,7 +4,11 @@ O que sai daqui para o Agent vai ASSINADO. O Agent aplica so' os campos
 permitidos (enabled, risk, description, min_plan) e so' em ids que ele ja
 conhece: o banco nao consegue criar otimizacao nova nem trocar o que ela faz.
 """
+import json
+import os
+import re
 from datetime import datetime, timezone
+from pathlib import Path
 
 from app import database, signing
 
@@ -24,6 +28,30 @@ def validate_override(o: dict) -> dict:
     if o.get("description") is not None and len(o["description"]) > 500:
         raise ValueError("description passa de 500 caracteres.")
     return o
+
+
+def _catalog_file() -> Path:
+    # No Docker o catalogo e' copiado para /app/catalog; no repo, fica em
+    # optimization-engine/catalog. O mesmo arquivo que o Agent embute.
+    env = os.getenv("CATALOG_FILE")
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parents[3] / "optimization-engine" / "catalog" / "optimizations.json"
+
+
+def definitions() -> list[dict]:
+    """Otimizacoes do catalogo publicado, para o admin escolher o que ajustar."""
+    path = _catalog_file()
+    if not path.exists():
+        return []
+    # O arquivo aceita comentarios de linha (// ...), como o Agent le.
+    text = "\n".join(line for line in path.read_text(encoding="utf-8").splitlines() if not line.lstrip().startswith("//"))
+    data = json.loads(re.sub(r",(\s*[}\]])", r"\1", text))
+    return [
+        {k: o.get(k) for k in ("id", "name", "category", "classification", "risk", "min_plan", "description")}
+        | {"enabled": o.get("enabled", True), "min_plan": o.get("min_plan", "free")}
+        for o in data.get("optimizations", [])
+    ]
 
 
 def list_overrides() -> list[dict]:

@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Tokens em canais RGB (rgb(var(--x) / alpha) no tailwind.config).
+ * Mesma paleta do app desktop (agent/src/Fpsx.App/Theme.xaml): quem sai do
+ * site e abre o app reconhece o produto.
+ */
+:root {
+  color-scheme: dark;
+
+  --surface-0: 14 17 22;    /* #0e1116 fundo da pagina */
+  --surface-1: 22 27 34;    /* #161b22 card */
+  --surface-2: 30 37 47;    /* #1e252f card elevado, input */
+  --surface-3: 42 50 61;    /* #2a323d hover */
+
+  --line: 42 50 61;
+  --line-strong: 60 70 84;
+
+  --ink-1: 230 237 243;     /* titulo, numero */
+  --ink-2: 196 205 214;     /* corpo */
+  --ink-3: 139 151 166;     /* apoio */
+  --ink-4: 105 117 131;     /* so' texto grande */
+
+  --accent: 61 220 151;     /* #3ddc97 */
+  --accent-hover: 91 232 171;
+  --accent-ink: 61 220 151;
+  --warn: 242 184 75;
+  --danger: 242 84 91;
+  --info: 88 166 255;
+}
+
+html {
+  background: rgb(var(--surface-0));
+  color: rgb(var(--ink-2));
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--info));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

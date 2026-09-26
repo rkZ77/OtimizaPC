@@ -173,7 +173,7 @@ def list_devices(page=Depends(_page)):
 
 @router.get("/catalog")
 def list_overrides():
-    return {"overrides": catalog.list_overrides()}
+    return {"overrides": catalog.list_overrides(), "definitions": catalog.definitions()}
 
 
 class OverrideIn(BaseModel):
