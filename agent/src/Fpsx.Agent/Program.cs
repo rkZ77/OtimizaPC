@@ -4,7 +4,7 @@ using Fpsx.Client;
 
 Console.OutputEncoding = Encoding.UTF8;
 
-var valueOptions = new[] { "profile", "seconds", "session", "change", "label", "game", "presentmon", "duration", "before", "after", "process" };
+var valueOptions = new[] { "profile", "seconds", "session", "change", "label", "game", "presentmon", "duration", "before", "after", "process", "name" };
 Args cli;
 try
 {
@@ -33,6 +33,8 @@ try
         "rollback" => Commands.Rollback(ctx, cli),
         "history" => Commands.History(ctx, cli),
         "benchmark" => Commands.Benchmark(ctx, cli),
+        "monitor" => Commands.Monitor(ctx, cli),
+        "gameplay" => Commands.Gameplay(ctx, cli),
         "catalog" => Commands.CatalogList(ctx, cli),
         "license" => Commands.License(ctx),
         "login" => await Commands.Login(ctx, cli),

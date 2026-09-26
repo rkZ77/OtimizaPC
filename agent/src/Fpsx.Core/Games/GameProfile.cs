@@ -103,6 +103,12 @@ public sealed record GameBenchmarkSpec
     public int DurationSeconds { get; init; } = 60;
     public int RecommendedRuns { get; init; } = 3;
     public string Method { get; init; } = "";
+
+    /// <summary>
+    /// Para processo genérico (javaw.exe do Minecraft): só mede quando o título
+    /// da janela contém este texto, senão qualquer programa Java viraria partida.
+    /// </summary>
+    public string? WindowTitle { get; init; }
 }
 
 public sealed record GameProfile

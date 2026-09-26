@@ -1,0 +1,81 @@
+<UserControl x:Class="Fpsx.App.Views.GameplayView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer>
+        <StackPanel Margin="32,28">
+            <TextBlock Text="Partidas" Style="{StaticResource H1}" />
+            <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,18"
+                       Text="O FPSX mede o FPS de cada partida sozinho, com o jogo aberto, e mostra se ele mudou depois de uma otimização. Só entram os minutos com o jogo em primeiro plano, depois do carregamento. Nada no jogo é alterado para medir." />
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Medição automática" Style="{StaticResource H2}" />
+                    <TextBlock Text="{Binding MonitorStatus}" Foreground="{StaticResource Accent}" Margin="0,0,0,10" TextWrapping="Wrap" />
+                    <CheckBox IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das partidas de CS2, Fortnite e Minecraft" />
+                    <CheckBox IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"
+                              Content="Iniciar com o Windows, na bandeja, para medir sempre que eu jogar" />
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="26,4,0,0"
+                               Text="Fechar a janela deixa o FPSX na bandeja, perto do relógio. Para encerrar de vez, clique com o botão direito no ícone e escolha Sair." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Antes e depois da otimização" Style="{StaticResource H2}" />
+                    <WrapPanel Margin="0,0,0,10">
+                        <StackPanel Margin="0,0,16,8">
+                            <TextBlock Text="Otimização" FontSize="13" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding Pivots}" SelectedItem="{Binding SelectedPivot}" DisplayMemberPath="Label" MinWidth="360" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,16,8">
+                            <TextBlock Text="Jogo" FontSize="13" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding Games}" SelectedItem="{Binding SelectedGame}" MinWidth="200" />
+                        </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding CompareStatus}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                    <ItemsControl ItemsSource="{Binding Metrics}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="170" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Before, StringFormat=antes {0}}" Style="{StaticResource MutedText}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding After, StringFormat=depois {0}}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Delta}" Foreground="{Binding Tone}" FontWeight="Bold" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="{Binding Verdict}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,10,0,0"
+                               Visibility="{Binding Verdict, Converter={StaticResource Visible}}" />
+                    <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="12" Margin="0,8,0,0"
+                               Visibility="{Binding Warnings, Converter={StaticResource Visible}}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Partidas medidas" Style="{StaticResource H2}" />
+                    <TextBlock Text="Nenhuma partida ainda." Style="{StaticResource MutedText}"
+                               Visibility="{Binding Sessions.Count, Converter={StaticResource Hidden}}" />
+                    <ItemsControl ItemsSource="{Binding Sessions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,6">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding Stats}" Style="{StaticResource MutedText}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

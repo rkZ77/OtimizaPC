@@ -6,23 +6,29 @@ namespace Fpsx.App;
 
 public partial class App : Application
 {
+    private const string ShowSignalName = @"Local\FPSX.App.Show";
+
     private Mutex? _single;
+    private EventWaitHandle? _showSignal;
+    private Tray? _tray;
+    private bool _exiting;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         // Uma instância só: duas aplicando alterações ao mesmo tempo
-        // disputariam o mesmo backup.
+        // disputariam o mesmo backup, e dois monitores mediriam a mesma partida.
         _single = new Mutex(true, @"Local\FPSX.App.Single", out var first);
         if (!first)
         {
-            Dialogs.Info("FPSX já está aberto", "O FPSX já está rodando. Procure a janela na barra de tarefas.");
+            // Já está aberto (talvez só na bandeja): pede para ele mostrar a janela.
+            if (EventWaitHandle.TryOpenExisting(ShowSignalName, out var signal))
+                signal.Set();
             Shutdown();
             return;
         }
 
         DispatcherUnhandledException += OnUnhandled;
-        // Até a janela principal existir, fechar um diálogo não encerra o app
-        // (o WPF trataria o primeiro diálogo como janela principal).
+        // A janela fecha para a bandeja: quem encerra o app é o "Sair".
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         base.OnStartup(e);
 
@@ -38,11 +44,60 @@ public partial class App : Application
             return;
         }
 
-        AskTelemetryOnce();
+        var startInTray = e.Args.Contains("--tray", StringComparer.OrdinalIgnoreCase);
+        if (!startInTray)
+            AskTelemetryOnce();
+
         var main = new MainWindow();
         MainWindow = main;
-        ShutdownMode = ShutdownMode.OnMainWindowClose;
-        main.Show();
+        main.Closing += (_, args) =>
+        {
+            // Com a medição ligada, fechar esconde: o monitor segue medindo.
+            if (!_exiting && AppHost.Current.AutoMeasure)
+            {
+                args.Cancel = true;
+                main.Hide();
+                _tray?.HintOnce();
+            }
+        };
+        main.Closed += (_, _) => ExitApp();
+
+        _tray = new Tray(ShowMain, ExitApp);
+        AppHost.Current.GameplayRecorded += s => _tray?.Notify($"{s.GameName}: partida registrada",
+            $"FPS médio {s.Stats.AvgFps:0}, 1% low {s.Stats.Low1Fps:0}. Veja o antes e depois em Partidas.");
+        AppHost.Current.StartMonitor();
+
+        _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, ShowSignalName);
+        new Thread(() =>
+        {
+            while (_showSignal.WaitOne())
+                Dispatcher.BeginInvoke(ShowMain);
+        }) { IsBackground = true, Name = "fpsx-show-signal" }.Start();
+
+        if (!startInTray)
+            main.Show();
+    }
+
+    private void ShowMain()
+    {
+        if (MainWindow is not { } w)
+            return;
+        if (!w.IsVisible)
+            w.Show();
+        if (w.WindowState == WindowState.Minimized)
+            w.WindowState = WindowState.Normal;
+        w.Activate();
+    }
+
+    private void ExitApp()
+    {
+        if (_exiting)
+            return;
+        _exiting = true;
+        _tray?.Dispose();
+        _tray = null;
+        AppHost.Current.ShutdownMonitor();
+        Shutdown();
     }
 
     /// <summary>Consentimento explícito, perguntado uma vez (seção 40). O padrão é NÃO enviar.</summary>
@@ -66,6 +121,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _tray?.Dispose();
+        _showSignal?.Dispose();
         _single?.Dispose();
         base.OnExit(e);
     }

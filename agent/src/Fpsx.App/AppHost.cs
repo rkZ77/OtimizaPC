@@ -113,6 +113,64 @@ public sealed class AppHost : ObservableObject
         return result;
     }
 
+    // ---- medição automática das partidas ----
+
+    private GameplayMonitor? _monitor;
+    private string _monitorStatus = "Medição automática desligada.";
+
+    /// <summary>Dispara quando uma partida é registrada (já salva no disco).</summary>
+    public event Action<Core.Benchmark.GameplaySession>? GameplayRecorded;
+
+    public bool AutoMeasure => Ctx.Settings.AutoMeasure;
+
+    public string MonitorStatus
+    {
+        get => _monitorStatus;
+        private set => Set(ref _monitorStatus, value);
+    }
+
+    public void SetAutoMeasure(bool on)
+    {
+        if (on == AutoMeasure)
+            return;
+        Ctx.Storage.SaveSettings(Ctx.Settings with { AutoMeasure = on });
+        if (on)
+            StartMonitor();
+        else
+            StopMonitor();
+        Raise(nameof(AutoMeasure));
+    }
+
+    public void StartMonitor()
+    {
+        if (!AutoMeasure || _monitor is { Running: true })
+            return;
+        _monitor = new GameplayMonitor(Ctx.GameProfiles, Ctx.PresentMonPath, Path.Combine(Ctx.DataDir, "gameplay-tmp"), AgentContext.Version);
+        _monitor.StatusChanged += s => OnUi(() => MonitorStatus = s);
+        _monitor.Recorded += s =>
+        {
+            Ctx.Gameplay.Save(s);
+            OnUi(() => GameplayRecorded?.Invoke(s));
+        };
+        _monitor.Start();
+        MonitorStatus = _monitor.Status;
+    }
+
+    public void StopMonitor()
+    {
+        var m = _monitor;
+        _monitor = null;
+        // Dispose espera a partida em andamento fechar o PresentMon: fora da UI.
+        if (m is not null)
+            Task.Run(m.Dispose);
+        MonitorStatus = "Medição automática desligada.";
+    }
+
+    /// <summary>Encerramento do app: espera o monitor salvar o que der da partida em andamento.</summary>
+    public void ShutdownMonitor() => _monitor?.Dispose();
+
+    private static void OnUi(Action action) => System.Windows.Application.Current?.Dispatcher.BeginInvoke(action);
+
     public async Task SyncAsync()
     {
         await Ctx.SyncAsync(WindowsBuild);

@@ -32,6 +32,26 @@ dotnet publish (Join-Path $root "agent/src/Fpsx.App/Fpsx.App.csproj") `
     -p:DebugType=none -o $appOut
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou" }
 
+# PresentMon (Intel, licenca MIT): mede o FPS das partidas. Versao fixa e
+# hash conferido: o instalador nunca empacota um binario que mudou sem a
+# gente saber. Para atualizar, troque versao e hash juntos.
+$pmVersion = "2.5.1"
+$pmSha256 = "9bec3083069f58f911e6a512f4806db51a27bd096103087bc1d05ef54c80a191"
+$pmCache = Join-Path $env:LOCALAPPDATA "FPSX-dev\tools\PresentMon-$pmVersion-x64.exe"
+if (-not (Test-Path $pmCache)) {
+    New-Item -ItemType Directory -Force (Split-Path $pmCache) | Out-Null
+    Invoke-WebRequest "https://github.com/GameTechDev/PresentMon/releases/download/v$pmVersion/PresentMon-$pmVersion-x64.exe" -OutFile $pmCache -UseBasicParsing
+}
+$pmHash = (Get-FileHash $pmCache -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($pmHash -ne $pmSha256) { throw "PresentMon com hash inesperado ($pmHash). Nao empacotado." }
+$pmSig = Get-AuthenticodeSignature $pmCache
+if ($pmSig.Status -ne "Valid" -or $pmSig.SignerCertificate.Subject -notmatch "O=Intel Corporation") { throw "PresentMon sem assinatura valida da Intel. Nao empacotado." }
+$tools = Join-Path $appOut "tools"
+New-Item -ItemType Directory -Force $tools | Out-Null
+Copy-Item $pmCache (Join-Path $tools "PresentMon.exe")
+Copy-Item (Join-Path $PSScriptRoot "third-party\PresentMon-LICENSE.txt") (Join-Path $tools "PresentMon-LICENSE.txt")
+Write-Host "PresentMon $pmVersion incluido (hash e assinatura Intel conferidos)"
+
 if (-not $Installer) { return }
 
 $iscc = @(

@@ -10,6 +10,7 @@
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><v:DashboardView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:OptimizationsViewModel}"><v:OptimizationsView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:GamesViewModel}"><v:GamesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GameplayViewModel}"><v:GameplayView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:BenchmarkViewModel}"><v:BenchmarkView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><v:HistoryView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:AccountViewModel}"><v:AccountView /></DataTemplate>

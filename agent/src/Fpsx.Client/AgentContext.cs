@@ -40,6 +40,15 @@ public sealed class AgentContext
 
     public string BenchmarksDir => Path.Combine(DataDir, "benchmarks");
 
+    /// <summary>Partidas medidas automaticamente pelo monitor.</summary>
+    public Fpsx.Core.Benchmark.GameplayStore Gameplay => new(DataDir);
+
+    /// <summary>PresentMon que vem no instalador (tools), salvo se o usuário escolheu outro.</summary>
+    public string PresentMonPath =>
+        Environment.GetEnvironmentVariable("FPSX_PRESENTMON")
+        ?? Settings.PresentMonPath
+        ?? Path.Combine(AppContext.BaseDirectory, "tools", "PresentMon.exe");
+
     public string LastScanPath => Path.Combine(DataDir, "last-scan.json");
 
     public ClientSettings Settings => Storage.LoadSettings();

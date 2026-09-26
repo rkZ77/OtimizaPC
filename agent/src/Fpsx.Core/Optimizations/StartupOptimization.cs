@@ -65,10 +65,15 @@ public sealed class StartupOptimization : IOptimization
 {
     public string Id => "startup-entry-disable";
 
+    /// <summary>Nome do valor que o FPSX grava em HKCU\...\Run para medir as partidas.</summary>
+    public const string OwnStartupName = "FPSX";
+
     public Evaluation Evaluate(EvaluationContext context)
     {
         var s = context.Snapshot;
-        var enabled = s.Startup.Where(e => e.Enabled).ToList();
+        // O próprio FPSX (medição de FPS das partidas) liga e desliga pelas
+        // configurações do app: oferecer para desligar a si mesmo aqui confunde.
+        var enabled = s.Startup.Where(e => e.Enabled && !e.Name.Equals(OwnStartupName, StringComparison.OrdinalIgnoreCase)).ToList();
         var evidence = new Dictionary<string, string>();
         var proposals = new List<Proposal>();
 

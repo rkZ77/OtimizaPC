@@ -40,6 +40,13 @@ Name: "ptbr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Criar atalho na área de trabalho"; GroupDescription: "Atalhos:"
+Name: "autostart"; Description: "Iniciar com o Windows, na bandeja, para medir o FPS das partidas"; GroupDescription: "Medição automática:"
+
+[Registry]
+; Mesmo valor que o app grava em Partidas > Iniciar com o Windows, e que ele
+; mesmo tira ao desmarcar. A desinstalação apaga sempre.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "FPSX"; ValueData: """{app}\FPSX.exe"" --tray"; Tasks: autostart; Flags: uninsdeletevalue
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "FPSX"; Flags: dontcreatekey uninsdeletevalue
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

@@ -3,6 +3,7 @@ using System.Text.Json;
 using Fpsx.Client;
 using Fpsx.Core.Benchmark;
 using Fpsx.Core.Engine;
+using Fpsx.Core.Games;
 using Fpsx.Core.Json;
 using Fpsx.Core.Model;
 using Fpsx.Core.Reporting;
@@ -364,6 +365,72 @@ public static class Commands
             return true;
         Ui.Warn($"{PlanFeatures.Label(feature)} está disponível a partir do plano {PlanFeatures.RequiredPlan(feature)}. Seu plano: {plan}.");
         return false;
+    }
+
+    /// <summary>
+    /// Mede as partidas no terminal até Ctrl+C. --process mede um executável
+    /// qualquer (teste do próprio monitor, ou jogo ainda sem perfil).
+    /// </summary>
+    public static int Monitor(AgentContext ctx, Args args)
+    {
+        var profiles = ctx.GameProfiles;
+        if (args.Get("process") is { } exe)
+        {
+            var name = args.Get("name") ?? exe;
+            profiles = [new GameProfile { Id = "custom", Name = name, Benchmark = new GameBenchmarkSpec { Process = exe } }];
+        }
+
+        using var monitor = new GameplayMonitor(profiles, ctx.PresentMonPath, Path.Combine(ctx.DataDir, "gameplay-tmp"), AgentContext.Version);
+        var store = ctx.Gameplay;
+        monitor.StatusChanged += s => Ui.Muted($"  {DateTime.Now:HH:mm:ss}  {s}");
+        monitor.Recorded += s =>
+        {
+            store.Save(s);
+            Ui.Ok($"  Registrada: {s.GameName}, {s.MeasuredSeconds / 60:0.#} min, {FormatStats(s.Stats)}");
+        };
+        using var done = new ManualResetEventSlim();
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            done.Set();
+        };
+        Ui.Title("FPSX: medição automática das partidas");
+        Ui.Muted("  Jogos: " + string.Join(", ", profiles.Select(p => p.Name)) + ". Ctrl+C para parar.");
+        monitor.Start();
+        if (!monitor.Running)
+            return 1;
+        done.Wait();
+        return 0;
+    }
+
+    public static int Gameplay(AgentContext ctx, Args args)
+    {
+        var sessions = ctx.Gameplay.All();
+        Ui.Title("Partidas medidas");
+        if (sessions.Count == 0)
+            Ui.Muted("  Nenhuma partida ainda. Deixe o FPSX aberto e jogue: a medição é automática.");
+        foreach (var s in sessions)
+            Ui.Line($"  {s.StartedAt:dd/MM HH:mm}  {s.GameName,-18} {s.MeasuredSeconds / 60,5:0.#} min  {FormatStats(s.Stats)}");
+
+        var pivot = GameplayComparer.Pivots(ctx.Store.All()).FirstOrDefault();
+        var game = args.Get("game") ?? sessions.FirstOrDefault()?.GameId;
+        if (pivot is null || game is null)
+            return 0;
+        var gameName = sessions.FirstOrDefault(s => s.GameId == game)?.GameName ?? game;
+        var cmp = GameplayComparer.Compare(sessions, game, gameName, pivot.StartedAt, $"otimização de {pivot.StartedAt:dd/MM HH:mm}");
+        Ui.Title($"Antes e depois da {cmp.PivotLabel}");
+        Ui.Muted("  " + cmp.Status);
+        if (cmp.Result is { } r)
+        {
+            foreach (var m in r.Metrics)
+                Ui.Line(string.Format(System.Globalization.CultureInfo.InvariantCulture, "  {0,-16} {1,8:0.0} -> {2,8:0.0}  ({3}{4:0.0}%){5}",
+                    m.Metric, m.Before, m.After, m.DeltaPercent >= 0 ? "+" : "", m.DeltaPercent, m.Significant ? "" : "  dentro da variação normal"));
+            Ui.Line("  " + r.Verdict);
+            foreach (var w in r.Warnings)
+                Ui.Muted("  " + w);
+        }
+
+        return 0;
     }
 
     public static int Benchmark(AgentContext ctx, Args args)

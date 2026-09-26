@@ -43,6 +43,41 @@ public static class PresentMonCsv
         return result;
     }
 
+    /// <summary>
+    /// Quadros com o instante em que ocorreram (segundos desde o início da
+    /// captura), lidos em fluxo: uma partida longa gera centenas de MB de CSV
+    /// e não cabe carregar inteira. Exige o formato 1.x (--v1_metrics).
+    /// </summary>
+    public static IEnumerable<(double TimeSeconds, double FrametimeMs, string SwapChain)> ReadTimedFrames(TextReader reader, int? processId = null)
+    {
+        var header = reader.ReadLine();
+        if (header is null)
+            yield break;
+        var columns = SplitLine(header);
+        var time = columns.FindIndex(h => h.Equals("TimeInSeconds", StringComparison.OrdinalIgnoreCase));
+        var ft = columns.FindIndex(h => h.Equals("msBetweenPresents", StringComparison.OrdinalIgnoreCase));
+        var pid = columns.FindIndex(h => h.Equals("ProcessID", StringComparison.OrdinalIgnoreCase));
+        var chain = columns.FindIndex(h => h.Equals("SwapChainAddress", StringComparison.OrdinalIgnoreCase));
+        if (time < 0 || ft < 0)
+            throw new InvalidDataException("CSV sem TimeInSeconds ou msBetweenPresents. A captura automática usa o PresentMon com --v1_metrics.");
+
+        var want = processId?.ToString(CultureInfo.InvariantCulture);
+        string? line;
+        while ((line = reader.ReadLine()) is not null)
+        {
+            if (line.Length == 0)
+                continue;
+            var cells = SplitLine(line);
+            if (cells.Count <= Math.Max(time, ft))
+                continue;
+            if (want is not null && pid >= 0 && pid < cells.Count && cells[pid] != want)
+                continue;
+            if (double.TryParse(cells[time], NumberStyles.Float, CultureInfo.InvariantCulture, out var t)
+                && double.TryParse(cells[ft], NumberStyles.Float, CultureInfo.InvariantCulture, out var ms))
+                yield return (t, ms, chain >= 0 && chain < cells.Count ? cells[chain] : "");
+        }
+    }
+
     // CSV do PresentMon não usa aspas com vírgula dentro, exceto em nomes de
     // processo raros. Tratar aspas aqui evita desalinhar colunas nesses casos.
     private static List<string> SplitLine(string line)

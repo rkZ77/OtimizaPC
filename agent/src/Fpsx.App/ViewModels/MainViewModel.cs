@@ -11,7 +11,7 @@ public sealed class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        Pages = [new DashboardViewModel(), new OptimizationsViewModel(), new GamesViewModel(), new BenchmarkViewModel(), new HistoryViewModel(), new AccountViewModel(), new SettingsViewModel()];
+        Pages = [new DashboardViewModel(), new OptimizationsViewModel(), new GamesViewModel(), new GameplayViewModel(), new BenchmarkViewModel(), new HistoryViewModel(), new AccountViewModel(), new SettingsViewModel()];
         _current = Pages[0];
 #if DEBUG
         // Só em desenvolvimento: abrir direto numa tela, para os prints de QA.

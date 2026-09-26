@@ -17,6 +17,9 @@ public sealed record ClientSettings
 
     public string Profile { get; init; } = "gaming";
     public string? PresentMonPath { get; init; }
+
+    /// <summary>Medir o FPS das partidas sozinho, com o app aberto ou na bandeja.</summary>
+    public bool AutoMeasure { get; init; } = true;
 }
 
 /// <summary>Arquivos do app em %LOCALAPPDATA%\FPSX. Nada disso sai do PC sem ação do usuário.</summary>

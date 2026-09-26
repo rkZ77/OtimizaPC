@@ -50,6 +50,7 @@
   ],
   "benchmark": {
     "process": "javaw.exe",
+    "window_title": "Minecraft",
     "duration_seconds": 60,
     "recommended_runs": 3,
     "method": "Use o mesmo mundo e a mesma posição (anote as coordenadas com F3), parado ou no mesmo percurso, com as mesmas opções de vídeo."
