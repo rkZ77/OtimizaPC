@@ -8,6 +8,8 @@ namespace Fpsx.App.ViewModels;
 
 public sealed record GameplayItem(GameplaySession Session)
 {
+    public bool HasChart => Session.Timeline.Count > 1;
+
     public string Title => $"{Session.StartedAt.ToLocalTime():dd/MM HH:mm}  {Session.GameName}";
 
     public string Stats => string.Format(CultureInfo.GetCultureInfo("pt-BR"),
@@ -43,6 +45,7 @@ public sealed class GameplayViewModel : PageViewModel
     private string _compareStatus = "";
     private string _verdict = "";
     private string _warnings = "";
+    private GameplayItem? _selected;
 
     public GameplayViewModel()
     {
@@ -57,9 +60,79 @@ public sealed class GameplayViewModel : PageViewModel
 
             if (e.PropertyName == nameof(AppHost.License))
                 Load();
+
+            if (e.PropertyName == nameof(AppHost.LivePoints))
+            {
+                Raise(nameof(LivePoints));
+                Raise(nameof(IsLive));
+                Raise(nameof(LiveTitle));
+                Raise(nameof(LiveSummary));
+            }
         };
+        SelectSessionCommand = new RelayCommand(p =>
+        {
+            if (p is GameplayItem item)
+                SelectedSession = item;
+        });
         Load();
     }
+
+    public System.Windows.Input.ICommand SelectSessionCommand { get; }
+
+    // ---- gráfico ao vivo ----
+
+    public IReadOnlyList<FpsPoint>? LivePoints => _host.LivePoints;
+    public bool IsLive => _host.LivePoints is { Count: > 0 };
+    public string LiveTitle => $"{_host.LiveGame} agora";
+
+    public string LiveSummary
+    {
+        get
+        {
+            if (_host.LivePoints is not { Count: > 0 } pts)
+                return "";
+            var now = pts[^1];
+            return string.Format(Pt, "{0:0} FPS agora. Nos últimos {1}: menor média {2:0}, maior {3:0}, pior quadro {4:0} FPS.",
+                now.Fps, pts.Count >= 60 ? $"{pts.Count / 60} min" : $"{pts.Count} s", pts.Min(p => p.Fps), pts.Max(p => p.Fps), pts.Min(p => p.Low));
+        }
+    }
+
+    // ---- gráfico da partida escolhida ----
+
+    public GameplayItem? SelectedSession
+    {
+        get => _selected;
+        set
+        {
+            if (!Set(ref _selected, value))
+                return;
+            Raise(nameof(ChartPoints));
+            Raise(nameof(ChartHz));
+            Raise(nameof(ChartTitle));
+            Raise(nameof(ChartNote));
+        }
+    }
+
+    public IReadOnlyList<FpsPoint>? ChartPoints => _selected?.Session.Timeline;
+    public int? ChartHz => _selected?.Session.DisplayHz;
+    public string ChartTitle => _selected is null ? "" : _selected.Title;
+
+    public string ChartNote
+    {
+        get
+        {
+            if (_selected is null)
+                return "";
+            var s = _selected.Session;
+            if (s.Timeline.Count < 2)
+                return "Partida medida antes do gráfico existir: só os números ficaram guardados.";
+            var drops = GameplayAnalyzer.Drops(s.Timeline, s.Stats.AvgFps);
+            return string.Format(Pt, "Média {0:0} FPS, 1% low {1:0}. {2}", s.Stats.AvgFps, s.Stats.Low1Fps,
+                drops == 0 ? "Nenhuma queda forte: FPS estável na partida." : $"{drops} {(drops == 1 ? "queda forte" : "quedas fortes")} (quadro 3 vezes mais lento que a média): passe o mouse no gráfico para ver quando.");
+        }
+    }
+
+    private static readonly CultureInfo Pt = CultureInfo.GetCultureInfo("pt-BR");
 
     public override string Title => "Partidas e FPS";
 
@@ -144,6 +217,8 @@ public sealed class GameplayViewModel : PageViewModel
         Sessions.Clear();
         foreach (var s in sessions)
             Sessions.Add(new GameplayItem(s));
+        SelectedSession = Sessions.FirstOrDefault(i => i.Session.Id == _selected?.Session.Id)
+                          ?? Sessions.FirstOrDefault(i => i.HasChart) ?? Sessions.FirstOrDefault();
 
         var game = _game;
         Games.Clear();

@@ -56,4 +56,15 @@ public sealed class LiveFpsMeter(int processId, double windowSeconds = 2)
             return total <= 0 ? null : main.Count() * 1000.0 / total;
         }
     }
+
+    /// <summary>FPS do pior quadro da janela recente (o pico para baixo do gráfico ao vivo). Pausa acima de 1 s não conta.</summary>
+    public double? Low
+    {
+        get
+        {
+            var main = _frames.GroupBy(f => f.Chain).OrderByDescending(g => g.Count()).FirstOrDefault();
+            var worst = main?.Where(f => f.Ms <= GameplayAnalyzer.PauseFrametimeMs).Select(f => f.Ms).DefaultIfEmpty(0).Max() ?? 0;
+            return worst <= 0 ? null : 1000.0 / worst;
+        }
+    }
 }

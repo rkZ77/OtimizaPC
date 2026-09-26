@@ -149,4 +149,56 @@ public class GameplayTests
         File.WriteAllText(Path.Combine(store.Dir, "quebrado.json"), "{ nao e json");
         Assert.Equal([160, 150], store.All().Select(s => Math.Round(s.Stats.AvgFps)));
     }
+
+    private static List<FpsPoint> Timeline(string csv, int pid, List<bool> fg)
+    {
+        using var reader = new StringReader(csv);
+        return GameplayAnalyzer.Analyze(PresentMonCsv.ReadTimedFrames(reader, pid), fg).Timeline;
+    }
+
+    [Fact]
+    public void Grafico_tem_um_ponto_por_segundo_com_media_e_pior_quadro()
+    {
+        // 2 min a 100 FPS com uma travada de 80 ms no segundo 90.
+        var rows = Steady(90, 10).Append((90.0, 80.0, 42, "0xA")).Concat(Steady(90, 10, start: 90.08)).ToList();
+        var tl = Timeline(Csv(rows), 42, AllForeground(200));
+
+        Assert.Equal(60, tl[0].T);
+        Assert.InRange(tl.Count, 118, 121);
+        Assert.Equal(100, tl[0].Fps, 0);
+        var spike = tl.Single(p => p.T == 90);
+        Assert.Equal(12.5, spike.Low, 1);
+        Assert.All(tl.Where(p => p.T != 90), p => Assert.Equal(100, p.Low, 0));
+    }
+
+    [Fact]
+    public void Grafico_de_partida_longa_e_reduzido_sem_perder_a_travada()
+    {
+        // 3 h: o gráfico não passa do limite de pontos e o pior quadro sobrevive à redução.
+        var rows = Steady(3 * 3600, 20).Append((5000.0, 250.0, 42, "0xA")).OrderBy(r => r.Item1).ToList();
+        var tl = Timeline(Csv(rows), 42, AllForeground(3 * 3600 + 5));
+
+        Assert.InRange(tl.Count, GameplayAnalyzer.MaxTimelinePoints - 5, GameplayAnalyzer.MaxTimelinePoints);
+        Assert.Equal(4, tl.Min(p => p.Low), 1);
+    }
+
+    [Fact]
+    public void Build_guarda_o_grafico_na_partida()
+    {
+        using var reader = new StringReader(Csv(Steady(300, 10)));
+        var (ft, tl) = GameplayAnalyzer.Analyze(PresentMonCsv.ReadTimedFrames(reader, 42), AllForeground(300));
+        var session = GameplayAnalyzer.Build(ft, "cs2", "Counter-Strike 2", T0, T0.AddMinutes(5), null, null, 144, "0.4.1", tl).Session!;
+        Assert.Equal(tl.Count, session.Timeline.Count);
+    }
+
+    [Fact]
+    public void Quedas_fortes_contam_uma_vez_por_queda()
+    {
+        var tl = new List<FpsPoint>
+        {
+            new(0, 100, 90), new(1, 100, 40), new(2, 100, 30), new(3, 100, 95), new(4, 100, 20), new(5, 100, 49.9),
+        };
+        Assert.Equal(2, GameplayAnalyzer.Drops(tl, 100));
+        Assert.Equal(0, GameplayAnalyzer.Drops([new(0, 100, 60)], 100));
+    }
 }

@@ -36,4 +36,15 @@ public class LiveFpsTests
         m.Add("cs2.exe,42,0xA,DXGI,0,0");        // linha cortada no meio da gravação
         Assert.Equal(100, m.Current!.Value, 0);
     }
+
+    [Fact]
+    public void Pior_quadro_recente_ignora_pausa()
+    {
+        var m = new LiveFpsMeter(42);
+        m.Add(Header);
+        for (var t = 0.0; t < 2; t += 0.01) m.Add(Row(t, 10));
+        m.Add(Row(2.0, 50));   // travada: 20 FPS naquele quadro
+        m.Add(Row(2.05, 1500)); // alt-tab: pausa, não travada
+        Assert.Equal(20, m.Low!.Value, 0);
+    }
 }

@@ -29,7 +29,19 @@ public sealed record GameplaySession
     public int? DisplayHz { get; init; }
 
     public string AppVersion { get; init; } = "";
+
+    /// <summary>
+    /// FPS ao longo da partida para o gráfico: média e pior quadro de cada
+    /// trecho. A média sozinha esconde a travada; o pior quadro é o "pico"
+    /// para baixo que a pessoa sente no jogo. Vazio em partidas antigas.
+    /// </summary>
+    public IReadOnlyList<FpsPoint> Timeline { get; init; } = [];
 }
+
+/// <param name="T">Segundo da partida (desde o início da medição).</param>
+/// <param name="Fps">FPS médio no trecho.</param>
+/// <param name="Low">FPS do pior quadro do trecho (1000 / maior frametime).</param>
+public sealed record FpsPoint(int T, double Fps, double Low);
 
 public static class GameplayAnalyzer
 {
@@ -51,9 +63,17 @@ public static class GameplayAnalyzer
     /// um launcher embutido, por exemplo), vale só a de mais quadros: o
     /// intervalo entre quadros de cadeias diferentes não é frametime de nada.
     /// </summary>
-    public static List<double> Filter(IEnumerable<(double TimeSeconds, double FrametimeMs, string SwapChain)> frames, IReadOnlyList<bool> foregroundBySecond)
+    public static List<double> Filter(IEnumerable<(double TimeSeconds, double FrametimeMs, string SwapChain)> frames, IReadOnlyList<bool> foregroundBySecond) =>
+        Analyze(frames, foregroundBySecond).Frametimes;
+
+    /// <summary>Pontos no gráfico: uma partida de 3 horas continua leve de guardar e de desenhar.</summary>
+    public const int MaxTimelinePoints = 900;
+
+    /// <summary>Mesmo filtro do <see cref="Filter"/>, mais a linha do tempo do gráfico.</summary>
+    public static (List<double> Frametimes, List<FpsPoint> Timeline) Analyze(
+        IEnumerable<(double TimeSeconds, double FrametimeMs, string SwapChain)> frames, IReadOnlyList<bool> foregroundBySecond)
     {
-        var byChain = new Dictionary<string, List<double>>();
+        var byChain = new Dictionary<string, List<(double T, double Ms)>>();
         foreach (var (t, ms, chain) in frames)
         {
             if (t < WarmupSeconds || ms <= 0 || ms > PauseFrametimeMs || !double.IsFinite(ms))
@@ -63,16 +83,54 @@ public static class GameplayAnalyzer
                 continue;
             if (!byChain.TryGetValue(chain, out var list))
                 byChain[chain] = list = [];
-            list.Add(ms);
+            list.Add((t, ms));
         }
 
-        return byChain.Values.OrderByDescending(l => l.Count).FirstOrDefault() ?? [];
+        var main = byChain.Values.OrderByDescending(l => l.Count).FirstOrDefault() ?? [];
+        return (main.Select(f => f.Ms).ToList(), Timeline(main));
+    }
+
+    private static List<FpsPoint> Timeline(List<(double T, double Ms)> frames)
+    {
+        if (frames.Count == 0)
+            return [];
+        var first = (int)frames.Min(f => f.T);
+        var span = (int)frames.Max(f => f.T) - first + 1;
+        var step = Math.Max(1, (int)Math.Ceiling(span / (double)MaxTimelinePoints));
+        return frames
+            .GroupBy(f => ((int)f.T - first) / step)
+            .OrderBy(g => g.Key)
+            .Select(g => new FpsPoint(
+                first + g.Key * step,
+                Math.Round(g.Count() * 1000 / g.Sum(f => f.Ms), 1),
+                Math.Round(1000 / g.Max(f => f.Ms), 1)))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Quedas fortes: trechos seguidos em que o pior quadro caiu abaixo de um
+    /// terço da média, ou seja, um quadro 3 vezes mais lento que o normal. É a
+    /// travada que se sente, e conta uma vez por queda.
+    /// </summary>
+    public static int Drops(IReadOnlyList<FpsPoint> timeline, double avgFps)
+    {
+        var count = 0;
+        var inDrop = false;
+        foreach (var p in timeline)
+        {
+            var drop = p.Low < avgFps / 3;
+            if (drop && !inDrop)
+                count++;
+            inDrop = drop;
+        }
+
+        return count;
     }
 
     /// <summary>A sessão, ou null com o motivo quando a partida não serve para medir.</summary>
     public static (GameplaySession? Session, string Reason) Build(
         IReadOnlyList<double> frametimes, string gameId, string gameName, DateTimeOffset startedAt, DateTimeOffset endedAt,
-        double? cpu, double? gpu, int? displayHz, string appVersion)
+        double? cpu, double? gpu, int? displayHz, string appVersion, IReadOnlyList<FpsPoint>? timeline = null)
     {
         var stats = FrameStats.From(frametimes);
         var measured = frametimes.Sum() / 1000.0;
@@ -92,6 +150,7 @@ public static class GameplayAnalyzer
             AvgGpuPercent = gpu,
             DisplayHz = displayHz,
             AppVersion = appVersion,
+            Timeline = timeline ?? [],
         }, "");
     }
 }

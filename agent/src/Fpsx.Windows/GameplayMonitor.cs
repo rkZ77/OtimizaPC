@@ -25,7 +25,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
     public event Action<string>? StatusChanged;
 
     /// <summary>Uma vez por segundo durante a partida: jogo e FPS atual (null = acabou ou ainda sem quadros).</summary>
-    public event Action<string, double?>? LiveFps;
+    public event Action<string, double?, double?>? LiveFps;
 
     public string Status
     {
@@ -179,7 +179,8 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
                 while (!ct.IsCancellationRequested && !HasExited(game) && watch.Elapsed < MaxCapture)
                 {
                     foreground.Add(IsForeground(game.Id));
-                    LiveFps?.Invoke(profile.Name, sink.CurrentFps);
+                    var (fps, low) = sink.Current;
+                    LiveFps?.Invoke(profile.Name, fps, low);
                     ct.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
                 }
 
@@ -192,7 +193,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
                 StopPresentMon(pm);
                 sink.Close();
                 TrySetPriority(self, previousPriority);
-                LiveFps?.Invoke(profile.Name, null);
+                LiveFps?.Invoke(profile.Name, null, null);
             }
         }
 
@@ -214,10 +215,11 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
             }
 
             List<double> frametimes;
+            List<FpsPoint> timeline;
             using (var reader = new StreamReader(csv))
-                frametimes = GameplayAnalyzer.Filter(PresentMonCsv.ReadTimedFrames(reader, game.Id), foreground);
+                (frametimes, timeline) = GameplayAnalyzer.Analyze(PresentMonCsv.ReadTimedFrames(reader, game.Id), foreground);
 
-            var (session, reason) = GameplayAnalyzer.Build(frametimes, profile.Id, profile.Name, startedAt, endedAt, cpu, gpu, PrimaryHz(), appVersion);
+            var (session, reason) = GameplayAnalyzer.Build(frametimes, profile.Id, profile.Name, startedAt, endedAt, cpu, gpu, PrimaryHz(), appVersion, timeline);
             if (session is null)
             {
                 Status = $"{profile.Name}: {reason}";
@@ -245,12 +247,13 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
 
         public bool HasFrames { get; private set; }
 
-        public double? CurrentFps
+        /// <summary>FPS médio e do pior quadro da janela recente.</summary>
+        public (double? Fps, double? Low) Current
         {
             get
             {
                 lock (_lock)
-                    return live.Current;
+                    return (live.Current, live.Low);
             }
         }
 

@@ -225,6 +225,43 @@ public sealed class AppHost : ObservableObject
         private set => Set(ref _liveFps, value);
     }
 
+    /// <summary>Últimos minutos da partida em andamento, para o gráfico ao vivo. null fora de partida.</summary>
+    public IReadOnlyList<Fpsx.Core.Benchmark.FpsPoint>? LivePoints
+    {
+        get => _livePoints;
+        private set => Set(ref _livePoints, value);
+    }
+
+    public string? LiveGame { get; private set; }
+
+    /// <summary>Janela do gráfico ao vivo: 3 minutos mostram a tendência sem virar borrão.</summary>
+    public const int LiveWindowSeconds = 180;
+
+    private IReadOnlyList<Fpsx.Core.Benchmark.FpsPoint>? _livePoints;
+    private readonly Queue<Fpsx.Core.Benchmark.FpsPoint> _liveBuffer = new();
+    private int _liveTick;
+
+    private void OnLive(string game, double? fps, double? low)
+    {
+        if (fps is not { } f)
+        {
+            _liveBuffer.Clear();
+            _liveTick = 0;
+            LiveGame = null;
+            LivePoints = null;
+            LiveFps = null;
+            return;
+        }
+
+        LiveGame = game;
+        LiveFps = $"{game}: {f:0} FPS agora";
+        _liveBuffer.Enqueue(new Fpsx.Core.Benchmark.FpsPoint(_liveTick++, Math.Round(f, 1), Math.Round(low ?? f, 1)));
+        while (_liveBuffer.Count > LiveWindowSeconds)
+            _liveBuffer.Dequeue();
+        // Lista nova a cada segundo: o gráfico redesenha só quando o valor muda.
+        LivePoints = _liveBuffer.ToArray();
+    }
+
     public string MonitorStatus
     {
         get => _monitorStatus;
@@ -249,7 +286,7 @@ public sealed class AppHost : ObservableObject
             return;
         _monitor = new GameplayMonitor(Ctx.GameProfiles, Ctx.PresentMonPath, Path.Combine(Ctx.DataDir, "gameplay-tmp"), AgentContext.Version);
         _monitor.StatusChanged += s => OnUi(() => MonitorStatus = s);
-        _monitor.LiveFps += (game, fps) => OnUi(() => LiveFps = fps is { } f ? $"{game}: {f:0} FPS agora" : null);
+        _monitor.LiveFps += (game, fps, low) => OnUi(() => OnLive(game, fps, low));
         _monitor.Recorded += s =>
         {
             Ctx.Gameplay.Save(s);

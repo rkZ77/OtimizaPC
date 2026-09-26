@@ -384,7 +384,7 @@ public static class Commands
         var store = ctx.Gameplay;
         monitor.StatusChanged += s => Ui.Muted($"  {DateTime.Now:HH:mm:ss}  {s}");
         var lastLive = DateTime.MinValue;
-        monitor.LiveFps += (game, fps) =>
+        monitor.LiveFps += (game, fps, _) =>
         {
             // No terminal, uma linha a cada 10 s basta para acompanhar.
             if (fps is { } f && DateTime.Now - lastLive > TimeSpan.FromSeconds(10))
