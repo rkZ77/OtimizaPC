@@ -225,6 +225,9 @@ public sealed class DashboardViewModel : PageViewModel
     public ICommand OpenUrlCommand { get; }
 
     public bool HasScan => _host.Scan is not null;
+
+    /// <summary>Página oficial do fabricante da placa (processadores compatíveis e BIOS).</summary>
+    public string? BoardSupportUrl => _host.Scan?.Snapshot.BoardSupportUrl;
     public ObservableCollection<KeyValueItem> Hardware { get; } = [];
     public ObservableCollection<ReadinessItem> Readiness { get; } = [];
     public ObservableCollection<FindingItem> Problems { get; } = [];
@@ -271,7 +274,7 @@ public sealed class DashboardViewModel : PageViewModel
             ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }
 
-        foreach (var name in new[] { nameof(HasScan), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
+        foreach (var name in new[] { nameof(HasScan), nameof(BoardSupportUrl), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
             Raise(name);
         RaiseHero();
     }

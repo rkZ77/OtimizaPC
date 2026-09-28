@@ -137,6 +137,18 @@ public static class ReportBuilder
             ["RAM"] = s.Memory is { } m ? Fmt.Gb(m.TotalBytes) : "desconhecida",
             ["Armazenamento"] = system is null ? "desconhecido" : $"{system.DriveLetter} {(system.Media == MediaKind.Ssd ? "SSD" : system.Media == MediaKind.Hdd ? "HDD" : "")} {system.BusType}".Trim(),
             ["Tipo"] = s.Power is null ? "desconhecido" : s.Power.HasBattery ? "Notebook" : "Desktop",
+            ["Placa-mãe"] = s.BoardProduct.Length > 0 ? $"{ShortBrand(s.BoardManufacturer)} {s.BoardProduct}".Trim() : "desconhecida",
+            ["BIOS"] = s.BiosVersion.Length > 0 ? s.BiosVersion + (s.BiosDate is { } d ? $" ({d:MM/yyyy})" : "") : "desconhecida",
         };
     }
+
+    // "Gigabyte Technology Co., Ltd." vira "Gigabyte": o resto é ruído na tela.
+    private static string ShortBrand(string m) =>
+        m.Split([' ', ','], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() switch
+        {
+            null => "",
+            "Micro-Star" => "MSI",
+            "ASUSTeK" => "ASUS",
+            var first => first,
+        };
 }

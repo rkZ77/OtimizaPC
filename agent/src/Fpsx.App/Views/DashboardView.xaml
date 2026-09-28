@@ -221,6 +221,13 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <Button Content="Processadores e BIOS compatíveis" Margin="0,10,0,0" HorizontalAlignment="Left"
+                                ToolTip="Abre o site do fabricante da placa-mãe: a lista oficial de processadores compatíveis e as versões de BIOS"
+                                CommandParameter="{Binding BoardSupportUrl}" Command="{Binding OpenUrlCommand}"
+                                Visibility="{Binding BoardSupportUrl, Converter={StaticResource Visible}}" />
+                        <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Visibility="{Binding BoardSupportUrl, Converter={StaticResource Visible}}"
+                                   Text="Antes de trocar o processador, confira a revisão impressa na placa (REV) e a BIOS exigida pelo fabricante." />
                     </StackPanel>
                 </Border>
             </Grid>

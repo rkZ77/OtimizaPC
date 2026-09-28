@@ -37,6 +37,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         var displays = Displays();
         var security = Security();
         var board = Wmi.Query("SELECT Manufacturer, Product FROM Win32_BaseBoard").FirstOrDefault();
+        var bios = Wmi.Query("SELECT SMBIOSBIOSVersion, ReleaseDate FROM Win32_BIOS").FirstOrDefault();
 
         progress?.Invoke("Procurando jogos");
         var games = Games();
@@ -74,6 +75,8 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
             Discord = Discord(startup),
             BoardManufacturer = board?.Str("Manufacturer").Trim() ?? "",
             BoardProduct = board?.Str("Product").Trim() ?? "",
+            BiosVersion = bios?.Str("SMBIOSBIOSVersion").Trim() ?? "",
+            BiosDate = bios?.CimDate("ReleaseDate"),
             SampleSeconds = options.SampleSeconds,
         };
     }

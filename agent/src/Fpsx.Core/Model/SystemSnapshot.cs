@@ -27,6 +27,27 @@ public sealed record SystemSnapshot
 
     public string BoardProduct { get; init; } = "";
 
+    /// <summary>Versão e data da BIOS (a lista de processadores compatíveis depende dela).</summary>
+    public string BiosVersion { get; init; } = "";
+
+    public DateTime? BiosDate { get; init; }
+
+    /// <summary>
+    /// Busca pela página de suporte do fabricante da placa, onde ficam a lista
+    /// oficial de processadores compatíveis e as versões de BIOS. Busca, e não
+    /// link direto: os sites dos fabricantes mudam de endereço e bloqueiam
+    /// verificação automática. O RKZFPS não afirma compatibilidade de peça.
+    /// </summary>
+    public string? BoardSupportUrl
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(BoardProduct) || BoardProduct.Contains("Default", StringComparison.OrdinalIgnoreCase))
+                return null;
+            return $"https://www.google.com/search?q={Uri.EscapeDataString($"{BoardManufacturer} {BoardProduct} CPU support list")}";
+        }
+    }
+
     /// <summary>Discord, que quase todo jogador deixa aberto junto com o jogo. null = não instalado.</summary>
     public DiscordInfo? Discord { get; init; }
 
