@@ -149,7 +149,7 @@ public sealed class DashboardViewModel : PageViewModel
         HeroState.Scanning => "Analisando...",
         HeroState.CanFix => "Corrigir agora",
         HeroState.NeedsPlan => "Ver planos",
-        _ => "Analisar de novo",
+        _ => "Otimizar de novo",
     };
 
     private async Task Hero()
@@ -163,7 +163,14 @@ public sealed class DashboardViewModel : PageViewModel
                 AppHost.OpenUrl(_host.SiteUrl + "/planos");
                 break;
             default:
+                // Windows, driver e jogo mudam com as atualizações: analisa de
+                // novo e, se surgiu algo que o FPSX corrige, já corrige (com a
+                // mesma confirmação de sempre). Sem nada novo, diz isso.
                 await Busy(() => _host.RunScanAsync(Reporter));
+                if (State == HeroState.CanFix)
+                    await Busy(Optimize);
+                else if (State == HeroState.Good)
+                    Dialogs.Info("Tudo certo", "Analisamos de novo: nada mudou desde a última vez e o seu PC continua bem configurado.");
                 break;
         }
     }

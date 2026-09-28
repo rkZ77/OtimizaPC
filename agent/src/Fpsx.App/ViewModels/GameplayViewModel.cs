@@ -73,6 +73,7 @@ public sealed class GameplayViewModel : PageViewModel
                 Raise(nameof(LiveSummary));
             }
         };
+        ShareCommand = new RelayCommand(_ => Share(), _ => _selected?.HasChart == true);
         SelectSessionCommand = new RelayCommand(p =>
         {
             if (p is GameplayItem item)
@@ -82,6 +83,28 @@ public sealed class GameplayViewModel : PageViewModel
     }
 
     public System.Windows.Input.ICommand SelectSessionCommand { get; }
+
+    /// <summary>Imagem da partida para postar no grupo (salva e copiada).</summary>
+    public System.Windows.Input.ICommand ShareCommand { get; }
+
+    private void Share()
+    {
+        if (_selected is not { HasChart: true } sel)
+            return;
+        try
+        {
+            // Partida de antes da 0.4.2 não guardava o hardware: é o mesmo PC, vale o de agora.
+            var session = sel.Session.Hardware is null && _host.Scan is { } scan
+                ? sel.Session with { Hardware = HardwareSummary.From(scan.Snapshot) }
+                : sel.Session;
+            var path = ShareCard.Export(session, ChartDrops ?? [], ChartCauses);
+            Dialogs.Info("Imagem pronta", $"A imagem da partida foi copiada: é só colar (Ctrl+V) no Discord ou no WhatsApp. Ela também ficou salva em {path}.");
+        }
+        catch (System.IO.IOException ex)
+        {
+            Dialogs.Info("Não deu para salvar", "A pasta de imagens não aceitou o arquivo: " + ex.Message);
+        }
+    }
 
     // ---- gráfico ao vivo ----
 
@@ -96,8 +119,13 @@ public sealed class GameplayViewModel : PageViewModel
             if (_host.LivePoints is not { Count: > 0 } pts)
                 return "";
             var now = pts[^1];
-            return string.Format(Pt, "{0:0} FPS agora. Nos últimos {1}: menor média {2:0}, maior {3:0}, pior quadro {4:0} FPS.",
+            var text = string.Format(Pt, "{0:0} FPS agora. Nos últimos {1}: menor média {2:0}, maior {3:0}, pior quadro {4:0} FPS.",
                 now.Fps, pts.Count >= 60 ? $"{pts.Count / 60} min" : $"{pts.Count} s", pts.Min(p => p.Fps), pts.Max(p => p.Fps), pts.Min(p => p.Low));
+            // Depois de 1 minuto de jogo, avisa se o FPS está bem abaixo da taxa do monitor.
+            var hz = _host.Scan?.Snapshot.Displays.FirstOrDefault(d => d.IsPrimary)?.CurrentHz;
+            if (pts.Count >= 60 && hz is > 0 && pts.TakeLast(60).Average(p => p.Fps) < hz * DisplayAdvice.AlertBelow)
+                text += string.Format(Pt, " Abaixo dos {0} Hz do monitor: o resumo com o que fazer aparece quando a partida terminar.", hz);
+            return text;
         }
     }
 
@@ -116,9 +144,20 @@ public sealed class GameplayViewModel : PageViewModel
             Raise(nameof(ChartNote));
             Raise(nameof(ChartDrops));
             Raise(nameof(ChartCauses));
+            Raise(nameof(HzText));
+            Raise(nameof(HzBrush));
             _ = LoadPeersAsync(value);
         }
     }
+
+    private (bool Alert, string Text)? Hz => _selected is { } sel
+        ? DisplayAdvice.For(sel.Session.Stats.AvgFps, sel.Session.Stats.Low1Fps, sel.Session.DisplayHz, sel.Session.Timeline)
+        : null;
+
+    /// <summary>FPS em relação à taxa do monitor (alerta quando fica bem abaixo).</summary>
+    public string HzText => Hz?.Text ?? "";
+
+    public System.Windows.Media.Brush HzBrush => (System.Windows.Media.Brush)App.Current.FindResource(Hz?.Alert == true ? "Warn" : "Accent");
 
     private string _peerNote = "";
 

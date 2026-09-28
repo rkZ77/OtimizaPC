@@ -131,6 +131,44 @@ public static class StutterExplainer
     }
 }
 
+/// <summary>
+/// FPS em relação à taxa do monitor. Abaixo da taxa não é defeito, mas o
+/// monitor mostra mais quadros do que o PC entrega: o jogo oscila e, sem
+/// FreeSync ou G-Sync, a imagem pode rasgar. O alerta diz o que ajuda, sem
+/// prometer que o FPS vai alcançar a taxa.
+/// </summary>
+public static class DisplayAdvice
+{
+    /// <summary>Abaixo disto (em fração da taxa do monitor) vira alerta.</summary>
+    public const double AlertBelow = 0.85;
+
+    /// <summary>Acima disto o FPS está colado na taxa: V-Sync ou limite de FPS.</summary>
+    public const double CappedAbove = 0.97;
+
+    public static (bool Alert, string Text)? For(double avgFps, double low1Fps, int? displayHz, IReadOnlyList<FpsPoint>? timeline = null)
+    {
+        if (displayHz is not { } hz || hz <= 0 || avgFps <= 0)
+            return null;
+        var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+        if (avgFps >= hz * CappedAbove)
+            return (false, string.Format(pt, "O FPS acompanhou os {0} Hz do monitor: nesta partida o PC não foi o limite.", hz));
+        if (avgFps >= hz * AlertBelow)
+            return null;
+        // Limite estável: o FPS que o PC segura em 90% dos trechos da partida,
+        // arredondado para baixo. O 1% low não serve: são só os piores
+        // quadros, e limitar nele jogaria fora metade do FPS (partida real:
+        // média 161, 1% low 77). Sem gráfico, não sugere número.
+        var cap = timeline is { Count: >= 30 }
+            ? (int)(Math.Floor(timeline.Select(p => p.Fps).OrderBy(v => v).ElementAt(timeline.Count / 10) / 10) * 10)
+            : 0;
+        var capTip = cap >= 30 && cap < hz ? string.Format(pt, " Limitar o FPS no jogo perto de {0} deixa a partida mais estável do que oscilar.", cap) : "";
+        return (true, string.Format(pt,
+            "Seu monitor é de {0} Hz, mas esta partida ficou em {1:0} FPS de média (1% low {2:0}). Não estraga nada, mas o jogo oscila e, sem FreeSync ou G-Sync, a imagem pode rasgar. " +
+            "Se o monitor tiver FreeSync ou G-Sync, ligue no monitor e no painel da placa de vídeo.{3} E use \"Otimizar este jogo\" na tela Jogos.",
+            hz, avgFps, low1Fps, capTip));
+    }
+}
+
 /// <summary>Só o que descreve a máquina para comparar desempenho. Sem nome do PC, usuário ou arquivos.</summary>
 public sealed record HardwareSummary
 {
