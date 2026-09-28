@@ -8,15 +8,15 @@ public sealed record BenchmarkRequest(string PresentMonPath, string Process, int
 
 /// <summary>
 /// Roda o PresentMon (ferramenta aberta da Intel) contra o processo do jogo e
-/// amostra CPU, GPU e RAM em paralelo. O RKZFPS não embute nem baixa o
-/// PresentMon: o caminho vem do usuário ou da pasta tools do instalador.
+/// amostra CPU, GPU e RAM em paralelo. O PresentMon vem no instalador (pasta
+/// tools), conferido por hash e assinatura da Intel no build.
 /// </summary>
 public static class BenchmarkRunner
 {
     public static (BenchmarkRun Run, string Log) Capture(BenchmarkRequest request, string label, string gameId, Action<string>? progress = null)
     {
         if (!File.Exists(request.PresentMonPath))
-            throw new FileNotFoundException("PresentMon não encontrado. Baixe em github.com/GameTechDev/PresentMon e informe o caminho com --presentmon.", request.PresentMonPath);
+            throw new FileNotFoundException("O medidor de FPS (PresentMon) que vem com o RKZFPS não foi encontrado. Reinstale o RKZFPS para voltar a medir.", request.PresentMonPath);
 
         var processName = request.Process.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? request.Process[..^4] : request.Process;
         if (System.Diagnostics.Process.GetProcessesByName(processName).Length == 0)

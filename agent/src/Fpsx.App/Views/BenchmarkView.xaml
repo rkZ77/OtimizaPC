@@ -15,12 +15,6 @@
                 <StackPanel>
                     <TextBlock Text="Nova captura" Style="{StaticResource H2}" />
                     <TextBlock Text="{Binding Method}" Style="{StaticResource MutedText}" Margin="0,0,0,12" />
-                    <TextBlock Text="PresentMon.exe" FontSize="13" Margin="0,0,0,4" />
-                    <DockPanel Margin="0,0,0,12">
-                        <Button DockPanel.Dock="Right" Content="Procurar" Command="{Binding BrowseCommand}" Margin="8,0,0,0" />
-                        <Button DockPanel.Dock="Right" Content="Baixar PresentMon" Style="{StaticResource Ghost}" Command="{Binding GetPresentMonCommand}" Margin="8,0,0,0" />
-                        <TextBox Text="{Binding PresentMonPath, UpdateSourceTrigger=PropertyChanged}" />
-                    </DockPanel>
                     <StackPanel Orientation="Horizontal">
                         <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Rótulo" FontSize="13" Margin="0,0,0,4" />

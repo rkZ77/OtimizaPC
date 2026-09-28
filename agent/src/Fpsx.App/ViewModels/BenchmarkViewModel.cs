@@ -7,7 +7,6 @@ using Fpsx.Core.Benchmark;
 using Fpsx.Core.Engine;
 using Fpsx.Core.Json;
 using Fpsx.Windows;
-using Microsoft.Win32;
 
 namespace Fpsx.App.ViewModels;
 
@@ -49,11 +48,11 @@ public sealed class BenchmarkViewModel : PageViewModel
 
     public BenchmarkViewModel()
     {
-        _presentMon = _host.Ctx.Settings.PresentMonPath ?? Path.Combine(AppContext.BaseDirectory, "tools", "PresentMon.exe");
-        BrowseCommand = new RelayCommand(Browse);
+        // O PresentMon vem dentro do instalador (pasta tools): a pessoa nunca
+        // precisa baixar nada de fora para medir.
+        _presentMon = _host.Ctx.PresentMonPath;
         RunCommand = new AsyncCommand(() => Busy(Capture), () => !IsBusy && Allowed);
         CompareCommand = new RelayCommand(Compare, () => Runs.Any(r => r.IsBefore) && Runs.Any(r => r.IsAfter));
-        GetPresentMonCommand = new RelayCommand(() => AppHost.OpenUrl("https://github.com/GameTechDev/PresentMon/releases"));
         _host.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppHost.License))
@@ -68,10 +67,8 @@ public sealed class BenchmarkViewModel : PageViewModel
 
     public override bool AdvancedOnly => true;
 
-    public ICommand BrowseCommand { get; }
     public ICommand RunCommand { get; }
     public ICommand CompareCommand { get; }
-    public ICommand GetPresentMonCommand { get; }
 
     public bool Allowed => _host.Allows(Feature.Benchmark);
     public string PlanNote => $"O RKZFPS Benchmark faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.Benchmark))}.";
@@ -101,16 +98,6 @@ public sealed class BenchmarkViewModel : PageViewModel
     {
         get => _result;
         private set => Set(ref _result, value);
-    }
-
-    private void Browse()
-    {
-        var dialog = new OpenFileDialog { Filter = "PresentMon|PresentMon*.exe", Title = "Selecione o PresentMon.exe" };
-        if (dialog.ShowDialog() == true)
-        {
-            PresentMonPath = dialog.FileName;
-            _host.Ctx.Storage.SaveSettings(_host.Ctx.Settings with { PresentMonPath = dialog.FileName });
-        }
     }
 
     private async Task Capture()
