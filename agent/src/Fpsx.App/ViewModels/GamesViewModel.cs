@@ -11,6 +11,11 @@ public sealed class GameCard
 {
     public string GameId { get; init; } = "";
     public string Name { get; init; } = "";
+
+    /// <summary>Ícone do próprio jogo instalado; sem ele, a tela mostra <see cref="Initials"/>.</summary>
+    public System.Windows.Media.ImageSource? Icon { get; init; }
+
+    public string Initials => GameIcons.Initials(Name);
     public string Status { get; init; } = "";
     public string? InstallPath { get; init; }
     public bool Installed { get; init; }
@@ -177,6 +182,7 @@ public sealed class GamesViewModel : PageViewModel
             {
                 GameId = profile.Id,
                 Name = profile.Name,
+                Icon = GameIcons.Get(profile.Id, install?.ExecutablePath),
                 Installed = install is not null,
                 InstallPath = install?.InstallPath,
                 Status = install is not null ? "Instalado."

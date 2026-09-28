@@ -30,8 +30,14 @@
                     <DataTemplate>
                         <Border Style="{StaticResource Card}">
                             <StackPanel>
-                                <TextBlock Text="{Binding Name}" Style="{StaticResource H2}" />
-                                <TextBlock Text="{Binding Status}" Style="{StaticResource MutedText}" />
+                                <DockPanel Margin="0,0,0,4">
+                                    <ContentControl DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource GameBadge}"
+                                                    VerticalAlignment="Center" Margin="0,0,12,0" Focusable="False" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource H2}" Margin="0" />
+                                        <TextBlock Text="{Binding Status}" Style="{StaticResource MutedText}" />
+                                    </StackPanel>
+                                </DockPanel>
                                 <TextBlock Text="{Binding InstallPath}" Style="{StaticResource MutedText}" FontSize="12"
                                            Visibility="{Binding InstallPath, Converter={StaticResource Visible}}" />
 

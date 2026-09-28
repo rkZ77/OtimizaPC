@@ -112,10 +112,14 @@
                             <DataTemplate>
                                 <Button Margin="0,3" Padding="14,10" HorizontalContentAlignment="Left" CommandParameter="{Binding}"
                                         Command="{Binding DataContext.SelectSessionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding Stats}" Style="{StaticResource MutedText}" />
-                                    </StackPanel>
+                                    <DockPanel>
+                                        <ContentControl DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource GameBadge}"
+                                                        VerticalAlignment="Center" Margin="0,0,12,0" Focusable="False" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Stats}" Style="{StaticResource MutedText}" />
+                                        </StackPanel>
+                                    </DockPanel>
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

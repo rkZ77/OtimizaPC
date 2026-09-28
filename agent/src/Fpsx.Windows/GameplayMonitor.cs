@@ -27,6 +27,9 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
     /// <summary>Uma vez por segundo durante a partida: jogo e FPS atual (null = acabou ou ainda sem quadros).</summary>
     public event Action<string, double?, double?>? LiveFps;
 
+    /// <summary>Jogo aberto: id do perfil e caminho do executável (para o ícone na tela).</summary>
+    public event Action<string, string>? GameSeen;
+
     public string Status
     {
         get => _status;
@@ -151,6 +154,15 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
     {
         using var gameProcess = game;
         var startedAt = DateTimeOffset.Now;
+        try
+        {
+            if (game.MainModule?.FileName is { } exe)
+                GameSeen?.Invoke(profile.Id, exe);
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            // Anti-cheat protege o processo de alguns jogos: sem ícone, a tela usa as iniciais.
+        }
         var csv = Path.Combine(workDir, $"{startedAt:yyyyMMdd-HHmmss}-{profile.Id}.csv");
         Status = $"Medindo {profile.Name}. Jogue normalmente: o resultado aparece quando o jogo fechar.";
 

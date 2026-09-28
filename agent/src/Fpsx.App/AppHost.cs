@@ -287,6 +287,7 @@ public sealed class AppHost : ObservableObject
         _monitor = new GameplayMonitor(Ctx.GameProfiles, Ctx.PresentMonPath, Path.Combine(Ctx.DataDir, "gameplay-tmp"), AgentContext.Version);
         _monitor.StatusChanged += s => OnUi(() => MonitorStatus = s);
         _monitor.LiveFps += (game, fps, low) => OnUi(() => OnLive(game, fps, low));
+        _monitor.GameSeen += (gameId, exe) => OnUi(() => GameIcons.Remember(gameId, exe));
         _monitor.Recorded += s =>
         {
             // O hardware vai junto: sem ele a partida não se compara com

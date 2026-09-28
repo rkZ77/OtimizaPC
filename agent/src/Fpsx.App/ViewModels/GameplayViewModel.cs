@@ -10,6 +10,10 @@ public sealed record GameplayItem(GameplaySession Session)
 {
     public bool HasChart => Session.Timeline.Count > 1;
 
+    public System.Windows.Media.ImageSource? Icon { get; } = GameIcons.Get(Session.GameId);
+
+    public string Initials => GameIcons.Initials(Session.GameName);
+
     public string Title => $"{Session.StartedAt.ToLocalTime():dd/MM HH:mm}  {Session.GameName}";
 
     public string Stats => string.Format(CultureInfo.GetCultureInfo("pt-BR"),
@@ -165,7 +169,9 @@ public sealed class GameplayViewModel : PageViewModel
                 return "Partida medida antes do gráfico existir: só os números ficaram guardados.";
             var drops = GameplayAnalyzer.Drops(s.Timeline, s.Stats.AvgFps);
             return string.Format(Pt, "Média {0:0} FPS, 1% low {1:0}. {2}", s.Stats.AvgFps, s.Stats.Low1Fps,
-                drops == 0 ? "Nenhuma queda forte: FPS estável na partida." : $"{drops} {(drops == 1 ? "queda forte" : "quedas fortes")} (um quadro 3 vezes mais lento que a média e acima de 33 ms), marcadas em vermelho: passe o mouse para ver quando e o que estava pesando no PC.");
+                drops == 0 ? "Nenhuma queda forte: FPS estável na partida." : drops == 1
+                    ? "1 queda forte (um quadro 3 vezes mais lento que a média e acima de 33 ms), marcada em vermelho: passe o mouse para ver quando e o que estava pesando no PC."
+                    : $"{drops} quedas fortes (um quadro 3 vezes mais lento que a média e acima de 33 ms), marcadas em vermelho: passe o mouse para ver quando e o que estava pesando no PC.");
         }
     }
 
