@@ -48,8 +48,14 @@ const GUARANTEES = [
   { icon: ShieldCheck, t: 'Segurança do Windows intocada', d: 'Antivírus, firewall e Windows Update ficam exatamente como estão.' },
 ]
 
-const GAMES = ['Counter-Strike 2', 'EA SPORTS FC', 'Fortnite', 'Valorant', 'League of Legends', 'Minecraft', 'Roblox', 'GTA V',
-  'Apex Legends', 'Call of Duty', 'PUBG', 'Rainbow Six Siege', 'Dota 2', 'Rocket League', 'Marvel Rivals']
+/* Icone de cada jogo em /img/games (baixado uma vez e servido pelo proprio
+ * site). Sem icone, o quadro mostra as iniciais. */
+const GAMES: Array<[name: string, icon?: string]> = [
+  ['Counter-Strike 2', 'cs2.jpg'], ['EA SPORTS FC', 'eafc.jpg'], ['Fortnite'], ['Valorant', 'valorant.png'],
+  ['League of Legends', 'lol.svg'], ['Minecraft', 'minecraft.png'], ['Roblox', 'roblox.png'], ['GTA V', 'gta5.jpg'],
+  ['Apex Legends', 'apex.jpg'], ['Call of Duty', 'warzone.jpg'], ['PUBG', 'pubg.jpg'], ['Rainbow Six Siege', 'r6.jpg'],
+  ['Dota 2', 'dota2.jpg'], ['Rocket League', 'rocketleague.jpg'], ['Marvel Rivals', 'marvelrivals.jpg'],
+]
 
 /* Duas letras do nome: "Counter-Strike 2" vira CS, "GTA V" vira GV. Sem logo
  * oficial no site: logo de estudio num produto pago parece parceria. */
@@ -148,13 +154,18 @@ export default function Home() {
       <section className="border-y border-line bg-surface-1/50">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <h2 className="font-display text-2xl font-bold text-ink-1">Jogos reconhecidos</h2>
-          <p className="mt-2 text-ink-3">A lista cresce a cada atualização. A medição não mexe no jogo e funciona com anti-cheat. No app, cada jogo aparece com o ícone do próprio jogo instalado no seu PC.</p>
+          <p className="mt-2 text-ink-3">A lista cresce a cada atualização. A medição não mexe no jogo e funciona com anti-cheat. </p>
           <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {GAMES.map((g) => (
+            {GAMES.map(([g, icon]) => (
               <li key={g} className="flex items-center gap-3 rounded-lg border border-line bg-surface-0 px-3 py-2.5">
-                <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-line bg-surface-2 font-display text-sm font-bold text-accent-ink">
-                  {initials(g)}
-                </span>
+                {icon ? (
+                  <img src={`/img/games/${icon}`} alt="" width={36} height={36} loading="lazy"
+                       className="h-9 w-9 shrink-0 rounded-md border border-line bg-surface-2 object-contain" />
+                ) : (
+                  <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-line bg-surface-2 font-display text-sm font-bold text-accent-ink">
+                    {initials(g)}
+                  </span>
+                )}
                 <span className="min-w-0 text-sm leading-tight text-ink-2">{g}</span>
               </li>
             ))}
