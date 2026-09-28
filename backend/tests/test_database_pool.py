@@ -10,6 +10,7 @@ from app.database import get_connection as _get_connection_real  # antes da trav
 
 class _Conn:
     closed = False
+    encoding = "UTF8"
 
     def rollback(self):
         pass

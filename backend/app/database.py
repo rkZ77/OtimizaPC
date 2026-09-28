@@ -23,12 +23,16 @@ def _parametros() -> dict:
             user=p.username, password=p.password,
             sslmode=os.getenv("DB_SSLMODE", "prefer"),
             cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10,
+            # UTF-8 fixo: pelo pooler do Supabase em modo transacao a conexao
+            # chegou a ser lida como latin1, e todo acento do banco virou
+            # "DiagnÃ³stico" no site (28/09/2026).
+            client_encoding="UTF8",
         )
     return dict(
         host=os.getenv("DB_HOST", "localhost"), port=os.getenv("DB_PORT", "5432"),
         dbname=os.getenv("DB_NAME", "fpsx"), user=os.getenv("DB_USER", "fpsx"),
         password=os.getenv("DB_PASS", ""), sslmode=os.getenv("DB_SSLMODE", "prefer"),
-        cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10,
+        cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10, client_encoding="UTF8",
     )
 
 
@@ -100,7 +104,12 @@ def get_connection():
     if not _vagas.acquire(timeout=_ESPERA_SEGUNDOS):
         raise PoolOcupado("Nenhuma conexão livre com o banco.")
     try:
-        return _ConexaoDoPool(_obter_pool().getconn())
+        conn = _obter_pool().getconn()
+        # Confere a cada uso: conexao que voltou do pooler com outra
+        # codificacao e' corrigida antes de ler qualquer texto.
+        if conn.encoding != "UTF8":
+            conn.set_client_encoding("UTF8")
+        return _ConexaoDoPool(conn)
     except BaseException:
         _vagas.release()
         raise
