@@ -5,6 +5,8 @@ nao reconhece. Campo livre com caminho de arquivo, nome de usuario ou lista
 de processos nunca chega ao banco.
 """
 import json
+import re
+from datetime import datetime, timedelta, timezone
 
 from app import database
 
@@ -17,6 +19,26 @@ EVENTS = {
 DETAIL_KEYS = {"profile", "catalog_version", "decision", "error_code", "error", "problems", "recommended", "duration_ms", "plan"}
 
 MAX_TEXT = 300
+
+_VERSION = re.compile(r"^[0-9][0-9A-Za-z.+-]{0,39}$")
+
+#: Evento mais antigo que isso (fila esquecida) ou no futuro (relogio errado)
+#: fica sem hora propria: o banco usa a do envio.
+MAX_AGE = timedelta(days=180)
+
+
+def occurred_at(value) -> datetime | None:
+    """Hora em que o evento aconteceu no PC, se for plausivel."""
+    if not isinstance(value, str):
+        return None
+    try:
+        at = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if at.tzinfo is None:
+        return None
+    now = datetime.now(timezone.utc)
+    return at if now - MAX_AGE <= at <= now + timedelta(days=1) else None
 
 
 def sanitize(event: dict) -> dict | None:
@@ -34,7 +56,10 @@ def sanitize(event: dict) -> dict | None:
             elif isinstance(v, (bool, int, float)):
                 clean[k] = v
     opt = event.get("optimization_id")
+    version = event.get("agent_version")
     return {
+        "occurred_at": occurred_at(event.get("occurred_at")),
+        "event_agent_version": version if isinstance(version, str) and _VERSION.match(version) else None,
         "event": name,
         "optimization_id": str(opt)[:80] if opt else None,
         "success": event.get("success") if isinstance(event.get("success"), bool) else None,
@@ -47,10 +72,12 @@ def record(device: dict, events: list[dict]) -> int:
     with database.transaction() as cur:
         for e in rows:
             cur.execute(
-                """INSERT INTO telemetry_events (device_id, event, optimization_id, success, agent_version, windows_build, detail)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                """INSERT INTO telemetry_events (device_id, event, optimization_id, success, agent_version, windows_build, detail,
+                                                 occurred_at, event_agent_version)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                 (device["id"], e["event"], e["optimization_id"], e["success"],
-                 device["agent_version"], device["windows_build"], json.dumps(e["detail"])))
+                 device["agent_version"], device["windows_build"], json.dumps(e["detail"]),
+                 e["occurred_at"], e["event_agent_version"]))
     return len(rows)
 
 

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app import auth, database, email_templates, settings
-from app.services import admin_insights, app_settings, catalog, emails, licenses, payments, plans, telemetry, users
+from app.services import admin_insights, app_settings, catalog, emails, gameplay, licenses, payments, plans, telemetry, users
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(auth.require_admin)])
 
@@ -215,6 +215,24 @@ def save_coupon(body: CouponIn, admin=Depends(auth.require_admin)):
              expires_at = EXCLUDED.expires_at, active = EXCLUDED.active RETURNING *""", body.model_dump())
     catalog.audit(admin["id"], "coupon.save", body.code, body.model_dump())
     return {"coupon": row}
+
+
+@router.get("/gameplay/summary")
+def gameplay_summary():
+    return gameplay.summary()
+
+
+@router.get("/gameplay")
+def gameplay_recent(page=Depends(_page)):
+    return {"sessions": gameplay.recent(*page)}
+
+
+@router.get("/gameplay/{session_id}/timeline")
+def gameplay_timeline(session_id: int):
+    row = gameplay.timeline(session_id)
+    if row is None:
+        raise HTTPException(404, "Partida não encontrada.")
+    return row
 
 
 @router.get("/devices")

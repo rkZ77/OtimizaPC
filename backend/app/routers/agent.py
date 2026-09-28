@@ -6,11 +6,13 @@ o que aplicar e' o motor local, com whitelist compilada.
 """
 import re
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app import auth, signing
-from app.services import catalog, licenses, telemetry, users
+from datetime import datetime
+
+from app.services import catalog, gameplay, licenses, telemetry, users
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
@@ -113,6 +115,45 @@ def post_benchmark(body: BenchmarkIn, ctx=Depends(device_context)):
     _, device = ctx
     telemetry.record_benchmark(device, body.model_dump())
     return {"ok": True}
+
+
+_GAME_ID = r"^[a-z0-9-]{1,30}$"
+
+
+class GameplayIn(BaseModel):
+    session_key: str = Field(min_length=1, max_length=60, pattern=r"^[A-Za-z0-9_-]+$")
+    game_id: str = Field(pattern=_GAME_ID)
+    started_at: datetime
+    ended_at: datetime
+    measured_seconds: float = Field(ge=0, le=86400)
+    avg_fps: float = Field(ge=0, le=10000)
+    low1_fps: float = Field(ge=0, le=10000)
+    low01_fps: float = Field(ge=0, le=10000)
+    p99_frametime_ms: float = Field(ge=0, le=100000)
+    stutters_per_minute: float = Field(ge=0, le=100000)
+    avg_cpu_percent: float | None = Field(default=None, ge=0, le=100)
+    avg_gpu_percent: float | None = Field(default=None, ge=0, le=100)
+    display_hz: int | None = Field(default=None, ge=0, le=1000)
+    agent_version: str = Field(default="", max_length=40)
+    hardware: dict = Field(default_factory=dict)
+    timeline: list = Field(default_factory=list, max_length=gameplay.MAX_POINTS)
+    drops: int = Field(default=0, ge=0, le=100000)
+    drop_causes: dict = Field(default_factory=dict)
+
+
+@router.post("/gameplay")
+def post_gameplay(body: GameplayIn, ctx=Depends(device_context)):
+    """Uma partida medida pelo app (so' com consentimento de telemetria no app)."""
+    _, device = ctx
+    gameplay.record(device, body.model_dump())
+    return {"ok": True}
+
+
+@router.get("/gameplay/peers")
+def gameplay_peers(game_id: str = Query(pattern=_GAME_ID), ctx=Depends(device_context)):
+    """Como PCs parecidos rodam o jogo (mediana, minimo de PCs no grupo)."""
+    _, device = ctx
+    return gameplay.peers(device, game_id)
 
 
 @router.get("/catalog")

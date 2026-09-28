@@ -312,3 +312,50 @@ def test_ataques_com_banco_real_idor_e_sql_injection(api, db):
     xss = "<img src=x onerror=alert(1)>"
     r = api.post("/api/auth/register", json={"email": "xss@fpsx.app", "password": "senha-forte-1", "name": xss})
     assert r.json()["user"]["name"] == xss
+
+def test_partidas_sobem_comparam_com_pcs_parecidos_e_aparecem_no_admin(api, db):
+    from datetime import datetime, timedelta, timezone
+
+    base = {
+        "game_id": "cs2", "measured_seconds": 1200, "low01_fps": 60, "p99_frametime_ms": 9, "stutters_per_minute": 5,
+        "timeline": [[100, 170, 150], [102, 168, 20]], "drops": 1, "drop_causes": {"app": 1},
+    }
+    tokens = []
+    for i in range(7):
+        headers = _register(api, f"jogador{i}@fpsx.app")
+        h = format(i + 4, "x") * 64
+        tokens.append(_activate(api, headers, h).json()["token"])
+    start = datetime(2026, 9, 27, 20, 0, tzinfo=timezone.utc)
+    # 6 PCs com a mesma placa (FPS 100, 110, ... 150) e 1 com outra placa.
+    for i, token in enumerate(tokens):
+        gpu = "Radeon RX 580 Series" if i < 6 else "GeForce RTX 4090"
+        match = {**base, "session_key": f"m{i}", "started_at": start.isoformat(), "ended_at": (start + timedelta(minutes=20)).isoformat(),
+                 "avg_fps": 100 + 10 * i, "low1_fps": 60 + i, "hardware": {"tier": "MID", "gpu": gpu, "threads": 8}}
+        r = api.post("/api/agent/gameplay", headers={"X-Device-Token": token}, json=match)
+        assert r.status_code == 200, r.text
+    # Reenvio da mesma partida não duplica.
+    assert api.post("/api/agent/gameplay", headers={"X-Device-Token": tokens[0]}, json={**base, "session_key": "m0",
+        "started_at": start.isoformat(), "ended_at": start.isoformat(), "avg_fps": 100, "low1_fps": 60,
+        "hardware": {"tier": "MID", "gpu": "Radeon RX 580 Series"}}).status_code == 200
+    assert db.fetch_one("SELECT count(*) AS n FROM gameplay_sessions")["n"] == 7
+
+    # PC 0 se compara com os outros 5 da mesma placa (ele mesmo fica fora): mediana de 110..150 = 130.
+    peers = api.get("/api/agent/gameplay/peers?game_id=cs2", headers={"X-Device-Token": tokens[0]}).json()
+    assert peers["scope"] == "gpu" and peers["devices"] == 5 and peers["avg_fps"] == 130
+    # A RTX 4090 está sozinha: cai para o nível do PC, com os 6 da RX 580.
+    peers = api.get("/api/agent/gameplay/peers?game_id=cs2", headers={"X-Device-Token": tokens[6]}).json()
+    assert peers["scope"] == "tier" and peers["devices"] == 6
+
+    _register(api, "analista@fpsx.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'analista@fpsx.app'")
+    r = api.post("/api/auth/login", json={"email": "analista@fpsx.app", "password": "senha-forte-1"})
+    admin = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    summary = api.get("/api/admin/gameplay/summary", headers=admin).json()
+    assert summary["by_game"][0]["matches"] == 7 and summary["by_game"][0]["devices"] == 7
+    assert summary["drop_causes"] == [{"cause": "app", "drops": 7}]
+    recent = api.get("/api/admin/gameplay", headers=admin).json()["sessions"]
+    assert len(recent) == 7 and "timeline" not in recent[0]
+    tl = api.get(f"/api/admin/gameplay/{recent[0]['id']}/timeline", headers=admin).json()
+    assert tl["timeline"] == [[100, 170.0, 150.0], [102, 168.0, 20.0]]
+    # Usuário comum não vê o painel.
+    assert api.get("/api/admin/gameplay/summary", headers=_register(api, "curioso@fpsx.app")).status_code == 403
