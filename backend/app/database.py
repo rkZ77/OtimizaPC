@@ -47,12 +47,24 @@ class PoolOcupado(psycopg2.pool.PoolError):
     """Nenhuma conexao livre dentro do tempo de espera."""
 
 
+class _PoolQueGuarda(psycopg2.pool.ThreadedConnectionPool):
+    """O psycopg2 so' guarda aberto o MINIMO de conexoes: toda conexao alem
+    dele e' fechada ao voltar. Com acesso simultaneo, cada requisicao abria
+    conexao nova com o Supabase (TLS e login em outra regiao), e o staging
+    atendia 3 por segundo com 1 ou 10 simultaneos. Aqui abre o minimo no
+    inicio, mas guarda ate' o maximo depois de usadas."""
+
+    def __init__(self, minconn, maxconn, **kwargs):
+        super().__init__(minconn, maxconn, **kwargs)
+        self.minconn = maxconn
+
+
 def _obter_pool():
     global _pool
     if _pool is None:
         with _pool_lock:
             if _pool is None:
-                _pool = psycopg2.pool.ThreadedConnectionPool(_POOL_MIN, _POOL_MAX, **_parametros())
+                _pool = _PoolQueGuarda(_POOL_MIN, _POOL_MAX, **_parametros())
     return _pool
 
 
