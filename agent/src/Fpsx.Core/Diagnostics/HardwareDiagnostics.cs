@@ -33,7 +33,7 @@ public sealed class WindowsVersionDiagnostic : IDiagnostic
             {
                 DiagnosticId = Id, Area = Areas.Windows, Status = HealthStatus.Info,
                 Title = $"{os.Caption} (build {os.Build})",
-                Detail = "Esta versão do FPSX foi validada no Windows 11. No Windows 10 o diagnóstico funciona, mas algumas otimizações podem não se aplicar.",
+                Detail = "Esta versão do RKZFPS foi validada no Windows 11. No Windows 10 o diagnóstico funciona, mas algumas otimizações podem não se aplicar.",
                 Evidence = evidence,
             };
     }
@@ -149,7 +149,7 @@ public sealed class BackgroundLoadDiagnostic : IDiagnostic
             Detail = heavy.Count > 0
                 ? $"{string.Join(", ", heavy.Select(p => $"{p.Name} ({Fmt.Pct(p.CpuPercent)})"))} consumiram CPU durante a amostra. Carga de fundo disputa núcleos com o jogo e aparece como queda no 1% low."
                 : $"Uso total de CPU em repouso de {Fmt.Pct(usage)}, alto para um PC sem jogo aberto.",
-            Recommendation = "Feche esses programas antes de jogar. O FPSX não encerra processos sozinho.",
+            Recommendation = "Feche esses programas antes de jogar. O RKZFPS não encerra processos sozinho.",
             Evidence = evidence,
         };
     }
@@ -344,7 +344,7 @@ public sealed class GpuDriverDiagnostic : IDiagnostic
 {
     public string Id => "gpu-driver";
 
-    // Links oficiais. O FPSX nunca baixa nem executa instalador de driver:
+    // Links oficiais. O RKZFPS nunca baixa nem executa instalador de driver:
     // driver de fonte errada é o jeito mais fácil de quebrar ou infectar um
     // PC. O atualizador do próprio fabricante detecta o modelo e instala certo.
     private static string VendorUrl(GpuVendor v) => v switch
@@ -421,7 +421,7 @@ public sealed class GpuDriverDiagnostic : IDiagnostic
 
 /// <summary>
 /// Integridade de memória (HVCI) tem custo de desempenho documentado pela
-/// própria Microsoft em alguns jogos, mas é proteção do kernel. O FPSX mostra
+/// própria Microsoft em alguns jogos, mas é proteção do kernel. O RKZFPS mostra
 /// a informação e não oferece desligar.
 /// </summary>
 public sealed class MemoryIntegrityDiagnostic : IDiagnostic
@@ -439,8 +439,8 @@ public sealed class MemoryIntegrityDiagnostic : IDiagnostic
             DiagnosticId = Id, Area = Areas.Security, Status = enabled ? HealthStatus.Info : HealthStatus.Ok,
             Title = enabled ? "Integridade de memória ativada" : "Integridade de memória desativada",
             Detail = enabled
-                ? "É um recurso de segurança do Windows que protege o kernel. Pode ter um custo pequeno de desempenho em alguns jogos. O FPSX não desativa recursos de segurança."
-                : "Recurso de segurança do Windows desativado neste PC. O FPSX não altera essa configuração.",
+                ? "É um recurso de segurança do Windows que protege o kernel. Pode ter um custo pequeno de desempenho em alguns jogos. O RKZFPS não desativa recursos de segurança."
+                : "Recurso de segurança do Windows desativado neste PC. O RKZFPS não altera essa configuração.",
             Evidence = new Dictionary<string, string> { ["hvci"] = enabled ? "ativada" : "desativada", ["vbs"] = sec.VbsRunning is { } v ? (v ? "rodando" : "parado") : "desconhecido" },
         };
     }

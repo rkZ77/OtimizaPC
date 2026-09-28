@@ -40,20 +40,20 @@
   --ink-3: 148 148 158;       /* #94949e ·  6.2:1 · apoio, rotulo    */
   --ink-4: 117 117 127;       /* #75757f ·  4.1:1 · so' texto grande */
 
-  /* Verde-menta do FPSX (#3ddc97), o mesmo do app desktop. O resto do sistema
+  /* Ciano da marca RKZFPS (#19d3f2), o mesmo do app desktop e do logo. O resto do sistema
      (superficies, tinta, raio, sombra) e' o do Pickia; so' a marca muda, pra
      um produto nao ser confundido com o outro. */
-  --accent:       61 220 151; /* #3ddc97 · a marca                   */
-  --accent-hover: 91 232 171;
-  --accent-press: 40 190 125;
+  --accent:       25 211 242; /* #19d3f2 · ciano da marca RKZFPS    */
+  --accent-hover: 92 225 246;
+  --accent-press: 15 182 212;
   /*
-   * O verde da marca quando ele e' TEXTO, nao preenchimento.
+   * O ciano da marca quando ele e' TEXTO, nao preenchimento.
    *
-   * No escuro e' o mesmo #00CC00. No claro nao pode ser: verde neon sobre
-   * branco da' 2:1 de contraste e some. O botao continua #00CC00 nos dois
-   * temas (a marca nao muda); o que muda e' so' a palavra escrita em verde.
+   * No escuro e' o mesmo #19d3f2. No claro nao pode ser: ciano claro sobre
+   * branco some. O botao continua ciano nos dois temas (a marca nao muda);
+   * o que muda e' so' a palavra escrita em ciano (#0e7490 no tema claro).
    */
-  --accent-ink: 61 220 151;
+  --accent-ink: 25 211 242;
   /* Graficos: par validado (faixa de luz, daltonismo, contraste com o card). */
   --chart-1: 34 163 108;      /* #22a36c · serie principal (FPS medio) */
   --chart-2: 234 106 10;      /* #ea6a0a · segunda serie (pior quadro) */
@@ -189,7 +189,7 @@
      #009a00 e' o #00CC00 escurecido NA MESMA MATIZ (120 graus), nao um verde
      de outra familia: continua sendo o verde do PickIA, so' que legivel sobre
      branco. Era #067a1a, que puxava pro azul e lia como verde-garrafa. */
-  --accent-ink: 4 138 88;     /* #048a58 · a menta escurecida na mesma matiz, legivel sobre branco */
+  --accent-ink: 14 116 144;   /* #0e7490 · o ciano escurecido na mesma matiz, legivel sobre branco */
 
   /*
    * Preto nos DOIS temas, de proposito · nao e' descuido.
@@ -615,7 +615,7 @@
            hover:border-line-strong transition-colors duration-1 ease-smooth;
   }
   .pill-active {
-    @apply bg-accent/15 border-accent/40 text-green-400;
+    @apply bg-accent/15 border-accent/40 text-accent-ink;
   }
 
   /* --- acao --- */

@@ -7,7 +7,7 @@ namespace Fpsx.App;
 /// <summary>
 /// Guia de 4 passos da primeira abertura, para quem nunca mexeu em
 /// configuração de PC. No fim a pessoa escolhe o modo: simples (o essencial)
-/// ou avançado (tudo, item a item). Reabre pelo "Como usar o FPSX".
+/// ou avançado (tudo, item a item). Reabre pelo "Como usar o RKZFPS".
 /// </summary>
 public static class Tutorial
 {
@@ -15,14 +15,14 @@ public static class Tutorial
 
     private static readonly Step[] Steps =
     [
-        new("", "1. O FPSX analisa o seu PC",
+        new("", "1. O RKZFPS analisa o seu PC",
             "Ao abrir, ele confere processador, placa de vídeo, memória, disco, energia, monitor, rede e os seus jogos. " +
             "Essa parte só lê: nada muda no PC. Na tela Início você vê um resumo: se está tudo bem ou o que pode melhorar."),
         new("", "2. Corrige com um clique, e desfaz também",
             "Quando algo pode melhorar, o botão Corrigir agora aplica só o que faz sentido para o seu PC. " +
-            "Antes de mudar qualquer coisa, o FPSX guarda como estava. Em Histórico e desfazer, tudo volta com um clique."),
+            "Antes de mudar qualquer coisa, o RKZFPS guarda como estava. Em Histórico e desfazer, tudo volta com um clique."),
         new("", "3. Mede o FPS dos seus jogos sozinho",
-            "Deixe o FPSX aberto (pode ser só o ícone perto do relógio) e jogue. O FPS aparece ao vivo no topo do app, " +
+            "Deixe o RKZFPS aberto (pode ser só o ícone perto do relógio) e jogue. O FPS aparece ao vivo no topo do app, " +
             "e cada partida fica salva em Partidas e FPS. Depois de otimizar, o app mostra se o FPS mudou de verdade."),
         new("", "4. Como você prefere usar?",
             "Modo simples: só o essencial, com botões grandes. Modo avançado: mostra também cada otimização, o benchmark " +
@@ -34,7 +34,7 @@ public static class Tutorial
         var res = Application.Current.Resources;
         var window = new Window
         {
-            Title = "Como usar o FPSX",
+            Title = "Como usar o RKZFPS",
             Width = 560,
             SizeToContent = SizeToContent.Height,
             WindowStartupLocation = Application.Current.MainWindow is { IsLoaded: true } ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen,

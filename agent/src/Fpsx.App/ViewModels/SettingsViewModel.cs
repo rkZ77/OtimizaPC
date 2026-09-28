@@ -27,7 +27,7 @@ public sealed class SettingsViewModel : PageViewModel
     public ICommand OpenDataCommand { get; }
     public ICommand PrivacyCommand { get; }
     public IReadOnlyList<ProfileDefinition> Profiles => _host.Ctx.Catalog.Profiles;
-    public string Version => "FPSX " + AgentContext.Version;
+    public string Version => "RKZFPS " + AgentContext.Version;
 
     public ProfileDefinition? Profile
     {

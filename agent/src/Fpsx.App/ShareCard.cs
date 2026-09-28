@@ -20,7 +20,7 @@ public static class ShareCard
 
     private static readonly CultureInfo Pt = CultureInfo.GetCultureInfo("pt-BR");
 
-    /// <summary>Gera o PNG, salva em Imagens\FPSX e copia para a área de transferência. Devolve o caminho.</summary>
+    /// <summary>Gera o PNG, salva em Imagens\RKZFPS e copia para a área de transferência. Devolve o caminho.</summary>
     public static string Export(GameplaySession s, IReadOnlyList<DropCause> drops, string causes)
     {
         var card = Build(s, drops, causes);
@@ -32,7 +32,7 @@ public static class ShareCard
         bitmap.Render(card);
         bitmap.Freeze();
 
-        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "FPSX");
+        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "RKZFPS");
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, $"{s.GameId}-{s.StartedAt.ToLocalTime():yyyyMMdd-HHmm}.png");
         var encoder = new PngBitmapEncoder();
@@ -85,7 +85,9 @@ public static class ShareCard
         // Cabeçalho: ícone do jogo, nome e data.
         var header = new DockPanel { Margin = new Thickness(0, 0, 0, 24) };
         DockPanel.SetDock(header, Dock.Top);
-        var brand = Text("FPSX", 22, "Accent", FontWeights.Bold);
+        var brand = new TextBlock { FontSize = 24, FontWeight = FontWeights.Black, FontStyle = FontStyles.Italic, FontFamily = new FontFamily("Segoe UI") };
+        brand.Inlines.Add(new System.Windows.Documents.Run("RKZ") { Foreground = Res("Text") });
+        brand.Inlines.Add(new System.Windows.Documents.Run("FPS") { Foreground = Res("Accent") });
         brand.VerticalAlignment = VerticalAlignment.Center;
         DockPanel.SetDock(brand, Dock.Right);
         header.Children.Add(brand);
@@ -119,7 +121,7 @@ public static class ShareCard
         var gpu = s.Hardware?.Gpu is { Length: > 0 } g ? g : "placa de vídeo não identificada";
         var footer = new DockPanel { Margin = new Thickness(0, 14, 0, 0) };
         DockPanel.SetDock(footer, Dock.Bottom);
-        var site = Text("Verde: FPS médio. Laranja: pior quadro. Medido com FPSX", 15, "Muted");
+        var site = Text("Azul: FPS médio. Laranja: pior quadro. Medido com RKZFPS, rkzfps.com.br", 15, "Muted");
         DockPanel.SetDock(site, Dock.Right);
         footer.Children.Add(site);
         footer.Children.Add(Text(gpu + (s.Hardware is { Threads: > 0 } h ? $", {h.Threads} threads, {h.RamGb:0} GB de RAM" : ""), 15, "Muted"));

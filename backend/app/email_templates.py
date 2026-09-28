@@ -1,4 +1,4 @@
-"""Casca e conteudo dos e-mails transacionais do FPSX.
+"""Casca e conteudo dos e-mails transacionais do RKZFPS.
 
 Mesmo desenho do email_templates.py do Pickia, e pela mesma licao de la': a
 casca e' UMA funcao. No Pickia ela estava copiada em tres arquivos e cada
@@ -31,7 +31,7 @@ TEXTO_4 = "#75757f"
 MENTA = "#3ddc97"
 ALERTA = "#f5a524"
 
-ASSINATURA = "FPSX. Otimização de PC com diagnóstico, backup e desfazer."
+ASSINATURA = "RKZFPS. Otimização de PC com diagnóstico, backup e desfazer."
 
 
 @dataclass(frozen=True)
@@ -113,13 +113,13 @@ def boas_vindas(nome: str, site_url: str, trial_days: int) -> Email:
     html = casca(
         _titulo("Conta criada", f"Bem-vindo, {escape(n)}")
         + _paragrafos(corpo)
-        + f'<div style="margin-top:10px;">{_botao(f"{site_url}/download", "Baixar o FPSX para Windows")}</div>',
-        nota_rodape="Você recebeu este e-mail porque este endereço foi usado para criar uma conta no FPSX.",
+        + f'<div style="margin-top:10px;">{_botao(f"{site_url}/download", "Baixar o RKZFPS para Windows")}</div>',
+        nota_rodape="Você recebeu este e-mail porque este endereço foi usado para criar uma conta no RKZFPS.",
     )
-    text = (f"Olá {n},\n\nSua conta no FPSX foi criada."
+    text = (f"Olá {n},\n\nSua conta no RKZFPS foi criada."
             + (f" Ela já tem {trial_days} dias de teste do plano Pro em 1 PC, sem cartão." if trial_days > 0 else "")
-            + f"\n\nBaixe o app: {site_url}/download\n\nO diagnóstico não muda nada no PC, e toda correção tem backup e pode ser desfeita.\n\nEquipe FPSX")
-    return Email("Sua conta no FPSX está pronta", text, html)
+            + f"\n\nBaixe o app: {site_url}/download\n\nO diagnóstico não muda nada no PC, e toda correção tem backup e pode ser desfeita.\n\nEquipe RKZFPS")
+    return Email("Sua conta no RKZFPS está pronta", text, html)
 
 
 # ─── 2. codigo para redefinir a senha ───────────────────────────────────
@@ -143,26 +143,26 @@ def codigo_senha(nome: str, codigo: str, site_url: str, email: str, minutos: int
         + _botao(destino, "Redefinir minha senha")
         + f'<p style="margin:24px 0 0;color:{TEXTO_3};font-size:13px;line-height:1.6;"><strong style="color:{TEXTO_2};">Não foi você?</strong> '
           'Ignore este e-mail. Sua senha atual continua valendo, e ninguém troca nada sem este código.</p>',
-        nota_rodape="O FPSX nunca pede sua senha por e-mail, WhatsApp ou telefone.",
+        nota_rodape="O RKZFPS nunca pede sua senha por e-mail, WhatsApp ou telefone.",
     )
-    text = (f"Olá {n},\n\nSeu código para redefinir a senha do FPSX é:\n\n  {codigo}\n\n"
+    text = (f"Olá {n},\n\nSeu código para redefinir a senha do RKZFPS é:\n\n  {codigo}\n\n"
             f"Ele vale por {minutos} minutos. Digite em: {destino}\n\n"
-            "Se não foi você, ignore este e-mail. Sua senha atual continua valendo.\n\nEquipe FPSX")
-    return Email("Seu código para redefinir a senha do FPSX", text, html)
+            "Se não foi você, ignore este e-mail. Sua senha atual continua valendo.\n\nEquipe RKZFPS")
+    return Email("Seu código para redefinir a senha do RKZFPS", text, html)
 
 
 def senha_alterada(nome: str, site_url: str) -> Email:
     n = primeiro_nome(nome)
     html = casca(
         _titulo("Segurança", "Sua senha foi alterada")
-        + _paragrafos([f"Olá, {escape(n)}. A senha da sua conta no FPSX acabou de ser trocada, e as sessões abertas antes disso foram encerradas.",
+        + _paragrafos([f"Olá, {escape(n)}. A senha da sua conta no RKZFPS acabou de ser trocada, e as sessões abertas antes disso foram encerradas.",
                        "Se foi você, não precisa fazer nada. Se não foi, peça um código novo agora mesmo."])
         + _botao(f"{site_url}/esqueci-senha", "Recuperar minha conta"),
-        nota_rodape="O FPSX nunca pede sua senha por e-mail, WhatsApp ou telefone.",
+        nota_rodape="O RKZFPS nunca pede sua senha por e-mail, WhatsApp ou telefone.",
     )
-    text = (f"Olá {n},\n\nA senha da sua conta no FPSX foi alterada e as sessões antigas foram encerradas.\n"
-            f"Se não foi você, recupere a conta em: {site_url}/esqueci-senha\n\nEquipe FPSX")
-    return Email("A senha da sua conta FPSX foi alterada", text, html)
+    text = (f"Olá {n},\n\nA senha da sua conta no RKZFPS foi alterada e as sessões antigas foram encerradas.\n"
+            f"Se não foi você, recupere a conta em: {site_url}/esqueci-senha\n\nEquipe RKZFPS")
+    return Email("A senha da sua conta RKZFPS foi alterada", text, html)
 
 
 # ─── 3. pagamento aprovado ──────────────────────────────────────────────
@@ -172,14 +172,14 @@ def pagamento_aprovado(nome: str, plano: str, vence_em: str, valor: str, site_ur
     html = casca(
         _titulo("Pagamento confirmado", f"Tudo certo, {escape(n)}")
         + _paragrafos(["O plano já está ativo na sua conta. No app, abra <strong>Conta</strong> e clique em "
-                       "<strong>Sincronizar</strong>, ou apenas reabra o FPSX."])
+                       "<strong>Sincronizar</strong>, ou apenas reabra o RKZFPS."])
         + _quadro([("Plano", plano), ("Valor", valor), ("Válido até", vence_em)])
         + _botao(f"{site_url}/conta", "Ver minha conta"),
         nota_rodape="Guarde este e-mail como comprovante. O desfazer continua liberado em qualquer plano.",
     )
     text = (f"Olá {n},\n\nSeu pagamento foi confirmado.\n\nPlano: {plano}\nValor: {valor}\nVálido até: {vence_em}\n\n"
-            f"No app, abra Conta e clique em Sincronizar, ou reabra o FPSX.\nSua conta: {site_url}/conta\n\nEquipe FPSX")
-    return Email(f"Pagamento confirmado: FPSX {plano}", text, html)
+            f"No app, abra Conta e clique em Sincronizar, ou reabra o RKZFPS.\nSua conta: {site_url}/conta\n\nEquipe RKZFPS")
+    return Email(f"Pagamento confirmado: RKZFPS {plano}", text, html)
 
 
 # ─── 4. avisos de plano (vencendo e encerrado) ──────────────────────────
@@ -188,7 +188,7 @@ def pagamento_aprovado(nome: str, plano: str, vence_em: str, valor: str, site_ur
 
 def aviso_plano(nome: str, plano: str, vence_em: str, dias: int, trial: bool, site_url: str) -> Email:
     n = primeiro_nome(nome)
-    o_que = "O seu teste do FPSX" if trial else f"O seu plano FPSX {plano}"
+    o_que = "O seu teste do RKZFPS" if trial else f"O seu plano RKZFPS {plano}"
     if dias > 0:
         quando = "amanhã" if dias == 1 else f"em {dias} dias"
         titulo = f"{o_que} acaba {quando}"
@@ -206,9 +206,9 @@ def aviso_plano(nome: str, plano: str, vence_em: str, dias: int, trial: bool, si
         _titulo("Seu plano", escape(titulo))
         + _paragrafos([f"Olá, {escape(n)}.", escape(frase)])
         + _botao(f"{site_url}/planos", cta),
-        nota_rodape="Você recebeu este aviso porque tem uma conta no FPSX.",
+        nota_rodape="Você recebeu este aviso porque tem uma conta no RKZFPS.",
     )
-    text = f"Olá {n},\n\n{titulo}.\n\n{frase}\n\nPlanos: {site_url}/planos\n\nEquipe FPSX"
+    text = f"Olá {n},\n\n{titulo}.\n\n{frase}\n\nPlanos: {site_url}/planos\n\nEquipe RKZFPS"
     return Email(subject, text, html)
 
 
@@ -216,9 +216,9 @@ def aviso_plano(nome: str, plano: str, vence_em: str, dias: int, trial: bool, si
 
 def teste(site_url: str) -> Email:
     html = casca(
-        _titulo("Teste de envio", "O e-mail do FPSX está funcionando")
+        _titulo("Teste de envio", "O e-mail do RKZFPS está funcionando")
         + _paragrafos(["Se você está lendo isto, o Resend aceitou o remetente e a mensagem chegou.",
                        "Confira também se ela não caiu no spam: se caiu, falta configurar SPF e DKIM do domínio no Resend."])
         + _botao(f"{site_url}/admin#emails", "Voltar ao admin"),
     )
-    return Email("Teste de envio do FPSX", "O e-mail do FPSX está funcionando.", html)
+    return Email("Teste de envio do RKZFPS", "O e-mail do RKZFPS está funcionando.", html)

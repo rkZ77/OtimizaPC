@@ -10,8 +10,9 @@
     <Color x:Key="BorderColor">#2A323D</Color>
     <Color x:Key="TextColor">#E6EDF3</Color>
     <Color x:Key="MutedColor">#8B97A6</Color>
-    <Color x:Key="AccentColor">#3DDC97</Color>
-    <Color x:Key="AccentHoverColor">#5BE8AB</Color>
+    <!-- Ciano da marca RKZFPS (arte do logo) -->
+    <Color x:Key="AccentColor">#19D3F2</Color>
+    <Color x:Key="AccentHoverColor">#5CE1F6</Color>
     <Color x:Key="WarnColor">#F2B84B</Color>
     <Color x:Key="DangerColor">#F2545B</Color>
     <Color x:Key="InfoColor">#58A6FF</Color>

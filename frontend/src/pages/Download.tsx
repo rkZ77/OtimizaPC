@@ -16,10 +16,10 @@ export default function Download() {
 
   return (
     <PageShell
-      title="Baixar o FPSX"
-      description="Baixe o FPSX para Windows 10 e 11. O diagnóstico é gratuito e não altera nada no seu PC."
+      title="Baixar o RKZFPS"
+      description="Baixe o RKZFPS para Windows 10 e 11. O diagnóstico é gratuito e não altera nada no seu PC."
       width="wide"
-      bar={{ title: 'Baixar o FPSX', sub: 'Instale, abra e o diagnóstico começa sozinho. O scan é gratuito e não altera nada.' }}
+      bar={{ title: 'Baixar o RKZFPS', sub: 'Instale, abra e o diagnóstico começa sozinho. O scan é gratuito e não altera nada.' }}
     >
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2 p-6">
@@ -29,7 +29,7 @@ export default function Download() {
           )}
           {release && (
             <>
-              <p className="font-display text-xl font-bold text-ink-1">FPSX {release.version}</p>
+              <p className="font-display text-xl font-bold text-ink-1">RKZFPS {release.version}</p>
               <p className="text-sm text-ink-3">Publicado em {date(release.published_at)}</p>
               <Button className="mt-5" size="lg" Icon={DownloadIcon} href={release.url}>Baixar para Windows</Button>
               {release.sha256 && <p className="mt-4 break-all font-mono text-[11px] text-ink-4">SHA-256: {release.sha256}</p>}
@@ -51,7 +51,7 @@ export default function Download() {
           </ul>
           <div className="mt-6 flex gap-3 text-sm text-ink-3">
             <ShieldCheck className="w-5 h-5 shrink-0 text-accent" aria-hidden />
-            <p>O FPSX não desativa antivírus, firewall nem atualizações, e toda alteração tem backup e pode ser desfeita.</p>
+            <p>O RKZFPS não desativa antivírus, firewall nem atualizações, e toda alteração tem backup e pode ser desfeita.</p>
           </div>
         </Card>
       </div>
@@ -59,7 +59,7 @@ export default function Download() {
       <SectionHead className="mt-12" title="Primeiros passos" />
       <ol className="grid gap-4 sm:grid-cols-3">
         {[
-          ['Instale e abra', 'O FPSX faz o diagnóstico ao abrir. Nada é alterado nessa etapa.'],
+          ['Instale e abra', 'O RKZFPS faz o diagnóstico ao abrir. Nada é alterado nessa etapa.'],
           ['Entre na sua conta', 'Na tela Conta do app. Isso ativa este PC no seu plano e libera os recursos.'],
           ['Resolva e meça', 'Use Resolver em cada problema encontrado e o Benchmark para medir antes e depois.'],
         ].map(([t, d], i) => (

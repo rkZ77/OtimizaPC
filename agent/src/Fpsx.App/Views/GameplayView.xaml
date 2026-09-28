@@ -15,7 +15,7 @@
         <StackPanel Margin="32,28">
             <TextBlock Text="Partidas" Style="{StaticResource H1}" />
             <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,18"
-                       Text="O FPSX mede o FPS de cada partida sozinho, com o jogo aberto, e mostra se ele mudou depois de uma otimização. Só entram os minutos com o jogo em primeiro plano, depois do carregamento. Nada no jogo é alterado para medir." />
+                       Text="O RKZFPS mede o FPS de cada partida sozinho, com o jogo aberto, e mostra se ele mudou depois de uma otimização. Só entram os minutos com o jogo em primeiro plano, depois do carregamento. Nada no jogo é alterado para medir." />
 
             <!-- Ao vivo, enquanto o jogo roda -->
             <Border Style="{StaticResource Card}" Visibility="{Binding IsLive, Converter={StaticResource Visible}}">
@@ -64,7 +64,7 @@
                     <CheckBox IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"
                               Content="Iniciar com o Windows, na bandeja, para medir sempre que eu jogar" />
                     <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="26,4,0,0"
-                               Text="Fechar a janela deixa o FPSX na bandeja, perto do relógio. Para encerrar de vez, clique com o botão direito no ícone e escolha Sair." />
+                               Text="Fechar a janela deixa o RKZFPS na bandeja, perto do relógio. Para encerrar de vez, clique com o botão direito no ícone e escolha Sair." />
                 </StackPanel>
             </Border>
 

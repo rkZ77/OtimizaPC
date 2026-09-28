@@ -5,7 +5,7 @@
   "name": "Minecraft Java",
   "version": "2026.09.1",
   "detect": {
-    // javaw.exe tambem e' de outros programas Java: com ele aberto o FPSX so'
+    // javaw.exe tambem e' de outros programas Java: com ele aberto o RKZFPS so'
     // pede para fechar antes de aplicar, o que e' o lado seguro do erro.
     "processes": ["javaw.exe", "Minecraft.exe", "MinecraftLauncher.exe"],
     "by_config_file": true
@@ -76,7 +76,7 @@
   },
   "recommended_settings": {
     "enableVsync": "false: menos travadas quando o FPS oscila",
-    "Sodium": "Em PC fraco, o mod de desempenho Sodium (Fabric) costuma render mais que qualquer ajuste de opção. O FPSX não instala mods.",
+    "Sodium": "Em PC fraco, o mod de desempenho Sodium (Fabric) costuma render mais que qualquer ajuste de opção. O RKZFPS não instala mods.",
     "RAM do Java": "Deixe o padrão do launcher. Alocar RAM demais piora as pausas do coletor de lixo"
   }
 }

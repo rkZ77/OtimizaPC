@@ -9,7 +9,7 @@ export default function Planos() {
   return (
     <PageShell
       title="Planos"
-      description="Planos do FPSX: do diagnóstico gratuito ao pacote completo. Cada plano contém o anterior, e desfazer é liberado em todos."
+      description="Planos do RKZFPS: do diagnóstico gratuito ao pacote completo. Cada plano contém o anterior, e desfazer é liberado em todos."
       width="wide"
       bar={{ title: 'Planos', sub: 'Cada plano contém tudo do anterior. Desfazer alterações é liberado em todos, sempre.' }}
     >

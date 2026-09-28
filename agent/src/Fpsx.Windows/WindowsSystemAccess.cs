@@ -30,7 +30,7 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
             RegistryValueKind.Binary => new RegValue(RegistryKind.Binary, Convert.ToHexString((byte[])value!)),
             RegistryValueKind.String or RegistryValueKind.ExpandString => new RegValue(RegistryKind.String, value?.ToString() ?? ""),
             RegistryValueKind.MultiString => new RegValue(RegistryKind.MultiString, string.Join('\n', (string[])value!)),
-            // Tipo que o FPSX não sabe restaurar fielmente: tratar como
+            // Tipo que o RKZFPS não sabe restaurar fielmente: tratar como
             // não-lido faz o motor recusar, em vez de sobrescrever às cegas.
             _ => throw new NotSupportedException($"Tipo de registro não suportado em {path}\\{name}: {kind}"),
         };
@@ -84,7 +84,7 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
         {
             using var p = Process.GetProcessById(pid);
             // Só o pedido educado (WM_CLOSE na janela principal). Processo sem
-            // janela não recebe pedido nenhum e o FPSX informa que não fechou:
+            // janela não recebe pedido nenhum e o RKZFPS informa que não fechou:
             // matar à força pode corromper arquivo ou perder trabalho.
             if (!p.CloseMainWindow())
                 return p.HasExited;
@@ -120,7 +120,7 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
         if (path is null)
             throw new InvalidOperationException("Arquivo de configuração do jogo não encontrado.");
         if (new FileInfo(path).IsReadOnly)
-            throw new InvalidOperationException("O arquivo de configuração do jogo está marcado como somente leitura. Alguém travou as opções de propósito, e o FPSX não destrava.");
+            throw new InvalidOperationException("O arquivo de configuração do jogo está marcado como somente leitura. Alguém travou as opções de propósito, e o RKZFPS não destrava.");
 
         var (text, encoding) = TextFiles.Read(path);
         var updated = ConfigFiles.Replace(format, text, key, value)

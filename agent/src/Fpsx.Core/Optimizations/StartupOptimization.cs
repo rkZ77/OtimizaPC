@@ -65,13 +65,13 @@ public sealed class StartupOptimization : IOptimization
 {
     public string Id => "startup-entry-disable";
 
-    /// <summary>Nome do valor que o FPSX grava em HKCU\...\Run para medir as partidas.</summary>
+    /// <summary>Nome do valor que o RKZFPS grava em HKCU\...\Run para medir as partidas.</summary>
     public const string OwnStartupName = "FPSX";
 
     public Evaluation Evaluate(EvaluationContext context)
     {
         var s = context.Snapshot;
-        // O próprio FPSX (medição de FPS das partidas) liga e desliga pelas
+        // O próprio RKZFPS (medição de FPS das partidas) liga e desliga pelas
         // configurações do app: oferecer para desligar a si mesmo aqui confunde.
         var enabled = s.Startup.Where(e => e.Enabled && !e.Name.Equals(OwnStartupName, StringComparison.OrdinalIgnoreCase)).ToList();
         var evidence = new Dictionary<string, string>();
@@ -105,7 +105,7 @@ public sealed class StartupOptimization : IOptimization
         {
             Decision = Decision.Optional,
             Potential = Potential.Low,
-            Reason = $"{enabled.Count} programa(s) iniciam com o Windows. Você escolhe o que manter: o FPSX nunca desliga item de inicialização sozinho.",
+            Reason = $"{enabled.Count} programa(s) iniciam com o Windows. Você escolhe o que manter: o RKZFPS nunca desliga item de inicialização sozinho.",
             Evidence = evidence,
             Proposals = proposals,
         };

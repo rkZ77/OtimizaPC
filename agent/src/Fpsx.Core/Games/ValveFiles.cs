@@ -4,7 +4,7 @@ namespace Fpsx.Core.Games;
 
 /// <summary>
 /// Leitura dos arquivos de texto da Steam (libraryfolders.vdf, appmanifest,
-/// cs2_video.txt). Só leitura: o FPSX não reescreve config de jogo no MVP,
+/// cs2_video.txt). Só leitura: o RKZFPS não reescreve config de jogo no MVP,
 /// porque o próprio jogo sobrescreve o arquivo ao fechar e a alteração sumiria
 /// sem o usuário saber.
 /// </summary>
@@ -28,7 +28,7 @@ public static partial class ValveFiles
     /// <summary>
     /// Troca o valor de uma chave existente preservando o resto do arquivo
     /// (tabulação, ordem, outras chaves). Retorna null se a chave não existe:
-    /// o FPSX não inventa chave nova no arquivo do jogo.
+    /// o RKZFPS não inventa chave nova no arquivo do jogo.
     /// </summary>
     public static string? ReplaceValue(string text, string key, string value)
     {

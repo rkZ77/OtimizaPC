@@ -101,7 +101,7 @@ public static class Updater
     }
 
     /// <summary>
-    /// Roda o instalador em modo silencioso. Ele fecha o FPSX, atualiza no
+    /// Roda o instalador em modo silencioso. Ele fecha o RKZFPS, atualiza no
     /// mesmo lugar (mesmo modo de instalação de antes) e reabre o app.
     /// Histórico, backups e configurações ficam na pasta de dados e não são tocados.
     /// </summary>
@@ -116,7 +116,7 @@ public static class Updater
     /// <summary>
     /// Atualiza no MESMO tipo de instalação que está rodando. Sem isso o
     /// instalador usa o padrão (todos os usuários, pede administrador) e quem
-    /// tinha instalado só para si ficava com duas cópias do FPSX.
+    /// tinha instalado só para si ficava com duas cópias do RKZFPS.
     /// </summary>
     public static string ScopeArg(string runningExe, string? localAppData = null)
     {

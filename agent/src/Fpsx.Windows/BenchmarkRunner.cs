@@ -8,7 +8,7 @@ public sealed record BenchmarkRequest(string PresentMonPath, string Process, int
 
 /// <summary>
 /// Roda o PresentMon (ferramenta aberta da Intel) contra o processo do jogo e
-/// amostra CPU, GPU e RAM em paralelo. O FPSX não embute nem baixa o
+/// amostra CPU, GPU e RAM em paralelo. O RKZFPS não embute nem baixa o
 /// PresentMon: o caminho vem do usuário ou da pasta tools do instalador.
 /// </summary>
 public static class BenchmarkRunner
@@ -82,7 +82,7 @@ internal sealed class SystemSampler : IDisposable
 
     private readonly TimeSpan _interval;
 
-    /// <summary>Benchmark: a cada segundo. Partida longa: a cada 5 s, para o FPSX não pesar no jogo.</summary>
+    /// <summary>Benchmark: a cada segundo. Partida longa: a cada 5 s, para o RKZFPS não pesar no jogo.</summary>
     public SystemSampler(TimeSpan? interval = null)
     {
         _interval = interval ?? TimeSpan.FromSeconds(1);

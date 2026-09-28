@@ -117,7 +117,7 @@ public sealed record LicenseState
         if (!string.Equals(p.Device, deviceHash, StringComparison.OrdinalIgnoreCase))
             return Free("A licença salva pertence a outro PC.");
         if (p.ValidUntil <= now)
-            return new LicenseState { Email = p.Email, Notice = "Conecte à internet para revalidar sua licença. Enquanto isso o FPSX funciona no plano Free." };
+            return new LicenseState { Email = p.Email, Notice = "Conecte à internet para revalidar sua licença. Enquanto isso o RKZFPS funciona no plano Free." };
         if (p.Status is "expired" or "blocked")
             return new LicenseState { Email = p.Email, Status = p.Status, Notice = p.Status == "blocked" ? "Licença bloqueada. Fale com o suporte." : "Sua assinatura venceu." };
 

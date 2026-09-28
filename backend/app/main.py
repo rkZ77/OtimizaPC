@@ -41,7 +41,7 @@ async def lifespan(_app: FastAPI):
         scheduler.stop()
 
 
-app = FastAPI(title="FPSX API", version="0.1.0", lifespan=lifespan, docs_url="/api/docs" if not settings.IS_PRODUCTION else None)
+app = FastAPI(title="RKZFPS API", version="0.1.0", lifespan=lifespan, docs_url="/api/docs" if not settings.IS_PRODUCTION else None)
 
 app.add_middleware(SecurityHeaders)
 app.add_middleware(

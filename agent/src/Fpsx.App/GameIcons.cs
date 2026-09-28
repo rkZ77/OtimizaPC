@@ -7,7 +7,7 @@ using System.Windows.Media.Imaging;
 namespace Fpsx.App;
 
 /// <summary>
-/// Ícone de cada jogo, tirado do próprio executável instalado no PC. O FPSX
+/// Ícone de cada jogo, tirado do próprio executável instalado no PC. O RKZFPS
 /// não distribui arte de ninguém: mostra o ícone que o jogo já tem, e guarda
 /// uma cópia em PNG para não reabrir o .exe a cada tela.
 /// </summary>

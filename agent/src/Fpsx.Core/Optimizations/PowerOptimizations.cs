@@ -71,7 +71,7 @@ public sealed class HighPerformancePowerOptimization : IOptimization
         if (PowerSchemes.Is(p.ActiveSchemeGuid, PowerSchemes.HighPerformance) || PowerSchemes.Is(p.ActiveSchemeGuid, PowerSchemes.UltimatePerformance))
             return Evaluation.Optimal("Já está em um plano de alto desempenho.", evidence);
         if (!PowerSchemes.Is(p.ActiveSchemeGuid, PowerSchemes.Balanced))
-            return Evaluation.NotApplicable("O plano ativo é personalizado ou de economia. O FPSX não substitui plano personalizado.", evidence);
+            return Evaluation.NotApplicable("O plano ativo é personalizado ou de economia. O RKZFPS não substitui plano personalizado.", evidence);
         if (p.HasBattery && p.OnAcPower != true)
             return Evaluation.NotApplicable("Notebook na bateria: alto desempenho só reduziria a autonomia.", evidence);
 

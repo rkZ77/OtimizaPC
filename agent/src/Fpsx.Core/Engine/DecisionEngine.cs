@@ -39,7 +39,7 @@ public sealed record OptimizationResult
     public bool AutoSelected { get; init; }
 
     /// <summary>
-    /// Altera configuração do sistema e o FPSX está sem administrador. Não é
+    /// Altera configuração do sistema e o RKZFPS está sem administrador. Não é
     /// bloqueio: o app pede a permissão do Windows na hora de aplicar.
     /// </summary>
     public bool RequiresElevation { get; init; }
@@ -118,7 +118,7 @@ public sealed class DecisionEngine(
         }
         catch (Exception ex)
         {
-            return [new Finding { DiagnosticId = diagnostic.Id, Area = "FPSX", Status = HealthStatus.Unknown, Title = $"Falha no diagnóstico {diagnostic.Id}", Detail = ex.Message }];
+            return [new Finding { DiagnosticId = diagnostic.Id, Area = "RKZFPS", Status = HealthStatus.Unknown, Title = $"Falha no diagnóstico {diagnostic.Id}", Detail = ex.Message }];
         }
     }
 
@@ -140,7 +140,7 @@ public sealed class DecisionEngine(
 
         // Ordem importa: o motivo de bloqueio mostrado é o primeiro que pega.
         if (!def.Enabled)
-            return result with { Decision = Decision.Blocked, Reason = "Desativada pelo administrador do FPSX." };
+            return result with { Decision = Decision.Blocked, Reason = "Desativada pelo administrador do RKZFPS." };
         // O motivo do handler fica: no Free a pessoa vê o problema e o que a
         // otimização resolveria, e só a aplicação depende do plano.
         if (Plans.Rank(plan) < Plans.Rank(def.MinPlan))

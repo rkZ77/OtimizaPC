@@ -25,7 +25,7 @@ public sealed record TierAssessment(HardwareTier Tier, IReadOnlyList<string> Rea
 /// <summary>
 /// Classifica o PC em entrada, intermediário ou forte, pelo componente mais
 /// fraco. Serve para UMA decisão: vale oferecer trocar qualidade gráfica por
-/// desempenho? Em PC forte a resposta é não, e o FPSX não oferece.
+/// desempenho? Em PC forte a resposta é não, e o RKZFPS não oferece.
 ///
 /// Os limites são conservadores de propósito. Classificar como fraco um PC
 /// que não é faria o app oferecer gráfico pior a quem não precisa; o erro
@@ -83,7 +83,7 @@ public sealed class HardwareTierDiagnostic : IDiagnostic
             Title = $"Nível do hardware: {a.Label}",
             Detail = string.Join(" ", a.Reasons),
             Recommendation = a.Tier == HardwareTier.Low
-                ? "O FPSX oferece configurações leves nos jogos com perfil. Elas trocam qualidade de imagem por desempenho e sempre pedem confirmação."
+                ? "O RKZFPS oferece configurações leves nos jogos com perfil. Elas trocam qualidade de imagem por desempenho e sempre pedem confirmação."
                 : null,
             Evidence = new Dictionary<string, string> { ["nivel"] = a.Tier.ToString().ToUpperInvariant() },
         };

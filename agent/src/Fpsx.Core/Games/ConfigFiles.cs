@@ -5,7 +5,7 @@ namespace Fpsx.Core.Games;
 
 /// <summary>
 /// Leitura e troca de valor nos formatos de configuração de jogo. Troca só
-/// valor de chave que JÁ existe, preservando o resto do arquivo: o FPSX não
+/// valor de chave que JÁ existe, preservando o resto do arquivo: o RKZFPS não
 /// inventa chave nova num arquivo que o jogo controla.
 /// </summary>
 public static class ConfigFiles
@@ -30,7 +30,7 @@ public static class ConfigFiles
         _ => throw new NotSupportedException($"Formato de configuração desconhecido: {format}"),
     };
 
-    // ---- ini: chave no FPSX é "Seção|Chave" (nome de chave pode ter ponto, como sg.ShadowQuality) ----
+    // ---- ini: chave no RKZFPS é "Seção|Chave" (nome de chave pode ter ponto, como sg.ShadowQuality) ----
 
     private static Dictionary<string, string> ParseIni(string text)
     {

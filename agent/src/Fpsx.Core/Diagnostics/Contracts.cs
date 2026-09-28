@@ -43,7 +43,7 @@ public sealed record Finding
     public string? ActionUrl { get; init; }
 
     /// <summary>
-    /// Botões que levam a pessoa a resolver o que o FPSX não resolve sozinho
+    /// Botões que levam a pessoa a resolver o que o RKZFPS não resolve sozinho
     /// (driver, backup, espaço). Cada destino é site oficial ou tela do Windows
     /// de uma lista fechada (FindingAction.IsAllowed).
     /// </summary>

@@ -34,13 +34,13 @@ public static partial class SafetyPolicy
     [GeneratedRegex(@"^[A-Za-z]:\\[^<>""|?*\r\n]+\.exe$", RegexOptions.IgnoreCase)]
     private static partial Regex ExePath();
 
-    // Só as chaves que o FPSX sabe o que significam, cada uma com valor numérico.
+    // Só as chaves que o RKZFPS sabe o que significam, cada uma com valor numérico.
     [GeneratedRegex(@"^((SwapEffectUpgradeEnable|GpuPreference|VRROptimizeEnable|AutoHDREnable)=[0-9]{1,6};)*$")]
     private static partial Regex DirectXValue();
 
-    // Chaves de configuração de jogo que o FPSX pode escrever, com o formato
+    // Chaves de configuração de jogo que o RKZFPS pode escrever, com o formato
     // aceito. Fica compilado aqui, e não no perfil JSON: um perfil adulterado
-    // não pode transformar o FPSX num editor de config arbitrário.
+    // não pode transformar o RKZFPS num editor de config arbitrário.
     private static readonly Dictionary<string, Dictionary<string, Regex>> AllowedGameKeys = new()
     {
         ["cs2"] = new(StringComparer.OrdinalIgnoreCase)
@@ -145,7 +145,7 @@ public static partial class SafetyPolicy
 
     /// <summary>
     /// Nunca fecha processo do Windows, de segurança, de anti-cheat, launcher
-    /// (o CS2 depende da Steam aberta), jogo ou o próprio FPSX.
+    /// (o CS2 depende da Steam aberta), jogo ou o próprio RKZFPS.
     /// </summary>
     private static void ValidateProcessClose(ProcessCloseChange p)
     {
@@ -153,12 +153,12 @@ public static partial class SafetyPolicy
             throw new SafetyViolationException("Processo inválido.");
         var category = Diagnostics.ProcessClassifier.Classify(p.Name);
         if (category is not Diagnostics.ProcessCategory.User)
-            throw new SafetyViolationException($"{p.Name} é {Diagnostics.ProcessClassifier.Label(category).ToLowerInvariant()} e não pode ser fechado pelo FPSX.");
+            throw new SafetyViolationException($"{p.Name} é {Diagnostics.ProcessClassifier.Label(category).ToLowerInvariant()} e não pode ser fechado pelo RKZFPS.");
         var startup = StartupClassifier.Classify(new StartupEntry { Name = p.Name });
         if (StartupClassifier.IsProtected(startup))
-            throw new SafetyViolationException($"{p.Name} é protegido e não pode ser fechado pelo FPSX.");
+            throw new SafetyViolationException($"{p.Name} é protegido e não pode ser fechado pelo RKZFPS.");
         if (p.Name.StartsWith("fpsx", StringComparison.OrdinalIgnoreCase))
-            throw new SafetyViolationException("O FPSX não fecha a si mesmo.");
+            throw new SafetyViolationException("O RKZFPS não fecha a si mesmo.");
     }
 
     /// <summary>

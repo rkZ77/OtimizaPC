@@ -25,7 +25,7 @@ public sealed record ReleaseInfo(string Component, string Version, string Url, s
 public sealed record ActiveDevice(int Id, string Name, DateTimeOffset LastSeenAt);
 
 /// <summary>
-/// Cliente da API do FPSX. Só lê licença, catálogo e versão, e envia
+/// Cliente da API do RKZFPS. Só lê licença, catálogo e versão, e envia
 /// telemetria consentida: não existe chamada que receba comando para executar.
 /// </summary>
 public sealed class ApiClient(HttpClient http)
@@ -122,11 +122,11 @@ public sealed class ApiClient(HttpClient http)
         }
         catch (HttpRequestException)
         {
-            throw new ApiException(HttpStatusCode.ServiceUnavailable, "Sem conexão com o servidor do FPSX. Verifique sua internet.");
+            throw new ApiException(HttpStatusCode.ServiceUnavailable, "Sem conexão com o servidor do RKZFPS. Verifique sua internet.");
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new ApiException(HttpStatusCode.RequestTimeout, "O servidor do FPSX demorou para responder. Tente de novo.");
+            throw new ApiException(HttpStatusCode.RequestTimeout, "O servidor do RKZFPS demorou para responder. Tente de novo.");
         }
 
         using (response)
@@ -152,7 +152,7 @@ public sealed class ApiClient(HttpClient http)
             // errado) diz isso com o codigo: "tente de novo" escondia a causa.
             string message = root.ValueKind == JsonValueKind.Object
                 ? "Não foi possível concluir. Tente de novo em instantes."
-                : $"O servidor do FPSX não respondeu como esperado (código {(int)response.StatusCode}). Confira sua internet e tente de novo; se continuar, fale com o suporte.";
+                : $"O servidor do RKZFPS não respondeu como esperado (código {(int)response.StatusCode}). Confira sua internet e tente de novo; se continuar, fale com o suporte.";
             if (response.StatusCode == HttpStatusCode.UnprocessableEntity)
                 message = "Algum dado enviado está em formato inválido. Confira o e-mail e a senha.";
             JsonElement? detail = null;

@@ -55,7 +55,7 @@ public sealed class AgentContext
 
     /// <summary>
     /// Plano vigente, sempre recalculado do token assinado. Sem licença válida
-    /// o FPSX roda como Free: diagnóstico completo e as correções básicas.
+    /// o RKZFPS roda como Free: diagnóstico completo e as correções básicas.
     /// </summary>
     public LicenseState License()
     {

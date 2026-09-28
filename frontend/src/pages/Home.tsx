@@ -42,7 +42,7 @@ function Row({ title, children, img, alt, flip }: { title: string; children: Rea
 }
 
 const GUARANTEES = [
-  { icon: CreditCard, t: 'Pagamento pelo Mercado Pago', d: 'PIX ou cartão. O FPSX não vê nem guarda os dados do seu cartão.' },
+  { icon: CreditCard, t: 'Pagamento pelo Mercado Pago', d: 'PIX ou cartão. O RKZFPS não vê nem guarda os dados do seu cartão.' },
   { icon: Undo2, t: '7 dias para desistir', d: 'Não gostou? Peça o reembolso em até 7 dias da compra, como manda o Código de Defesa do Consumidor.' },
   { icon: RotateCcw, t: 'Desfazer tudo, sempre', d: 'Toda alteração guarda o estado anterior. Desfazer funciona em qualquer plano, mesmo depois de cancelar.' },
   { icon: ShieldCheck, t: 'Segurança do Windows intocada', d: 'Antivírus, firewall e Windows Update ficam exatamente como estão.' },
@@ -68,10 +68,10 @@ const NOT_DOING = [
 ]
 
 const FAQ: [string, string][] = [
-  ['O FPSX aumenta meu FPS?', 'Depende do seu PC, e é isso que ele descobre primeiro. Em PC com configuração errada (monitor rodando a 60 Hz, plano de economia de energia, jogo na placa integrada, programas pesando) o ganho costuma ser grande. Em PC já bem configurado, o FPSX diz que não há o que mudar. A medição das partidas mostra o número real, antes e depois.'],
+  ['O RKZFPS aumenta meu FPS?', 'Depende do seu PC, e é isso que ele descobre primeiro. Em PC com configuração errada (monitor rodando a 60 Hz, plano de economia de energia, jogo na placa integrada, programas pesando) o ganho costuma ser grande. Em PC já bem configurado, o RKZFPS diz que não há o que mudar. A medição das partidas mostra o número real, antes e depois.'],
   ['O que eu consigo fazer no plano grátis?', 'Ver tudo: o diagnóstico completo, os problemas encontrados, o que cada otimização resolveria no seu PC e o FPS das suas partidas. Para aplicar as correções, é preciso um plano pago.'],
-  ['É seguro? E se der problema?', 'Cada alteração guarda o estado anterior e é conferida depois de aplicada. Qualquer uma pode ser desfeita com um clique, em qualquer plano. O FPSX só executa operações de uma lista fechada e revisada.'],
-  ['Funciona com anti-cheat (Vanguard, Easy Anti-Cheat)?', 'Sim. A medição de FPS usa o registro de quadros do próprio Windows e não injeta nada no jogo. O FPSX também nunca fecha nem mexe em anti-cheat.'],
+  ['É seguro? E se der problema?', 'Cada alteração guarda o estado anterior e é conferida depois de aplicada. Qualquer uma pode ser desfeita com um clique, em qualquer plano. O RKZFPS só executa operações de uma lista fechada e revisada.'],
+  ['Funciona com anti-cheat (Vanguard, Easy Anti-Cheat)?', 'Sim. A medição de FPS usa o registro de quadros do próprio Windows e não injeta nada no jogo. O RKZFPS também nunca fecha nem mexe em anti-cheat.'],
   ['Preciso ser administrador do PC?', 'Não para usar. Quando uma correção mexe em configuração do sistema, o Windows pede a sua permissão só para ela, e você vê antes o que vai mudar.'],
   ['Posso usar em mais de um PC?', 'Cada assinatura vale para 1 PC por vez. Trocou de PC? Desative o antigo em Minha conta e entre no novo.'],
   ['Como cancelo?', 'Na sua conta, quando quiser. O plano vale até o fim do período pago e o desfazer continua liberado depois.'],
@@ -95,7 +95,7 @@ export default function Home() {
               Descubra o que está travando seus jogos. E corrija sem medo.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-2">
-              O FPSX analisa o Windows e o hardware do seu PC, corrige só o que encontrar de errado e mede o FPS
+              O RKZFPS analisa o Windows e o hardware do seu PC, corrige só o que encontrar de errado e mede o FPS
               das suas partidas antes e depois. Toda alteração tem backup e pode ser desfeita.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -106,7 +106,7 @@ export default function Home() {
               Windows 10 e 11, 64 bits.{latest ? ` Versão ${latest.version}, de ${date(latest.published_at)}.` : ''} O diagnóstico é grátis e não altera nada.
             </p>
           </div>
-          <Screenshot src="/img/app-dashboard.png" alt="Tela inicial do FPSX com o diagnóstico do PC" />
+          <Screenshot src="/img/app-dashboard.png" alt="Tela inicial do RKZFPS com o diagnóstico do PC" />
         </div>
       </section>
 
@@ -129,16 +129,16 @@ export default function Home() {
             <h2 className="font-display text-3xl font-bold text-ink-1">Como funciona</h2>
             <p className="mt-3 text-ink-3">Analisar, corrigir o que estiver errado e provar o resultado. Nessa ordem.</p>
           </div>
-          <Row title="1. Um diagnóstico que não chuta" img="/img/app-otimizacoes.png" alt="Tela de otimizações do FPSX, com o motivo de cada uma">
-            <p>Ao abrir, o FPSX lê processador, placa de vídeo, memória, discos, energia, monitor, rede, inicialização e os jogos instalados. Só leitura: nada muda nessa etapa.</p>
+          <Row title="1. Um diagnóstico que não chuta" img="/img/app-otimizacoes.png" alt="Tela de otimizações do RKZFPS, com o motivo de cada uma">
+            <p>Ao abrir, o RKZFPS lê processador, placa de vídeo, memória, discos, energia, monitor, rede, inicialização e os jogos instalados. Só leitura: nada muda nessa etapa.</p>
             <p>Cada ponto diz o que foi encontrado e por que importa. Se o PC já está bem configurado, ele diz isso, e não inventa trabalho.</p>
           </Row>
-          <Row flip title="2. Ajuste por jogo, no nível do seu PC" img="/img/app-jogos.png" alt="Tela de jogos do FPSX">
-            <p>O FPSX reconhece {GAMES.length} jogos e sabe o que pesa em cada um. No CS2, no Fortnite e no Minecraft ele corrige o arquivo de vídeo sozinho, com o jogo fechado e com backup.</p>
+          <Row flip title="2. Ajuste por jogo, no nível do seu PC" img="/img/app-jogos.png" alt="Tela de jogos do RKZFPS">
+            <p>O RKZFPS reconhece {GAMES.length} jogos e sabe o que pesa em cada um. No CS2, no Fortnite e no Minecraft ele corrige o arquivo de vídeo sozinho, com o jogo fechado e com backup.</p>
             <p>Em PC fraco, oferece uma configuração leve que só reduz o que está pesado: nunca deixa pior o que você já tinha ajustado.</p>
           </Row>
-          <Row title="3. Prova de resultado nas suas partidas" img="/img/app-partidas.png" alt="Tela de partidas do FPSX">
-            <p>Com o FPSX aberto (pode ser perto do relógio), cada partida é medida sozinha: FPS médio, 1% low e travadas por minuto. Só entram os minutos com o jogo na tela.</p>
+          <Row title="3. Prova de resultado nas suas partidas" img="/img/app-partidas.png" alt="Tela de partidas do RKZFPS">
+            <p>Com o RKZFPS aberto (pode ser perto do relógio), cada partida é medida sozinha: FPS médio, 1% low e travadas por minuto. Só entram os minutos com o jogo na tela.</p>
             <p>Depois de otimizar, o app compara as partidas de antes e de depois. Se a diferença estiver dentro da variação normal, ele diz que não houve ganho.</p>
           </Row>
         </div>
@@ -159,7 +159,7 @@ export default function Home() {
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-ink-4">Os nomes dos jogos são marcas dos seus donos. O FPSX é independente e não tem parceria com os estúdios.</p>
+          <p className="mt-4 text-xs text-ink-4">Os nomes dos jogos são marcas dos seus donos. O RKZFPS é independente e não tem parceria com os estúdios.</p>
         </div>
       </section>
 
@@ -167,8 +167,8 @@ export default function Home() {
       <section id="o-que-nao-fazemos" className="scroll-mt-16">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <h2 className="font-display text-2xl font-bold text-ink-1">O que o FPSX não faz, de propósito</h2>
-            <p className="mt-3 text-ink-3">Muito "otimizador" ganha fama com truque que não funciona ou que deixa o PC exposto. Isto fica de fora do FPSX, e o app mostra o porquê de cada um.</p>
+            <h2 className="font-display text-2xl font-bold text-ink-1">O que o RKZFPS não faz, de propósito</h2>
+            <p className="mt-3 text-ink-3">Muito "otimizador" ganha fama com truque que não funciona ou que deixa o PC exposto. Isto fica de fora do RKZFPS, e o app mostra o porquê de cada um.</p>
           </div>
           <ul className="grid gap-3 sm:grid-cols-2">
             {NOT_DOING.map((item) => (
@@ -187,7 +187,7 @@ export default function Home() {
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <h2 className="font-display text-2xl font-bold text-ink-1">Sempre atualizado</h2>
-              <p className="mt-3 text-ink-3">Jogos e o Windows mudam o tempo todo. O FPSX acompanha: cada versão traz jogos novos, correções e ajustes, sem custo a mais para quem assina.</p>
+              <p className="mt-3 text-ink-3">Jogos e o Windows mudam o tempo todo. O RKZFPS acompanha: cada versão traz jogos novos, correções e ajustes, sem custo a mais para quem assina.</p>
             </div>
             <ol className="space-y-4">
               {versions.slice(0, 4).map((v) => (
@@ -206,7 +206,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
           <div className="max-w-2xl">
             <h2 className="font-display text-3xl font-bold text-ink-1">Planos</h2>
-            <p className="mt-3 text-ink-3">Comece grátis para ver o diagnóstico do seu PC. Assine quando quiser que o FPSX corrija.</p>
+            <p className="mt-3 text-ink-3">Comece grátis para ver o diagnóstico do seu PC. Assine quando quiser que o RKZFPS corrija.</p>
           </div>
           <div className="mt-10"><PlansGrid compact /></div>
           <div className="mt-6"><Button variant="ghost" to="/planos" IconRight={ArrowRight}>Comparar os planos em detalhe</Button></div>

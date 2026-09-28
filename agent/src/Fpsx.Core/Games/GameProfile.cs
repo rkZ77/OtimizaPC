@@ -20,7 +20,7 @@ public sealed record GameDetect
     /// <summary>
     /// Jogo fora da Steam (Epic, launcher próprio): considera instalado quando
     /// o arquivo de configuração existe. Honesto o bastante para o que o
-    /// FPSX faz com ele, que é ler e ajustar essa configuração.
+    /// RKZFPS faz com ele, que é ler e ajustar essa configuração.
     /// </summary>
     public bool ByConfigFile { get; init; }
 }
@@ -102,7 +102,7 @@ public sealed record SettingCheck
     /// <summary>Só avalia quando o PC tem GPU deste fabricante (ex.: Reflex só existe em NVIDIA).</summary>
     public GpuVendor? GpuVendor { get; init; }
 
-    /// <summary>Valor que o FPSX grava ao corrigir. Sem ele, o item é só recomendação.</summary>
+    /// <summary>Valor que o RKZFPS grava ao corrigir. Sem ele, o item é só recomendação.</summary>
     public string? FixValue { get; init; }
 }
 

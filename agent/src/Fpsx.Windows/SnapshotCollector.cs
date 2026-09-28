@@ -434,7 +434,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         TransparencyValue = ReadDword(Registry.CurrentUser, RegistryPaths.Personalize, "EnableTransparency"),
         DirectXGlobalSettings = ReadString(Registry.CurrentUser, RegistryPaths.DirectXUserGpuPreferences, DirectXSettings.GlobalValueName),
         // Só os executáveis dos jogos com perfil: a lista inteira diria que
-        // programas a pessoa usa, e isso não é da conta do FPSX.
+        // programas a pessoa usa, e isso não é da conta do RKZFPS.
         GpuPreferences = games
             .Where(g => g.ExecutablePath is not null)
             .Select(g => (Exe: g.ExecutablePath!, Value: ReadString(Registry.CurrentUser, RegistryPaths.DirectXUserGpuPreferences, g.ExecutablePath!)))

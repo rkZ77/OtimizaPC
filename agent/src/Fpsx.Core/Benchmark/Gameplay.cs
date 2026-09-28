@@ -4,7 +4,7 @@ using Fpsx.Core.Json;
 
 namespace Fpsx.Core.Benchmark;
 
-// Medição automática em partida real. É o complemento do FPSX Benchmark:
+// Medição automática em partida real. É o complemento do RKZFPS Benchmark:
 // o benchmark compara um cenário controlado; aqui o app mede cada partida
 // sozinho, com o jogo aberto, e mostra se o FPS mudou depois de uma
 // otimização. Partida real varia mais (mapa, modo, jogadores), e por isso a
@@ -45,7 +45,7 @@ public sealed record GameplaySession
 }
 
 /// <param name="T">Segundo da partida, na mesma escala do <see cref="FpsPoint.T"/>.</param>
-/// <param name="App">Programa (fora o jogo e o FPSX) que mais usou processador no trecho. Fica só no PC.</param>
+/// <param name="App">Programa (fora o jogo e o RKZFPS) que mais usou processador no trecho. Fica só no PC.</param>
 public sealed record LoadSample(int T, double? Cpu, double? Gpu, string? App, double AppCpu);
 
 /// <summary>Por que uma queda aconteceu, na medida do que dá para afirmar.</summary>
@@ -342,7 +342,7 @@ public static class GameplayComparer
     public const int MaxPerSide = 5;
 
     public const string RealWorldWarning =
-        "Partidas reais variam com mapa, modo e número de jogadores. Para uma comparação controlada, use o FPSX Benchmark no mesmo cenário.";
+        "Partidas reais variam com mapa, modo e número de jogadores. Para uma comparação controlada, use o RKZFPS Benchmark no mesmo cenário.";
 
     public static GameplayComparison Compare(IReadOnlyList<GameplaySession> sessions, string gameId, string gameName, DateTimeOffset pivotAt, string pivotLabel,
         IReadOnlyList<DateTimeOffset>? shaderClears = null)
@@ -362,8 +362,8 @@ public static class GameplayComparer
             var status = (before.Count, after.Count) switch
             {
                 (0, 0) => $"Nenhuma partida de {gameName} medida antes nem depois desta otimização.",
-                (0, _) => $"Não há partida de {gameName} medida ANTES desta otimização, então não dá para comparar. Da próxima vez, jogue com o FPSX aberto antes de otimizar.",
-                _ => $"Jogue {gameName} com o FPSX aberto: depois de 2 partidas o resultado aparece aqui.",
+                (0, _) => $"Não há partida de {gameName} medida ANTES desta otimização, então não dá para comparar. Da próxima vez, jogue com o RKZFPS aberto antes de otimizar.",
+                _ => $"Jogue {gameName} com o RKZFPS aberto: depois de 2 partidas o resultado aparece aqui.",
             };
             return baseResult with { Status = status };
         }

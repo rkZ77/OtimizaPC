@@ -25,7 +25,7 @@ public sealed class GameCard
 
     // ---- Otimizar este jogo / Voltar como era ----
 
-    /// <summary>O FPSX sabe editar a configuração deste jogo (CS2, Fortnite, Minecraft).</summary>
+    /// <summary>O RKZFPS sabe editar a configuração deste jogo (CS2, Fortnite, Minecraft).</summary>
     public bool Tunable { get; init; }
 
     public string TuneTitle { get; init; } = "";
@@ -93,7 +93,7 @@ public sealed class GamesViewModel : PageViewModel
     private async Task ClearShaders()
     {
         if (!Dialogs.Confirm("Limpar cache de shaders",
-                "Use só se o jogo começou a travar de um jeito estranho ou mostrar erro gráfico depois de uma atualização. Não aumenta FPS. A primeira partida depois fica com mais travadas enquanto o jogo recria os shaders, e o FPSX deixa essa partida fora do antes e depois.",
+                "Use só se o jogo começou a travar de um jeito estranho ou mostrar erro gráfico depois de uma atualização. Não aumenta FPS. A primeira partida depois fica com mais travadas enquanto o jogo recria os shaders, e o RKZFPS deixa essa partida fora do antes e depois.",
                 "Limpar mesmo assim"))
             return;
         await ApplyFlow.RunAsync(["shader-cache-clear-cs2"], Reporter);
@@ -105,12 +105,12 @@ public sealed class GamesViewModel : PageViewModel
         if (applied.Count == 0)
             return;
         var name = _host.Ctx.GameProfiles.FirstOrDefault(p => p.Id == gameId)?.Name ?? gameId;
-        if (!Dialogs.Confirm("Voltar como era", $"As {applied.Count} opções que o FPSX mudou no {name} voltam para o valor que tinham antes. Feche o jogo antes de continuar.", "Voltar como era"))
+        if (!Dialogs.Confirm("Voltar como era", $"As {applied.Count} opções que o RKZFPS mudou no {name} voltam para o valor que tinham antes. Feche o jogo antes de continuar.", "Voltar como era"))
             return;
         foreach (var (sessionId, changeId, _) in applied)
             await _host.RollbackAsync(sessionId, changeId, force: false);
         await _host.RunScanAsync(Reporter, network: false);
-        Dialogs.Info("Pronto", $"O {name} voltou à configuração que tinha antes do FPSX.");
+        Dialogs.Info("Pronto", $"O {name} voltou à configuração que tinha antes do RKZFPS.");
     }
 
     private void Load()
@@ -123,14 +123,14 @@ public sealed class GamesViewModel : PageViewModel
         var tier = scan is null ? HardwareTier.Unknown : HardwareTierClassifier.Assess(scan.Snapshot).Tier;
         var sessions = _host.Ctx.Store.All();
 
-        // Só os jogos deste PC (instalados ou já jogados com o FPSX aberto):
+        // Só os jogos deste PC (instalados ou já jogados com o RKZFPS aberto):
         // 15 cartões de "não encontrado" esconderiam os que importam.
         var played = _host.Ctx.Gameplay.All().Select(s => s.GameId).ToHashSet();
         var mine = _host.Ctx.GameProfiles
             .Where(p => scan?.Snapshot.Games.Any(g => g.GameId == p.Id) == true || played.Contains(p.Id))
             .ToList();
         var others = _host.Ctx.GameProfiles.Except(mine).Select(p => p.Name).ToList();
-        OtherGames = others.Count == 0 ? "" : "O FPSX também reconhece e mede o FPS de: " + string.Join(", ", others) + ". Eles aparecem aqui quando forem instalados ou jogados com o FPSX aberto.";
+        OtherGames = others.Count == 0 ? "" : "O RKZFPS também reconhece e mede o FPS de: " + string.Join(", ", others) + ". Eles aparecem aqui quando forem instalados ou jogados com o RKZFPS aberto.";
 
         var res = System.Windows.Application.Current.Resources;
         foreach (var profile in mine)
@@ -167,7 +167,7 @@ public sealed class GamesViewModel : PageViewModel
             }
             else if (applied.Count > 0)
             {
-                title = "Otimizado pelo FPSX";
+                title = "Otimizado pelo RKZFPS";
                 detail = $"{applied.Count} {(applied.Count == 1 ? "opção ajustada" : "opções ajustadas")} em {applied[0].At.ToLocalTime():dd/MM}. Pode voltar como era quando quiser.";
                 brush = (Brush)res["Accent"];
             }
@@ -198,8 +198,8 @@ public sealed class GamesViewModel : PageViewModel
                 CanOptimize = pending.Count > 0,
                 CanRevert = applied.Count > 0,
                 ManualNote = tunable ? "" : profile.Config is null
-                    ? "Neste jogo o FPSX mede o FPS e mostra o que mais pesa. O ajuste é pelo menu de vídeo do próprio jogo, com as dicas abaixo."
-                    : "Abra o jogo uma vez para ele criar o arquivo de configuração. Depois o FPSX consegue otimizar.",
+                    ? "Neste jogo o RKZFPS mede o FPS e mostra o que mais pesa. O ajuste é pelo menu de vídeo do próprio jogo, com as dicas abaixo."
+                    : "Abra o jogo uma vez para ele criar o arquivo de configuração. Depois o RKZFPS consegue otimizar.",
             });
         }
 

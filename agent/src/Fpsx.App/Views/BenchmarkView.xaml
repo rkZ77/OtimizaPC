@@ -3,9 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer>
         <StackPanel Margin="32,28">
-            <TextBlock Text="FPSX Benchmark" Style="{StaticResource H1}" />
+            <TextBlock Text="RKZFPS Benchmark" Style="{StaticResource H1}" />
             <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,18"
-                       Text="Mede FPS médio, 1% low, 0.1% low, frametime e stutter com o PresentMon. Capture antes e depois de otimizar, no mesmo cenário. Se a diferença estiver dentro da variação normal, o FPSX diz que não houve ganho." />
+                       Text="Mede FPS médio, 1% low, 0.1% low, frametime e stutter com o PresentMon. Capture antes e depois de otimizar, no mesmo cenário. Se a diferença estiver dentro da variação normal, o RKZFPS diz que não houve ganho." />
 
             <Border Style="{StaticResource Card}" Background="{StaticResource Surface2}" Visibility="{Binding Allowed, Converter={StaticResource Hidden}}">
                 <TextBlock Text="{Binding PlanNote}" />

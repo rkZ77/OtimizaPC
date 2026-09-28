@@ -4,7 +4,7 @@ namespace Fpsx.Core.Benchmark;
 
 /// <summary>
 /// Lê o CSV do PresentMon (1.x: MsBetweenPresents; 2.x: FrameTime ou
-/// MsBetweenPresents). O FPSX não reinventa captura de frames: usa a
+/// MsBetweenPresents). O RKZFPS não reinventa captura de frames: usa a
 /// ferramenta aberta da Intel que a indústria usa como referência.
 /// </summary>
 public static class PresentMonCsv

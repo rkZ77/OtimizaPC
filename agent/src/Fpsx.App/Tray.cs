@@ -6,7 +6,7 @@ namespace Fpsx.App;
 
 /// <summary>
 /// Ícone na bandeja: com a medição automática ligada, fechar a janela deixa
-/// o FPSX na bandeja medindo as partidas. "Sair" encerra de verdade.
+/// o RKZFPS na bandeja medindo as partidas. "Sair" encerra de verdade.
 /// </summary>
 public sealed class Tray : IDisposable
 {
@@ -20,14 +20,14 @@ public sealed class Tray : IDisposable
         _measure = new Forms.ToolStripMenuItem("Medir FPS das partidas") { CheckOnClick = true, Checked = AppHost.Current.Ctx.Settings.AutoMeasure };
         _measure.CheckedChanged += (_, _) => AppHost.Current.SetAutoMeasure(_measure.Checked);
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Abrir FPSX", null, (_, _) => open());
+        menu.Items.Add("Abrir RKZFPS", null, (_, _) => open());
         menu.Items.Add(_measure);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Sair", null, (_, _) => exit());
         _icon = new Forms.NotifyIcon
         {
             Icon = new System.Drawing.Icon(stream),
-            Text = "FPSX",
+            Text = "RKZFPS",
             ContextMenuStrip = menu,
             Visible = true,
         };
@@ -41,7 +41,7 @@ public sealed class Tray : IDisposable
             // mostra o número sem sair do jogo. Limite de 63 caracteres do Windows.
             if (e.PropertyName == nameof(AppHost.LiveFps))
             {
-                var text = AppHost.Current.LiveFps is { } fps ? "FPSX. " + fps : "FPSX";
+                var text = AppHost.Current.LiveFps is { } fps ? "RKZFPS. " + fps : "RKZFPS";
                 _icon.Text = text.Length > 63 ? text[..63] : text;
             }
         };
@@ -55,7 +55,7 @@ public sealed class Tray : IDisposable
         if (_hintShown)
             return;
         _hintShown = true;
-        Notify("O FPSX continua aberto", "Ele fica aqui na bandeja medindo o FPS das suas partidas. Para fechar de vez, clique com o botão direito e escolha Sair.");
+        Notify("O RKZFPS continua aberto", "Ele fica aqui na bandeja medindo o FPS das suas partidas. Para fechar de vez, clique com o botão direito e escolha Sair.");
     }
 
     public void Dispose()

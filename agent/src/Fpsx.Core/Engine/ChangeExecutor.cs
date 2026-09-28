@@ -100,7 +100,7 @@ public sealed class ChangeExecutor(ISystemAccess system)
         _ => new Verification(true, "execução concluída"),
     };
 
-    /// <summary>O estado atual ainda é o que o FPSX escreveu? Se não, alguém mexeu depois.</summary>
+    /// <summary>O estado atual ainda é o que o RKZFPS escreveu? Se não, alguém mexeu depois.</summary>
     public bool StillApplied(Change applied) => applied switch
     {
         RegistryValueChange r => Equal(system.ReadRegistry(r.Root, r.Path, r.Name), r.Value),

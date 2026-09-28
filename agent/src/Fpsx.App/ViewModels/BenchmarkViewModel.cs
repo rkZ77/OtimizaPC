@@ -36,7 +36,7 @@ public sealed class RunItem(BenchmarkRun run) : ObservableObject
 }
 
 /// <summary>
-/// FPSX Benchmark: captura com PresentMon e compara antes/depois com limiar
+/// RKZFPS Benchmark: captura com PresentMon e compara antes/depois com limiar
 /// de ruído. O número que aparece é o medido; sem diferença, a tela diz isso.
 /// </summary>
 public sealed class BenchmarkViewModel : PageViewModel
@@ -74,7 +74,7 @@ public sealed class BenchmarkViewModel : PageViewModel
     public ICommand GetPresentMonCommand { get; }
 
     public bool Allowed => _host.Allows(Feature.Benchmark);
-    public string PlanNote => $"O FPSX Benchmark faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.Benchmark))}.";
+    public string PlanNote => $"O RKZFPS Benchmark faz parte do plano {Plans.Label(PlanFeatures.RequiredPlan(Feature.Benchmark))}.";
     public string Method => _host.Ctx.GameProfiles.FirstOrDefault(g => g.Id == "cs2")?.Benchmark.Method ?? "";
     public ObservableCollection<RunItem> Runs { get; } = [];
     public string[] Labels { get; } = ["antes", "depois"];

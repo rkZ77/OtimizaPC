@@ -18,7 +18,7 @@ public static class Commands
     public static void Help()
     {
         Ui.Line("""
-            FPSX Agent: diagnóstico + otimização compatível + medição + transparência.
+            RKZFPS Agent: diagnóstico + otimização compatível + medição + transparência.
 
             USO
               fpsx scan [--profile gaming] [--cpu-test] [--no-network] [--seconds 3] [--json]
@@ -73,7 +73,7 @@ public static class Commands
     {
         var json = args.Flag("json");
         if (!json)
-            Ui.Title("FPSX Scan");
+            Ui.Title("RKZFPS Scan");
         var scan = RunScan(ctx, args, quiet: json);
         var report = ReportBuilder.Build(scan);
 
@@ -157,7 +157,7 @@ public static class Commands
     {
         var dryRun = args.Flag("dry-run");
         var assumeYes = args.Flag("yes");
-        Ui.Title(dryRun ? "FPSX Apply (simulação)" : "FPSX Apply");
+        Ui.Title(dryRun ? "RKZFPS Apply (simulação)" : "RKZFPS Apply");
 
         // Sempre um scan novo: aplicar em cima de um diagnóstico velho é
         // aplicar sem saber o estado atual.
@@ -179,7 +179,7 @@ public static class Commands
             selected = scan.Optimizations.Where(o => o.AutoSelected).SelectMany(o => o.Evaluation.Proposals.Select(p => p.Id)).ToList();
             if (selected.Count == 0)
             {
-                Ui.Ok("Nada precisa ser alterado neste perfil. O FPSX prefere não mexer no que já está bom.");
+                Ui.Ok("Nada precisa ser alterado neste perfil. O RKZFPS prefere não mexer no que já está bom.");
                 var optional = scan.Optimizations.Where(o => o.Decision == Decision.Optional).ToList();
                 if (optional.Count > 0)
                     Ui.Muted($"Opcionais disponíveis: {string.Join(", ", optional.Select(o => o.Definition.Id))}. Use 'fpsx scan' para detalhes.");
@@ -289,7 +289,7 @@ public static class Commands
     {
         var force = args.Flag("force");
         var manager = new RollbackManager(new WindowsSystemAccess(ctx.GameProfiles), ctx.Store);
-        Ui.Title("FPSX Rollback");
+        Ui.Title("RKZFPS Rollback");
 
         if (args.Get("change") is { } change)
         {
@@ -308,7 +308,7 @@ public static class Commands
 
         if (args.Flag("all"))
         {
-            if (!args.Flag("yes") && !Ui.Confirm("Desfazer TODAS as alterações já feitas pelo FPSX neste PC?"))
+            if (!args.Flag("yes") && !Ui.Confirm("Desfazer TODAS as alterações já feitas pelo RKZFPS neste PC?"))
                 return 0;
             foreach (var s in manager.RollbackAll(force))
                 PrintSession(s);
@@ -404,7 +404,7 @@ public static class Commands
             e.Cancel = true;
             done.Set();
         };
-        Ui.Title("FPSX: medição automática das partidas");
+        Ui.Title("RKZFPS: medição automática das partidas");
         Ui.Muted("  Jogos: " + string.Join(", ", profiles.Select(p => p.Name)) + ". Ctrl+C para parar.");
         monitor.Start();
         if (!monitor.Running)
@@ -422,12 +422,12 @@ public static class Commands
     {
         var current = args.Get("version") ?? AgentContext.Version;
         var token = await ctx.Api().SignedUpdateAsync();
-        Ui.Title("Atualização do FPSX");
+        Ui.Title("Atualização do RKZFPS");
         Ui.Line($"  Versão instalada: {current}");
         var release = Updater.Check(token, current);
         if (release is null)
         {
-            Ui.Ok(token is null ? "  Nenhuma versão publicada." : "  O FPSX está na versão mais nova (ou a publicada não passou na conferência).");
+            Ui.Ok(token is null ? "  Nenhuma versão publicada." : "  O RKZFPS está na versão mais nova (ou a publicada não passou na conferência).");
             return 0;
         }
 
@@ -449,7 +449,7 @@ public static class Commands
         var sessions = ctx.Gameplay.All();
         Ui.Title("Partidas medidas");
         if (sessions.Count == 0)
-            Ui.Muted("  Nenhuma partida ainda. Deixe o FPSX aberto e jogue: a medição é automática.");
+            Ui.Muted("  Nenhuma partida ainda. Deixe o RKZFPS aberto e jogue: a medição é automática.");
         foreach (var s in sessions)
             Ui.Line($"  {s.StartedAt:dd/MM HH:mm}  {s.GameName,-18} {s.MeasuredSeconds / 60,5:0.#} min  {FormatStats(s.Stats)}");
 
@@ -507,7 +507,7 @@ public static class Commands
         var duration = Math.Clamp(args.Int("duration", profile.Benchmark.DurationSeconds), 10, 600);
         var label = args.Get("label") ?? "captura";
 
-        Ui.Title($"FPSX Benchmark: {profile.Name}");
+        Ui.Title($"RKZFPS Benchmark: {profile.Name}");
         Ui.Muted($"  Método: {profile.Benchmark.Method}");
         Ui.Muted($"  Recomendado: {profile.Benchmark.RecommendedRuns} rodadas antes e {profile.Benchmark.RecommendedRuns} depois, no mesmo cenário.");
 
@@ -614,7 +614,7 @@ public static class Commands
         }
 
         if (!args.Flag("all"))
-            Ui.Muted("  Use --all para ver os tweaks populares que o FPSX NÃO aplica, e por quê.");
+            Ui.Muted("  Use --all para ver os tweaks populares que o RKZFPS NÃO aplica, e por quê.");
         return 0;
     }
 

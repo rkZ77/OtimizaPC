@@ -43,7 +43,7 @@ public static class DiscordSettings
         }
         catch (JsonException)
         {
-            // Arquivo corrompido: não dá para afirmar nada, e o FPSX não escreve por cima.
+            // Arquivo corrompido: não dá para afirmar nada, e o RKZFPS não escreve por cima.
             return null;
         }
     }

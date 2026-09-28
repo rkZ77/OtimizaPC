@@ -61,7 +61,7 @@ public sealed class BackgroundProcessCloseOptimization : IOptimization
         // Um programa, não um processo: o Chrome tem dezenas, e o que pesa não é
         // o da janela. Soma tudo com o mesmo nome e manda o pedido de fechar
         // para o processo que tem janela. Sem janela não há como pedir com
-        // educação, e o FPSX não força: então nem oferece.
+        // educação, e o RKZFPS não força: então nem oferece.
         var candidates = s.Processes
             .Where(p => ProcessClassifier.Classify(p.Name) == ProcessCategory.User)
             .Where(p => !StartupClassifier.IsProtected(StartupClassifier.Classify(new StartupEntry { Name = p.Name })))
@@ -82,7 +82,7 @@ public sealed class BackgroundProcessCloseOptimization : IOptimization
             Decision = Decision.Recommended,
             Potential = Potential.Moderate,
             Reason = "Programas abertos estão disputando CPU ou memória com o jogo agora.",
-            Warning = "O FPSX pede para o programa fechar, como o botão X. Salve seu trabalho antes. Se ele não fechar sozinho, nada é forçado.",
+            Warning = "O RKZFPS pede para o programa fechar, como o botão X. Salve seu trabalho antes. Se ele não fechar sozinho, nada é forçado.",
             Proposals = candidates.Select(p => new Proposal(
                 $"{Id}:{p.Pid}",
                 $"Fechar {p.Name} ({p.CpuPercent.ToString("0", CultureInfo.InvariantCulture)}% CPU, {p.WorkingSetBytes / 1024 / 1024} MB)",

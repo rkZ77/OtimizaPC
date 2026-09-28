@@ -188,7 +188,7 @@ public sealed class AppHost : ObservableObject
         }
     }
 
-    /// <summary>Baixa, confere e instala. O instalador fecha e reabre o FPSX.</summary>
+    /// <summary>Baixa, confere e instala. O instalador fecha e reabre o RKZFPS.</summary>
     public async Task UpdateNowAsync(IProgress<int> percent)
     {
         if (Update is not { } release)
@@ -339,7 +339,7 @@ public sealed class AppHost : ObservableObject
         }
     }
 
-    /// <summary>Reabre o FPSX elevado (UAC). O Windows pergunta; o usuário pode recusar.</summary>
+    /// <summary>Reabre o RKZFPS elevado (UAC). O Windows pergunta; o usuário pode recusar.</summary>
     public static bool RelaunchAsAdmin()
     {
         try

@@ -1,5 +1,5 @@
 {
-  // Catálogo de otimizações do FPSX. Descreve; não executa.
+  // Catálogo de otimizações do RKZFPS. Descreve; não executa.
   // A lógica de cada id vive em agent/src/Fpsx.Core/Optimizations e o Agent
   // recusa o arquivo inteiro se houver id sem handler, handler sem id ou
   // justificativa incompleta (CatalogValidator).
@@ -20,7 +20,7 @@
         "works_on": "Windows 10 1703+ e Windows 11 com AutoGameModeEnabled = 0.",
         "does_not_work_on": "PCs onde o Game Mode já está ligado (padrão do Windows 11): nesse caso a decisão é ALREADY_OPTIMAL e nada é alterado.",
         "expected_benefit": "Baixo no FPS médio; pode reduzir quedas pontuais causadas por atividade de fundo.",
-        "how_to_measure": "FPSX Benchmark antes/depois, olhando 1% low e contagem de stutter.",
+        "how_to_measure": "RKZFPS Benchmark antes/depois, olhando 1% low e contagem de stutter.",
         "risk": "Baixo. É o padrão do sistema.",
         "rollback": "Restaura o valor anterior de HKCU\\Software\\Microsoft\\GameBar\\AutoGameModeEnabled (ou remove o valor se ele não existia).",
         "evidence": "Recurso documentado pela Microsoft (support.microsoft.com, 'Use o Modo de Jogo ao jogar no Windows').",
@@ -44,7 +44,7 @@
         "works_on": "PCs com a gravação em segundo plano ligada.",
         "does_not_work_on": "PCs com o recurso desligado (padrão). Também não se aplica a quem usa o recurso de propósito: por isso exige confirmação.",
         "expected_benefit": "Baixo em GPUs com encoder dedicado; maior em GPUs integradas ou de entrada.",
-        "how_to_measure": "FPSX Benchmark antes/depois (FPS médio e 1% low).",
+        "how_to_measure": "RKZFPS Benchmark antes/depois (FPS médio e 1% low).",
         "risk": "Baixo. O usuário perde o recurso de salvar os últimos minutos.",
         "rollback": "Restaura o valor anterior de HistoricalCaptureEnabled.",
         "evidence": "Documentação da Microsoft sobre a Game Bar avisa que gravar em segundo plano pode afetar o desempenho do jogo.",
@@ -67,7 +67,7 @@
         "works_on": "Desktops e notebooks na tomada com o plano Economia de energia ativo.",
         "does_not_work_on": "Notebook na bateria (economia é legítima), PCs em outro plano.",
         "expected_benefit": "Alto em jogos limitados por CPU: o processador volta a atingir a frequência máxima.",
-        "how_to_measure": "FPSX Benchmark antes/depois; contador '% Performance Limit' no scan.",
+        "how_to_measure": "RKZFPS Benchmark antes/depois; contador '% Performance Limit' no scan.",
         "risk": "Baixo. Equilibrado é o padrão do Windows.",
         "rollback": "Reativa o plano anterior pelo GUID salvo no backup.",
         "evidence": "Documentação de gerenciamento de energia do processador da Microsoft (Processor Power Management): o plano define o estado máximo do processador.",
@@ -90,7 +90,7 @@
         "works_on": "Desktops no plano Equilibrado com o plano Alto desempenho disponível.",
         "does_not_work_on": "Notebook na bateria; PCs com Modern Standby (o plano não existe); planos personalizados de fabricante.",
         "expected_benefit": "Baixo. Pode melhorar consistência de frametime; em muitos PCs modernos não muda nada.",
-        "how_to_measure": "FPSX Benchmark com 3 rodadas antes e depois. Se não houver diferença significativa, desfazer.",
+        "how_to_measure": "RKZFPS Benchmark com 3 rodadas antes e depois. Se não houver diferença significativa, desfazer.",
         "risk": "Baixo. Aumenta consumo em repouso. Em notebook aumenta temperatura, por isso só é opcional com aviso.",
         "rollback": "Reativa o plano anterior pelo GUID salvo no backup.",
         "evidence": "Documentação da Microsoft sobre planos de energia; ganho varia por CPU e deve ser medido.",
@@ -142,7 +142,7 @@
         "rollback": "Restaura o valor anterior em StartupApproved (mesmo mecanismo do Gerenciador de Tarefas).",
         "evidence": "Mesmo mecanismo da aba Inicializar do Gerenciador de Tarefas do Windows.",
         "safer_alternative": "Desligar pela configuração do próprio programa.",
-        "user_need": "O usuário decide item a item; o FPSX nunca desliga sozinho."
+        "user_need": "O usuário decide item a item; o RKZFPS nunca desliga sozinho."
       }
     },
     {
@@ -161,7 +161,7 @@
         "works_on": "Windows 10 2004+ com GPU e driver WDDM 2.7+ que suportam (a chave HwSchMode existe).",
         "does_not_work_on": "GPUs/drivers sem suporte. Em vários jogos o efeito é nulo ou negativo.",
         "expected_benefit": "Incerto. Por isso é experimental e só deve ser mantido com medição positiva.",
-        "how_to_measure": "FPSX Benchmark com 3 rodadas antes e depois do reinício.",
+        "how_to_measure": "RKZFPS Benchmark com 3 rodadas antes e depois do reinício.",
         "risk": "Médio. Relatos de stutter em algumas combinações de driver e jogo. Exige reinício.",
         "rollback": "Restaura o valor anterior de HwSchMode e pede reinício.",
         "evidence": "Documentação do WDDM 2.7 (Microsoft) e notas de driver dos fabricantes; benchmarks independentes mostram resultado misto.",
@@ -305,7 +305,7 @@
         "works_on": "PCs com programa do usuário acima de 5% de CPU, ou acima de 1,5 GB com a memória já apertada, no momento do scan.",
         "does_not_work_on": "Processos do Windows, segurança, anti-cheat, launchers e jogos: nunca são oferecidos.",
         "expected_benefit": "Moderado quando há carga real de fundo; nenhum quando não há.",
-        "how_to_measure": "FPSX Benchmark antes e depois (1% low e stutter).",
+        "how_to_measure": "RKZFPS Benchmark antes e depois (1% low e stutter).",
         "risk": "Baixo. O fechamento é gracioso, como o botão X; nada é forçado.",
         "rollback": "Não há estado a restaurar: o usuário abre o programa de novo quando quiser.",
         "evidence": "Contadores de CPU e memória por processo medidos pelo próprio scan.",
@@ -350,10 +350,10 @@
       "measurement": true,
       "justification": {
         "problem": "Opções de vídeo como V-Sync ligado ou taxa de atualização abaixo do monitor aumentam latência ou limitam os quadros exibidos.",
-        "works_on": "Jogos com perfil no FPSX (CS2, Fortnite, Minecraft Java) cujo arquivo de vídeo tem essas opções fora do recomendado.",
+        "works_on": "Jogos com perfil no RKZFPS (CS2, Fortnite, Minecraft Java) cujo arquivo de vídeo tem essas opções fora do recomendado.",
         "does_not_work_on": "Jogos sem perfil, ou já configurados: nada é alterado. Exige o jogo fechado.",
         "expected_benefit": "Moderado em latência; alto quando o jogo estava limitado a uma taxa abaixo do monitor.",
-        "how_to_measure": "FPSX Benchmark antes e depois; leitura do arquivo confirma o valor gravado.",
+        "how_to_measure": "RKZFPS Benchmark antes e depois; leitura do arquivo confirma o valor gravado.",
         "risk": "Baixo. Só chaves de uma whitelist compilada, com formato validado.",
         "rollback": "Restaura o valor anterior de cada chave no arquivo do jogo.",
         "evidence": "V-Sync adiciona espera pelo refresh (documentação NVIDIA Reflex / Valve); taxa do jogo abaixo do monitor descarta quadros.",
@@ -377,7 +377,7 @@
         "works_on": "PCs classificados como de entrada (RAM abaixo de 8 GB, só vídeo integrado, placa com menos de 3 GB ou processador de até 4 threads) com CS2, Fortnite ou Minecraft Java instalado e já aberto uma vez.",
         "does_not_work_on": "PC intermediário ou forte: não é oferecido. Opção que já está no nível leve, ou abaixo dele, não é tocada. Exige o jogo fechado.",
         "expected_benefit": "Alto quando a GPU é o gargalo, que é o caso típico de PC de entrada. O número só sai da medição antes e depois.",
-        "how_to_measure": "FPSX Benchmark no mesmo cenário, antes e depois: FPS médio, 1% low e frametime.",
+        "how_to_measure": "RKZFPS Benchmark no mesmo cenário, antes e depois: FPS médio, 1% low e frametime.",
         "risk": "Baixo. Muda só a aparência do jogo. Chaves e valores numa whitelist compilada, com formato validado.",
         "rollback": "Restaura o valor anterior de cada chave, e existe cópia do arquivo original ao lado dele.",
         "evidence": "Sombras, oclusão de ambiente, antisserrilhado e efeitos são as opções de maior custo de GPU nos guias de desempenho dos próprios jogos e dos fabricantes de placa.",
@@ -401,7 +401,7 @@
         "works_on": "PCs com vídeo integrado e placa dedicada ativos ao mesmo tempo, para jogos com perfil e pasta de instalação conhecida (CS2).",
         "does_not_work_on": "PC com uma GPU só, ou jogo já configurado para a dedicada. Jogos sem pasta conhecida (Fortnite pela Epic) ficam de fora.",
         "expected_benefit": "Alto quando o jogo estava rodando na integrada; nenhum quando já usava a dedicada.",
-        "how_to_measure": "FPSX Benchmark antes e depois; o Gerenciador de Tarefas mostra em qual GPU o jogo roda.",
+        "how_to_measure": "RKZFPS Benchmark antes e depois; o Gerenciador de Tarefas mostra em qual GPU o jogo roda.",
         "risk": "Baixo. É a mesma opção de Configurações > Sistema > Tela > Gráficos. Em notebook, gasta mais bateria.",
         "rollback": "Restaura o valor anterior da preferência, ou apaga quando não havia nenhuma.",
         "evidence": "Documentação da Microsoft sobre preferência de GPU por aplicativo (UserGpuPreferences).",
@@ -473,7 +473,7 @@
         "works_on": "PCs com vídeo integrado ou placa com menos de 4 GB, processador com 6 threads ou mais e Discord com a aceleração ligada.",
         "does_not_work_on": "Placa de vídeo com folga (não é oferecido) ou processador fraco, onde só troca um gargalo por outro (não é oferecido).",
         "expected_benefit": "Baixo a moderado e dependente do uso: maior com chamada de vídeo ou transmissão aberta durante o jogo. Sem número prometido: a medição da partida mostra.",
-        "how_to_measure": "FPS médio e 1% low da partida com o Discord aberto, antes e depois, pela medição automática do FPSX.",
+        "how_to_measure": "FPS médio e 1% low da partida com o Discord aberto, antes e depois, pela medição automática do RKZFPS.",
         "risk": "Baixo. Vídeo e transmissão dentro do Discord passam a usar mais o processador.",
         "rollback": "Restaura o valor anterior de enableHardwareAcceleration no settings.json do Discord, com cópia do arquivo original.",
         "evidence": "Opção oficial do Discord (Configurações > Avançado > Aceleração de hardware), indicada pelo suporte do Discord para problemas de desempenho.",
@@ -501,7 +501,7 @@
         "how_to_measure": "Não se aplica.",
         "risk": "Alto: PC sem proteção contra malware.",
         "rollback": "Não se aplica.",
-        "evidence": "Spec do FPSX, seção 17: proibido desativar segurança.",
+        "evidence": "Spec do RKZFPS, seção 17: proibido desativar segurança.",
         "safer_alternative": "Exclusão de pasta do jogo nas configurações do Defender, feita pelo próprio usuário se quiser.",
         "user_need": "Nenhuma."
       }
@@ -523,8 +523,8 @@
         "how_to_measure": "Não se aplica.",
         "risk": "Alto: quebra funções do Windows de forma difícil de diagnosticar.",
         "rollback": "Não se aplica.",
-        "evidence": "Spec do FPSX, seção 18.",
-        "safer_alternative": "Diagnóstico de processos em segundo plano do FPSX, que mostra o que realmente consome recurso.",
+        "evidence": "Spec do RKZFPS, seção 18.",
+        "safer_alternative": "Diagnóstico de processos em segundo plano do RKZFPS, que mostra o que realmente consome recurso.",
         "user_need": "Nenhuma."
       }
     },
@@ -545,7 +545,7 @@
         "how_to_measure": "Não se aplica.",
         "risk": "Alto: travamentos e input atrasado.",
         "rollback": "Não se aplica.",
-        "evidence": "Documentação da Microsoft sobre classes de prioridade (SetPriorityClass) desaconselha REALTIME_PRIORITY_CLASS; spec do FPSX, seção 19.",
+        "evidence": "Documentação da Microsoft sobre classes de prioridade (SetPriorityClass) desaconselha REALTIME_PRIORITY_CLASS; spec do RKZFPS, seção 19.",
         "safer_alternative": "Game Mode, que já prioriza o jogo em primeiro plano.",
         "user_need": "Nenhuma."
       }
@@ -568,7 +568,7 @@
         "risk": "Médio: carregamentos mais lentos.",
         "rollback": "Não se aplica.",
         "evidence": "Documentação da Microsoft sobre gerenciamento de memória (standby list é cache reutilizável).",
-        "safer_alternative": "Diagnóstico de pressão de memória do FPSX e fechar aplicações antes de jogar.",
+        "safer_alternative": "Diagnóstico de pressão de memória do RKZFPS e fechar aplicações antes de jogar.",
         "user_need": "Nenhuma."
       }
     },
@@ -589,8 +589,8 @@
         "how_to_measure": "Não se aplica.",
         "risk": "Médio: pode piorar downloads e outros aplicativos TCP.",
         "rollback": "Não se aplica.",
-        "evidence": "Spec do FPSX, seções 15 e 16; jogos como CS2 usam UDP (Steam Datagram Relay).",
-        "safer_alternative": "Diagnóstico de rede do FPSX (latência, jitter e perda separados por rede local e internet).",
+        "evidence": "Spec do RKZFPS, seções 15 e 16; jogos como CS2 usam UDP (Steam Datagram Relay).",
+        "safer_alternative": "Diagnóstico de rede do RKZFPS (latência, jitter e perda separados por rede local e internet).",
         "user_need": "Nenhuma."
       }
     },
@@ -612,7 +612,7 @@
         "risk": "Alto: crashes por falta de memória.",
         "rollback": "Não se aplica.",
         "evidence": "Documentação da Microsoft sobre dimensionamento do arquivo de paginação.",
-        "safer_alternative": "Manter gerenciado pelo sistema; o FPSX avisa quando está desativado.",
+        "safer_alternative": "Manter gerenciado pelo sistema; o RKZFPS avisa quando está desativado.",
         "user_need": "Nenhuma."
       }
     }

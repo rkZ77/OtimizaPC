@@ -1,7 +1,7 @@
 {
   // Perfil do Counter-Strike 2. Chaves de setting_checks são as do arquivo
   // Steam\userdata\<conta>\730\local\cfg\cs2_video.txt gravado pelo jogo.
-  // O FPSX só LÊ esse arquivo: o CS2 o reescreve ao fechar.
+  // O RKZFPS só LÊ esse arquivo: o CS2 o reescreve ao fechar.
   "id": "cs2",
   "name": "Counter-Strike 2",
   "version": "2026.09.1",

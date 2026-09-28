@@ -73,7 +73,7 @@ public static class PlanFeatures
         Feature.Troubleshooting => "Ferramentas de troubleshooting",
         Feature.History => "Histórico de otimizações",
         Feature.GameProfiles => "Perfis de jogo (CS2, Fortnite, Minecraft) e configuração leve para PC fraco",
-        Feature.Benchmark => "Antes e depois das partidas e FPSX Benchmark",
+        Feature.Benchmark => "Antes e depois das partidas e RKZFPS Benchmark",
         Feature.Reports => "Relatórios",
         _ => "Otimizações experimentais",
     };

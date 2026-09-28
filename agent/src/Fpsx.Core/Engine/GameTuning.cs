@@ -6,7 +6,7 @@ namespace Fpsx.Core.Engine;
 /// "Otimizar este jogo" e "Voltar como era", por jogo. O que liga é o
 /// conjunto de propostas daquele jogo (correções de latência mais a
 /// configuração pelo nível do PC); o que desliga é desfazer exatamente as
-/// alterações que o FPSX gravou no arquivo daquele jogo, e nada de outro.
+/// alterações que o RKZFPS gravou no arquivo daquele jogo, e nada de outro.
 /// </summary>
 public static class GameTuning
 {
@@ -21,7 +21,7 @@ public static class GameTuning
             .Select(x => x.p.Id)
             .ToList();
 
-    /// <summary>Alterações do FPSX ainda valendo no arquivo do jogo, da mais nova para a mais antiga.</summary>
+    /// <summary>Alterações do RKZFPS ainda valendo no arquivo do jogo, da mais nova para a mais antiga.</summary>
     public static IReadOnlyList<(string SessionId, string ChangeId, DateTimeOffset At)> AppliedChanges(IEnumerable<SessionRecord> sessions, string gameId) =>
         sessions
             .SelectMany(s => s.Changes.Select(c => (Session: s, Change: c)))

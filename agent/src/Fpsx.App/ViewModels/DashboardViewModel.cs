@@ -138,9 +138,9 @@ public sealed class DashboardViewModel : PageViewModel
     public string HeroText => State switch
     {
         HeroState.Scanning => Progress.Length > 0 ? Progress : "Só leitura: nada muda no PC nesta etapa.",
-        HeroState.Good => "Nada para mudar agora. Jogue com o FPSX aberto para medir o FPS das suas partidas.",
-        HeroState.CanFix => "O FPSX guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
-        HeroState.NeedsPlan => "Veja abaixo o que cada uma resolve. Para o FPSX corrigir, entre com um plano na tela Conta.",
+        HeroState.Good => "Nada para mudar agora. Jogue com o RKZFPS aberto para medir o FPS das suas partidas.",
+        HeroState.CanFix => "O RKZFPS guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
+        HeroState.NeedsPlan => "Veja abaixo o que cada uma resolve. Para o RKZFPS corrigir, entre com um plano na tela Conta.",
         _ => "Veja abaixo o que foi encontrado e o botão para resolver cada um.",
     };
 
@@ -164,7 +164,7 @@ public sealed class DashboardViewModel : PageViewModel
                 break;
             default:
                 // Windows, driver e jogo mudam com as atualizações: analisa de
-                // novo e, se surgiu algo que o FPSX corrige, já corrige (com a
+                // novo e, se surgiu algo que o RKZFPS corrige, já corrige (com a
                 // mesma confirmação de sempre). Sem nada novo, diz isso.
                 await Busy(() => _host.RunScanAsync(Reporter));
                 if (State == HeroState.CanFix)

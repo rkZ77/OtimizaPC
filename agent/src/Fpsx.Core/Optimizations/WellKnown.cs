@@ -26,7 +26,7 @@ public static class RegistryPaths
 
 /// <summary>
 /// Texto de configuração do DirectX por usuário: pares "Chave=valor;" numa
-/// string só. O FPSX troca um par e preserva os outros, do mesmo jeito que a
+/// string só. O RKZFPS troca um par e preserva os outros, do mesmo jeito que a
 /// tela de Configurações do Windows faz.
 /// </summary>
 public static class DirectXSettings

@@ -48,7 +48,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
             return;
         if (!File.Exists(presentMonPath))
         {
-            Status = "PresentMon não encontrado na pasta do FPSX. Reinstale o FPSX para medir o FPS das partidas.";
+            Status = "PresentMon não encontrado na pasta do RKZFPS. Reinstale o RKZFPS para medir o FPS das partidas.";
             return;
         }
 
@@ -101,7 +101,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
     {
         // UMA lista de processos por rodada: GetProcessesByName para cada um
         // dos ~30 executáveis dos perfis pediria a lista inteira ao Windows 30
-        // vezes a cada 5 segundos. O FPSX não pode pesar no PC que ele otimiza.
+        // vezes a cada 5 segundos. O RKZFPS não pode pesar no PC que ele otimiza.
         var running = Process.GetProcesses();
         try
         {
@@ -168,7 +168,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
 
         var pmLog = new System.Text.StringBuilder();
         var live = new LiveFpsMeter(game.Id);
-        // O PresentMon entrega o CSV pela saída padrão e o FPSX grava o
+        // O PresentMon entrega o CSV pela saída padrão e o RKZFPS grava o
         // arquivo. Ler o arquivo que o PresentMon grava não dá: ele o trava
         // enquanto escreve. Assim o mesmo fluxo alimenta o FPS ao vivo.
         var sink = new CsvSink(csv, live);
@@ -183,7 +183,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
         {
             try
             {
-                // Durante a partida o FPSX e o PresentMon ficam abaixo do normal:
+                // Durante a partida o RKZFPS e o PresentMon ficam abaixo do normal:
                 // se o processador apertar, o jogo vem primeiro. E o uso de CPU e
                 // GPU (WMI, a consulta mais cara daqui) é lido a cada 5 s.
                 TrySetPriority(self, ProcessPriorityClass.BelowNormal);
@@ -232,7 +232,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
                     log = pmLog.ToString();
                 Status = log.Contains("privilege", StringComparison.OrdinalIgnoreCase) && log.Contains("error", StringComparison.OrdinalIgnoreCase)
                          || log.Contains("access denied", StringComparison.OrdinalIgnoreCase)
-                    ? $"{profile.Name}: o Windows não deixou medir sem permissão. Abra o FPSX como administrador e jogue de novo."
+                    ? $"{profile.Name}: o Windows não deixou medir sem permissão. Abra o RKZFPS como administrador e jogue de novo."
                     : $"{profile.Name}: nenhum quadro registrado. O jogo fechou antes de desenhar na tela.";
                 return;
             }
@@ -262,7 +262,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
     }
 
     /// <summary>
-    /// Qual programa, fora o jogo e o FPSX, mais usou processador desde a última
+    /// Qual programa, fora o jogo e o RKZFPS, mais usou processador desde a última
     /// amostra. Só programas do usuário: serviço do Windows e antivírus não são
     /// "culpados" que a pessoa possa fechar. O nome fica só no PC.
     /// </summary>

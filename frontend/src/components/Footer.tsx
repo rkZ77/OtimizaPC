@@ -55,7 +55,7 @@ export default function Footer() {
 
         <div className="mt-6 pt-5 border-t border-line flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-ink-4 text-center sm:text-left">
-            {new Date().getFullYear()} © FPSX. Otimização de PC com diagnóstico e medição.
+            {new Date().getFullYear()} © RKZFPS. Otimização de PC com diagnóstico e medição.
           </p>
           <p className="text-[11px] text-ink-4 text-center sm:text-right">
             Resultados variam por PC e são sempre medidos, nunca prometidos.

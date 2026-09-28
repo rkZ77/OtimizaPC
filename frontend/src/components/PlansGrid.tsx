@@ -107,7 +107,7 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
           const destaque = plan.tier === 'pro'
           const free = plan.price_cents === 0
           return (
-            <div key={plan.key} className={cn('card relative flex flex-col p-5', destaque && 'border-green-500/50 shadow-elev')}>
+            <div key={plan.key} className={cn('card relative flex flex-col p-5', destaque && 'border-accent/50 shadow-elev')}>
               {destaque && (
                 <span className="absolute -top-2.5 left-5 rounded-sm bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black">
                   Mais escolhido

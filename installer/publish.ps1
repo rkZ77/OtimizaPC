@@ -19,7 +19,7 @@ $appOut = Join-Path $out "app"
 # Versao unica do produto: a do Directory.Build.props do Agent.
 [xml]$props = Get-Content (Join-Path $root "agent/Directory.Build.props")
 $version = $props.Project.PropertyGroup.Version
-Write-Host "FPSX $version"
+Write-Host "RKZFPS $version"
 
 if (Test-Path $appOut) { Remove-Item $appOut -Recurse -Force }
 
@@ -64,7 +64,7 @@ if (-not $iscc) { throw "Inno Setup 6 nao encontrado. Instale com: winget instal
 & $iscc "/DAppVersion=$version" "/DSourceDir=$appOut" "/O$out" (Join-Path $PSScriptRoot "fpsx.iss")
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup falhou" }
 
-$setup = Join-Path $out "FPSX-Setup-$version.exe"
+$setup = Join-Path $out "RKZFPS-Setup-$version.exe"
 $hash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLowerInvariant()
 Write-Host "Instalador: $setup"
 Write-Host "SHA-256:    $hash   (cole no admin > Atualizacoes ao publicar)"

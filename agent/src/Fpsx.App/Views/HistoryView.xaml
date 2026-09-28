@@ -8,7 +8,7 @@
                 <StackPanel>
                     <TextBlock Text="Histórico" Style="{StaticResource H1}" />
                     <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
-                               Text="Cada sessão guarda o valor anterior de tudo que foi alterado. Desfazer restaura exatamente esse valor. Se você mudou algo depois, o FPSX pergunta antes de sobrescrever." />
+                               Text="Cada sessão guarda o valor anterior de tudo que foi alterado. Desfazer restaura exatamente esse valor. Se você mudou algo depois, o RKZFPS pergunta antes de sobrescrever." />
                 </StackPanel>
             </DockPanel>
             <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" Margin="0,0,0,10"
@@ -16,7 +16,7 @@
             <Border Style="{StaticResource Card}" Background="{StaticResource Surface2}" Visibility="{Binding PlanNote, Converter={StaticResource Visible}}">
                 <TextBlock Text="{Binding PlanNote}" />
             </Border>
-            <TextBlock Text="Nenhuma alteração feita pelo FPSX neste PC." Style="{StaticResource MutedText}"
+            <TextBlock Text="Nenhuma alteração feita pelo RKZFPS neste PC." Style="{StaticResource MutedText}"
                        Visibility="{Binding IsEmpty, Converter={StaticResource Visible}}" />
 
             <ItemsControl ItemsSource="{Binding Sessions}">

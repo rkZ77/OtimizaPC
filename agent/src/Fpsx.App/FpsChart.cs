@@ -8,7 +8,7 @@ namespace Fpsx.App;
 
 /// <summary>
 /// Gráfico de FPS ao longo da partida, desenhado direto (sem biblioteca):
-/// área verde com o FPS médio e linha laranja com o pior quadro de cada
+/// área azul com o FPS médio e linha laranja com o pior quadro de cada
 /// trecho, que é onde aparecem os picos para baixo, as travadas que a pessoa
 /// sente. Só redesenha quando os pontos mudam: não pesa no jogo.
 /// </summary>

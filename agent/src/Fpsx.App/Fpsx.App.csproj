@@ -13,8 +13,8 @@
     <AssemblyName>FPSX</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\fpsx.ico</ApplicationIcon>
-    <Product>FPSX</Product>
-    <Company>FPSX</Company>
+    <Product>RKZFPS</Product>
+    <Company>RKZFPS</Company>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fpsx.Core\Fpsx.Core.csproj" />

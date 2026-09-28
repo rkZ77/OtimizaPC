@@ -44,7 +44,7 @@ public partial class App : Application
         var instance = @"Local\FPSX.App.Single";
 #if DEBUG
         // Só em desenvolvimento: uma cópia separada para prints de QA, sem
-        // brigar com o FPSX instalado que o dono está usando.
+        // brigar com o RKZFPS instalado que o dono está usando.
         if (Environment.GetEnvironmentVariable("FPSX_INSTANCE") is { Length: > 0 } suffix)
             instance += "." + suffix;
 #endif
@@ -70,7 +70,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Dialogs.Log(ex);
-            Dialogs.Info("Instalação incompleta", "O catálogo de otimizações do FPSX não foi encontrado ou está corrompido. Reinstale o FPSX.");
+            Dialogs.Info("Instalação incompleta", "O catálogo de otimizações do RKZFPS não foi encontrado ou está corrompido. Reinstale o RKZFPS.");
             Shutdown();
             return;
         }
@@ -99,8 +99,8 @@ public partial class App : Application
         _tray = new Tray(ShowMain, ExitApp);
         AppHost.Current.GameplayRecorded += s => _tray?.Notify($"{s.GameName}: partida registrada",
             $"FPS médio {s.Stats.AvgFps:0}, 1% low {s.Stats.Low1Fps:0}. Veja o antes e depois em Partidas.");
-        AppHost.Current.UpdateFound += u => _tray?.Notify($"FPSX {u.Version} disponível",
-            (string.IsNullOrWhiteSpace(u.Notes) ? "Uma versão nova do FPSX saiu." : u.Notes) + " Clique para abrir e atualizar com um clique.");
+        AppHost.Current.UpdateFound += u => _tray?.Notify($"RKZFPS {u.Version} disponível",
+            (string.IsNullOrWhiteSpace(u.Notes) ? "Uma versão nova do RKZFPS saiu." : u.Notes) + " Clique para abrir e atualizar com um clique.");
         AppHost.Current.StartMonitor();
         // Quem abre direto na bandeja (com o Windows) também recebe o aviso.
         if (startInTray)
@@ -148,10 +148,10 @@ public partial class App : Application
         // partidas): pergunta uma vez com o texto novo, porque o que sobe mudou.
         if (s.TelemetryConsent == false || (s.TelemetryConsent == true && s.TelemetryConsentVersion >= Fpsx.Client.ClientSettings.CurrentConsentVersion))
             return;
-        var yes = Dialogs.Show("Ajude a melhorar o FPSX",
+        var yes = Dialogs.Show("Ajude a melhorar o RKZFPS",
             "Podemos enviar dados anônimos de uso? Somente: quais otimizações foram aplicadas e se funcionaram, o FPS das partidas medidas (números e o gráfico), " +
             "um resumo do hardware (processador, placa de vídeo, memória e versão do Windows) e a versão do app.\n\n" +
-            "É com isso que o FPSX compara seu PC com PCs parecidos e descobre o que de fato melhora o FPS. " +
+            "É com isso que o RKZFPS compara seu PC com PCs parecidos e descobre o que de fato melhora o FPS. " +
             "Nunca enviamos arquivos, nomes de programas, nome do PC, caminhos de pasta ou qualquer conteúdo pessoal. Você pode mudar isso a qualquer momento em Configurações.",
             "Permitir", "Não permitir") == 0;
         ctx.Storage.SaveSettings(ctx.Settings with { TelemetryConsent = yes, TelemetryConsentVersion = Fpsx.Client.ClientSettings.CurrentConsentVersion });

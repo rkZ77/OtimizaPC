@@ -327,7 +327,7 @@ public sealed class GameplayViewModel : PageViewModel
         var sessions = _host.Ctx.Gameplay.All();
         if (sessions.Count == 0)
         {
-            CompareStatus = "Nenhuma partida medida ainda. Deixe o FPSX aberto (pode ser na bandeja) e jogue: a medição começa sozinha quando o jogo abre.";
+            CompareStatus = "Nenhuma partida medida ainda. Deixe o RKZFPS aberto (pode ser na bandeja) e jogue: a medição começa sozinha quando o jogo abre.";
             return;
         }
 

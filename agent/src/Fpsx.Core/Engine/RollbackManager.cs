@@ -18,7 +18,7 @@ public sealed class RollbackManager(ISystemAccess system, SessionStore store)
     public SessionRecord RollbackSession(string sessionId, bool force) =>
         RollbackSession(store.Load(sessionId) ?? throw new ArgumentException($"Sessão não encontrada: {sessionId}"), force);
 
-    /// <summary>Da sessão mais nova para a mais antiga, para cada valor voltar ao estado de antes do FPSX.</summary>
+    /// <summary>Da sessão mais nova para a mais antiga, para cada valor voltar ao estado de antes do RKZFPS.</summary>
     public IReadOnlyList<SessionRecord> RollbackAll(bool force) =>
         store.All().Select(s => RollbackSession(s, force)).ToList();
 
@@ -52,7 +52,7 @@ public sealed class RollbackManager(ISystemAccess system, SessionStore store)
             }
             else if (!force && record.Status == ChangeStatus.Applied && !_executor.StillApplied(record.Applied))
             {
-                // Alguém mudou o valor depois do FPSX. Sobrescrever apagaria a
+                // Alguém mudou o valor depois do RKZFPS. Sobrescrever apagaria a
                 // escolha do usuário; só com --force.
                 updated = record with { Status = ChangeStatus.RollbackSkipped, Error = "O valor foi modificado depois pelo usuário ou outro programa. Use --force para restaurar mesmo assim." };
             }

@@ -30,7 +30,7 @@ public sealed class DisplayRefreshOptimization : IOptimization
             Decision = Decision.Recommended,
             Potential = Potential.High,
             Reason = "Há monitor rodando abaixo da taxa de atualização que ele suporta. A tela descarta quadros que o PC já renderizou.",
-            Warning = "Se a tela piscar ou ficar preta, o FPSX volta ao modo anterior pelo rollback. Cabos antigos (HDMI 1.4) podem não suportar a taxa máxima.",
+            Warning = "Se a tela piscar ou ficar preta, o RKZFPS volta ao modo anterior pelo rollback. Cabos antigos (HDMI 1.4) podem não suportar a taxa máxima.",
             Evidence = evidence,
             Proposals = below.Select(d => new Proposal(
                 $"{Id}:{d.DeviceName}",

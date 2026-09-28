@@ -17,7 +17,7 @@ export const FEATURES: { label: string; plan: (typeof PLAN_ORDER)[number] }[] = 
   { label: 'Perfis de jogo: CS2, Fortnite e Minecraft', plan: 'pro' },
   { label: 'Configuração leve do jogo para PC fraco', plan: 'pro' },
   { label: 'Antes e depois do FPS nas suas partidas', plan: 'pro' },
-  { label: 'FPSX Benchmark e relatórios', plan: 'pro' },
+  { label: 'RKZFPS Benchmark e relatórios', plan: 'pro' },
   { label: 'Otimizações experimentais, com medição', plan: 'ultimate' },
   { label: 'Novos jogos e otimizações em acesso antecipado', plan: 'ultimate' },
   { label: 'Suporte prioritário', plan: 'ultimate' },

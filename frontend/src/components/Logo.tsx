@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { cn } from '../lib/cn'
 
-/** Marca do FPSX: o grafico subindo do icone do app, na mesma cor de marca. */
+/** Marca do RKZFPS: o grafico subindo do icone do app, na mesma cor de marca. */
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={cn('w-8 h-8', className)} aria-hidden>
@@ -13,10 +13,11 @@ export function LogoMark({ className }: { className?: string }) {
 
 export default function Logo({ className }: { className?: string }) {
   return (
-    <Link to="/" className={cn('flex items-center gap-2.5 shrink-0', className)} aria-label="FPSX, início">
+    <Link to="/" className={cn('flex items-center gap-2.5 shrink-0', className)} aria-label="RKZFPS, início">
       <LogoMark />
-      <span className="font-display font-extrabold text-lg tracking-tight text-ink-1">
-        FPS<span className="text-accent-ink">X</span>
+      {/* Como na arte da marca: RKZ na cor do texto, FPS no ciano, em italico. */}
+      <span className="font-display font-extrabold italic text-lg tracking-tight text-ink-1">
+        RKZ<span className="text-accent-ink">FPS</span>
       </span>
     </Link>
   )

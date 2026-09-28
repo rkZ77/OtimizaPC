@@ -78,7 +78,7 @@ public sealed record ChangeLogEntry(
 /// <summary>
 /// BackupManager + histórico: uma sessão por arquivo, gravada a cada passo.
 /// Arquivo por sessão (e não um banco) porque o rollback precisa funcionar
-/// mesmo sem rede e sem o serviço do FPSX rodando.
+/// mesmo sem rede e sem o serviço do RKZFPS rodando.
 /// </summary>
 public sealed class SessionStore
 {

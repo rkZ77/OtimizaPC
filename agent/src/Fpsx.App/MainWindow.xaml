@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Fpsx.App.ViewModels"
         xmlns:v="clr-namespace:Fpsx.App.Views"
-        Title="FPSX" Width="1180" Height="780" MinWidth="960" MinHeight="620"
+        Title="RKZFPS" Width="1180" Height="780" MinWidth="960" MinHeight="620"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
         Icon="Assets/fpsx.ico">
     <Window.Resources>
@@ -28,14 +28,16 @@
             <DockPanel Margin="14,20">
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,26">
                     <Image Source="Assets/fpsx.ico" Width="30" Height="30" />
-                    <TextBlock Text="FPSX" FontSize="22" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    <TextBlock FontSize="22" FontWeight="Black" FontStyle="Italic" Margin="10,0,0,0" VerticalAlignment="Center">
+                        <Run Text="RKZ" /><Run Text="FPS" Foreground="{StaticResource Accent}" />
+                    </TextBlock>
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Bottom" Margin="8,0">
                     <Button Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="-6,0,0,12" Command="{Binding TutorialCommand}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Info}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Text="Como usar o FPSX" Foreground="{StaticResource Info}" />
+                            <TextBlock Text="Como usar o RKZFPS" Foreground="{StaticResource Info}" />
                         </StackPanel>
                     </Button>
                     <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">

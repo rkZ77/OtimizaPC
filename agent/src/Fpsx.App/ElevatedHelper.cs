@@ -20,7 +20,7 @@ public sealed record ElevatedRequest
 }
 
 /// <summary>
-/// O FPSX roda sem administrador. Quando o usuário aplica algo que mexe no
+/// O RKZFPS roda sem administrador. Quando o usuário aplica algo que mexe no
 /// sistema (HKLM, pagefile, HAGS, Winsock), o app abre uma cópia de si mesmo
 /// com a permissão do Windows (UAC) só para aquilo, e ela fecha em seguida.
 ///
@@ -68,7 +68,7 @@ public static class ElevatedHelper
     public static int Execute(string requestPath)
     {
         var ctx = AppHost.Current.Ctx;
-        // O pedido só vale se estiver na pasta de dados do FPSX: um arquivo
+        // O pedido só vale se estiver na pasta de dados do RKZFPS: um arquivo
         // qualquer passado na linha de comando não vira alteração elevada.
         var full = Path.GetFullPath(requestPath);
         if (!full.StartsWith(Path.Combine(Path.GetFullPath(ctx.DataDir), "elevated") + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))

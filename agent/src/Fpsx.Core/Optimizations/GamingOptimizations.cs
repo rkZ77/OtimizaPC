@@ -101,7 +101,7 @@ public sealed class HagsOptimization : IOptimization
             Decision = Decision.Optional,
             Potential = Potential.Low,
             Reason = "HAGS pode reduzir a latência de CPU no envio de quadros em alguns jogos, e é exigido por recursos como Frame Generation. Em outros casos não muda nada ou piora. Só vale com medição antes e depois.",
-            Warning = "Experimental. Exige reinício. Meça com o FPSX Benchmark antes e depois e desfaça se não houver ganho.",
+            Warning = "Experimental. Exige reinício. Meça com o RKZFPS Benchmark antes e depois e desfaça se não houver ganho.",
             Evidence = evidence,
             Proposals =
             [

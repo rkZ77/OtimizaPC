@@ -80,9 +80,9 @@ public static class Dialogs
         var message = ex switch
         {
             ApiException api => api.Message,
-            SafetyViolationException s => "O FPSX recusou a operação por segurança: " + s.Message,
+            SafetyViolationException s => "O RKZFPS recusou a operação por segurança: " + s.Message,
             InvalidOperationException or FileNotFoundException or ArgumentException => ex.Message,
-            UnauthorizedAccessException => "O Windows negou acesso. Algumas otimizações exigem abrir o FPSX como administrador.",
+            UnauthorizedAccessException => "O Windows negou acesso. Algumas otimizações exigem abrir o RKZFPS como administrador.",
             _ => "Algo deu errado. Nenhuma alteração foi deixada pela metade: o que já foi aplicado está no Histórico e pode ser desfeito.",
         };
         Log(ex);

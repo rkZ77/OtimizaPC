@@ -23,7 +23,7 @@ public sealed record ApplyOptions
 
     /// <summary>
     /// Chamado quando uma alteração falha. Sem callback, o padrão é Cancel:
-    /// o FPSX não continua silenciosamente depois de um erro (seção 43).
+    /// o RKZFPS não continua silenciosamente depois de um erro (seção 43).
     /// </summary>
     public Func<FailureContext, FailureChoice>? OnFailure { get; init; }
 }

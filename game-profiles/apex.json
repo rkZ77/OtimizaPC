@@ -1,5 +1,5 @@
 {
-  // Perfil de medicao: o FPSX mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  // Perfil de medicao: o RKZFPS mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
   "id": "apex",
   "name": "Apex Legends",
   "version": "2026.09.1",

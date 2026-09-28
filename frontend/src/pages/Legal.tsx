@@ -12,7 +12,7 @@ export function Privacidade() {
                bar={{ title: 'Política de privacidade', sub: 'Coletamos o mínimo necessário para o produto funcionar, e nada sem você saber.' }}>
       <Prose>
         <h2>O que fica só no seu PC</h2>
-        <p>O resultado completo do diagnóstico, a lista de processos, os programas de inicialização, os backups e o histórico de alterações ficam na pasta de dados do FPSX no seu computador e não são enviados.</p>
+        <p>O resultado completo do diagnóstico, a lista de processos, os programas de inicialização, os backups e o histórico de alterações ficam na pasta de dados do RKZFPS no seu computador e não são enviados.</p>
         <h2>O que o servidor recebe</h2>
         <ul>
           <li>Conta: e-mail, nome e senha (guardada só como hash).</li>
@@ -26,7 +26,7 @@ export function Privacidade() {
           <li>o FPS das partidas medidas: números (FPS médio, 1% low, travadas), o gráfico da partida e quantas quedas vieram de cada tipo de causa (programa aberto, processador, placa de vídeo ou o próprio jogo);</li>
           <li>um resumo do hardware: modelo do processador e da placa de vídeo, quantidade de memória e versão do Windows.</li>
         </ul>
-        <p>Com isso o FPSX compara o seu PC com PCs parecidos (a comparação só aparece quando o grupo tem pelo menos 5 PCs, para ninguém ser identificado) e descobre, no conjunto, o que de fato melhora o FPS. Nunca enviamos arquivos, nomes de programas, o nome do PC, caminhos de pasta ou conteúdo pessoal. Você pode desligar a qualquer momento em Configurações, e a fila local é apagada.</p>
+        <p>Com isso o RKZFPS compara o seu PC com PCs parecidos (a comparação só aparece quando o grupo tem pelo menos 5 PCs, para ninguém ser identificado) e descobre, no conjunto, o que de fato melhora o FPS. Nunca enviamos arquivos, nomes de programas, o nome do PC, caminhos de pasta ou conteúdo pessoal. Você pode desligar a qualquer momento em Configurações, e a fila local é apagada.</p>
         <h2>Cookies</h2>
         <p>O site usa só o cookie essencial de sessão (para manter você conectado) e guarda no navegador a sua escolha de tema.</p>
         <h2>Seus direitos</h2>
@@ -40,10 +40,10 @@ export function Termos() {
   return (
     <PageShell title="Termos de uso" width="prose" revelacao={false} bar={{ title: 'Termos de uso' }}>
       <Prose>
-        <h2>O que o FPSX faz</h2>
-        <p>O FPSX analisa o seu PC e aplica, com a sua confirmação, apenas alterações de uma lista fechada, sempre com backup do estado anterior e opção de desfazer. Limpezas de cache e reparos de rede não têm estado anterior e são indicados como tal antes de aplicar.</p>
+        <h2>O que o RKZFPS faz</h2>
+        <p>O RKZFPS analisa o seu PC e aplica, com a sua confirmação, apenas alterações de uma lista fechada, sempre com backup do estado anterior e opção de desfazer. Limpezas de cache e reparos de rede não têm estado anterior e são indicados como tal antes de aplicar.</p>
         <h2>Sem promessa de desempenho</h2>
-        <p>Resultados dependem do hardware, do jogo e da configuração de cada PC. O FPSX não promete aumento de FPS ou redução de latência: ele mede antes e depois e informa o resultado real, inclusive quando não há ganho.</p>
+        <p>Resultados dependem do hardware, do jogo e da configuração de cada PC. O RKZFPS não promete aumento de FPS ou redução de latência: ele mede antes e depois e informa o resultado real, inclusive quando não há ganho.</p>
         <h2>Licença</h2>
         <p>Cada assinatura vale para 1 PC ativo por vez. Você pode trocar de PC desativando o anterior em Minha conta. A licença é pessoal: não pode ser dividida, emprestada nem revendida.</p>
         <h2>Cancelamento</h2>

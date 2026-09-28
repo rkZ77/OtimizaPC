@@ -51,7 +51,7 @@ public sealed class HistoryViewModel : PageViewModel
 
     private async Task Undo(SessionItem item, string? changeId)
     {
-        if (!Dialogs.Confirm("Desfazer", "O FPSX vai restaurar os valores salvos no backup desta sessão.", "Desfazer"))
+        if (!Dialogs.Confirm("Desfazer", "O RKZFPS vai restaurar os valores salvos no backup desta sessão.", "Desfazer"))
             return;
         await Report(await _host.RollbackAsync(item.Session.Id, changeId, force: false));
     }
@@ -61,7 +61,7 @@ public sealed class HistoryViewModel : PageViewModel
 
     private async Task UndoAll()
     {
-        if (!Dialogs.Confirm("Desfazer tudo", "Desfazer TODAS as alterações que o FPSX fez neste PC?", "Desfazer tudo"))
+        if (!Dialogs.Confirm("Desfazer tudo", "Desfazer TODAS as alterações que o RKZFPS fez neste PC?", "Desfazer tudo"))
             return;
         foreach (var s in Sessions.Where(s => s.CanUndo).ToList())
             await _host.RollbackAsync(s.Session.Id, null, force: false);

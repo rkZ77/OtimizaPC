@@ -7,7 +7,7 @@ namespace Fpsx.Client;
 /// <summary>
 /// Identidade do PC para o limite de dispositivos (seção 36): um hash, e só.
 /// Nada de serial de disco, MAC ou nome de usuário. O MachineGuid é gerado
-/// pelo Windows na instalação; com o sal do FPSX, o hash não serve para
+/// pelo Windows na instalação; com o sal do RKZFPS, o hash não serve para
 /// rastrear o PC em nenhum outro serviço.
 /// </summary>
 public static class DeviceIdentity

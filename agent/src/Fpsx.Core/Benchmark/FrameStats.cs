@@ -2,7 +2,7 @@ namespace Fpsx.Core.Benchmark;
 
 /// <summary>
 /// Estatísticas de uma captura de frametimes. Definições fixas e documentadas
-/// (docs/BENCHMARK.md), para o "1% low" do FPSX significar sempre a mesma coisa:
+/// (docs/BENCHMARK.md), para o "1% low" do RKZFPS significar sempre a mesma coisa:
 /// 1% low = 1000 / P99 do frametime; 0.1% low = 1000 / P99.9.
 /// </summary>
 public sealed record FrameStats

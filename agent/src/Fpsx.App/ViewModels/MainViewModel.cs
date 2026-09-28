@@ -118,7 +118,7 @@ public sealed class MainViewModel : ObservableObject
         catch (Exception ex) when (ex is InvalidOperationException or System.Net.Http.HttpRequestException or System.IO.IOException)
         {
             UpdateButton = "Atualizar agora";
-            Dialogs.Info("Não foi possível atualizar", ex.Message + "\n\nO FPSX continua funcionando na versão atual. Você também pode baixar pelo site.");
+            Dialogs.Info("Não foi possível atualizar", ex.Message + "\n\nO RKZFPS continua funcionando na versão atual. Você também pode baixar pelo site.");
         }
     }
 

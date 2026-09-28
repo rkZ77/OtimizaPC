@@ -27,7 +27,7 @@ public static class LoginPrompt
         var res = Application.Current.Resources;
         var window = new Window
         {
-            Title = "Entrar no FPSX",
+            Title = "Entrar no RKZFPS",
             Width = 460,
             SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterScreen,
@@ -75,7 +75,7 @@ public static class LoginPrompt
             }
             catch (System.Net.Http.HttpRequestException)
             {
-                error.Text = "Sem conexão com o servidor do FPSX. Confira a internet e tente de novo.";
+                error.Text = "Sem conexão com o servidor do RKZFPS. Confira a internet e tente de novo.";
                 error.Visibility = Visibility.Visible;
             }
             finally

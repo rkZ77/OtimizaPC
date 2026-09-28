@@ -36,12 +36,12 @@ public static class ApplyFlow
         var experimental = items.Any(i => i.Result.Definition.Classification == Classification.Experimental);
         if (experimental && !Dialogs.Confirm("Otimização experimental",
                 "Você escolheu uma otimização EXPERIMENTAL. O resultado varia por PC e jogo e pode piorar o desempenho.\n\n" +
-                "Meça com o FPSX Benchmark antes e depois, e desfaça pelo Histórico se não houver ganho.", "Entendo, continuar"))
+                "Meça com o RKZFPS Benchmark antes e depois, e desfaça pelo Histórico se não houver ganho.", "Entendo, continuar"))
             return null;
 
         var elevated = items.Where(i => i.Result.RequiresElevation).ToList();
         var confirm = Describe(items) + (elevated.Count > 0
-            ? "\nO Windows vai pedir sua permissão para as alterações de sistema. Isso é normal: o FPSX usa a permissão só para elas e fecha em seguida."
+            ? "\nO Windows vai pedir sua permissão para as alterações de sistema. Isso é normal: o RKZFPS usa a permissão só para elas e fecha em seguida."
             : "");
         if (!Dialogs.Confirm("Confirmar alterações", confirm, "Aplicar com backup"))
             return null;
@@ -79,7 +79,7 @@ public static class ApplyFlow
 
     private static string Describe(IEnumerable<(OptimizationResult Result, Fpsx.Core.Optimizations.Proposal Proposal)> items)
     {
-        var sb = new StringBuilder("O FPSX vai criar um backup antes de cada alteração e conferir o resultado depois.\n");
+        var sb = new StringBuilder("O RKZFPS vai criar um backup antes de cada alteração e conferir o resultado depois.\n");
         foreach (var group in items.GroupBy(i => i.Result))
         {
             var def = group.Key.Definition;
@@ -113,7 +113,7 @@ public static class ApplyFlow
         if (s.Changes.Any(c => c.Status == ChangeStatus.Applied && c.Applied.RequiresReboot))
             sb.Append("\n\nReinicie o PC para concluir as alterações que exigem reinício.");
         if (applied > 0)
-            sb.Append("\n\nTudo pode ser desfeito na tela Histórico. Para medir o efeito no jogo, use o FPSX Benchmark.");
+            sb.Append("\n\nTudo pode ser desfeito na tela Histórico. Para medir o efeito no jogo, use o RKZFPS Benchmark.");
         return sb.ToString();
     }
 }

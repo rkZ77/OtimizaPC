@@ -180,7 +180,7 @@ def create_checkout(user: dict, plan_key: str, coupon_code: str | None) -> dict:
     q = quote(plan_key, coupon_code)
     ref = make_reference(user["id"], plan_key, q["coupon"])
     url = provider().create_checkout(
-        title=f"FPSX {q['plan']['name']} {PERIOD_LABEL.get(q['plan'].get('period', 'monthly'), '')}".strip(),
+        title=f"RKZFPS {q['plan']['name']} {PERIOD_LABEL.get(q['plan'].get('period', 'monthly'), '')}".strip(),
         amount_cents=q["amount_cents"], reference=ref, payer_email=user["email"])
     return {"checkout_url": url, "amount_cents": q["amount_cents"]}
 

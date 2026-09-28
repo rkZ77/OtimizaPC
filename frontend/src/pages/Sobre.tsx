@@ -13,7 +13,7 @@ import { SUPPORT_IS_EXTERNAL, SUPPORT_URL } from '../lib/support'
 const PRINCIPIOS = [
   {
     icon: Ruler, t: 'Medir, não prometer',
-    d: 'Não existe "até 300% mais FPS" aqui. O FPSX mede suas partidas antes e depois e mostra o número real, inclusive quando não mudou nada.',
+    d: 'Não existe "até 300% mais FPS" aqui. O RKZFPS mede suas partidas antes e depois e mostra o número real, inclusive quando não mudou nada.',
   },
   {
     icon: ListChecks, t: 'Cada ajuste tem um porquê',
@@ -35,17 +35,17 @@ const PRINCIPIOS = [
 
 export default function Sobre() {
   return (
-    <PageShell title="Quem somos" bar={{ title: 'Quem somos', sub: 'Por que o FPSX existe e como ele decide o que mudar no seu PC.' }}>
+    <PageShell title="Quem somos" bar={{ title: 'Quem somos', sub: 'Por que o RKZFPS existe e como ele decide o que mudar no seu PC.' }}>
       <div className="mx-auto max-w-3xl space-y-12">
         <section className="space-y-4 leading-relaxed text-ink-2">
-          <h2 className="font-display text-2xl font-bold text-ink-1">Por que o FPSX existe</h2>
+          <h2 className="font-display text-2xl font-bold text-ink-1">Por que o RKZFPS existe</h2>
           <p>
             Todo mundo que joga no PC já viu o "otimizador milagroso": um botão que promete dobrar o FPS, desliga o antivírus,
             mexe em dezenas de configurações do Windows de uma vez e não diz o que fez. Às vezes o jogo melhora um pouco. Às vezes
             o PC fica instável e ninguém sabe voltar.
           </p>
           <p>
-            O FPSX nasceu para fazer o contrário: olhar primeiro, explicar o que encontrou, mudar só o que faz sentido para o seu
+            O RKZFPS nasceu para fazer o contrário: olhar primeiro, explicar o que encontrou, mudar só o que faz sentido para o seu
             hardware e provar o resultado com medição de verdade, nas suas partidas.
           </p>
         </section>
@@ -67,7 +67,7 @@ export default function Sobre() {
           <h2 className="font-display text-2xl font-bold text-ink-1">Como a gente mede</h2>
           <p>
             A medição usa o registro de quadros do próprio Windows, pela ferramenta aberta PresentMon, da Intel. Ela não injeta
-            nada no jogo, por isso funciona com anti-cheat. O FPSX descarta o carregamento, os minutos com o jogo minimizado e as
+            nada no jogo, por isso funciona com anti-cheat. O RKZFPS descarta o carregamento, os minutos com o jogo minimizado e as
             telas de pausa, e só compara partidas suficientes para a diferença não ser ruído.
           </p>
           <p>

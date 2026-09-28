@@ -27,7 +27,7 @@ const ORIGEM = 'https://otimizapc-production.up.railway.app'
  *  não passam uma própria (Login, VerifyEmail, ForgotPassword, NotFound e o
  *  link público de pick), que hoje não competem na busca. */
 const DESCRICAO_PADRAO =
-  'O FPSX analisa seu PC Windows e aplica só otimizações compatíveis, com backup, ' +
+  'O RKZFPS analisa seu PC Windows e aplica só otimizações compatíveis, com backup, ' +
   'desfazer e medição antes e depois. Sem tweak placebo, sem promessa de FPS.'
 
 export interface PageBar {
@@ -74,7 +74,7 @@ export default function PageShell({
   revelacao = true,
 }: {
   children: React.ReactNode
-  /** Vira "<title> | FPSX". Passar já com o sufixo desliga o automático. */
+  /** Vira "<title> | RKZFPS". Passar já com o sufixo desliga o automático. */
   title?: string
   description?: string
   canonical?: string
@@ -97,7 +97,7 @@ export default function PageShell({
   const revelado = useRevelacao(!revelacao)
   const { pathname } = useLocation()
   const fullTitle = title
-    ? (title.includes('FPSX') ? title : `${title} | FPSX`)
+    ? (title.includes('RKZFPS') ? title : `${title} | RKZFPS`)
     : undefined
 
   /*

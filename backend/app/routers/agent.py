@@ -1,4 +1,4 @@
-"""API que o app desktop (FPSX Agent) consome.
+"""API que o app desktop (RKZFPS Agent) consome.
 
 Nao existe endpoint que mande o Agent executar algo (secao 31): o servidor so'
 entrega licenca assinada, catalogo assinado e versao disponivel. Quem decide

@@ -27,7 +27,7 @@ public sealed class GamePresetOptimization : IOptimization
         if (tier.Tier == HardwareTier.Unknown)
             return Evaluation.Unknown("Não foi possível ler o hardware para decidir se vale reduzir a qualidade gráfica.");
         // PC forte não tem o que ganhar trocando imagem por FPS: nesse caso o
-        // FPSX só corrige o que aumenta atraso (V-Sync, Reflex, taxa do monitor).
+        // RKZFPS só corrige o que aumenta atraso (V-Sync, Reflex, taxa do monitor).
         if (tier.Tier == HardwareTier.High)
             return Evaluation.NotApplicable($"{tier.Label}: reduzir a qualidade gráfica não é necessário aqui.", evidence);
 
@@ -43,7 +43,7 @@ public sealed class GamePresetOptimization : IOptimization
             foreach (var preset in profile.Presets.Where(p => p.Tiers.Contains(tier.Tier)))
             {
                 // Só chave que já existe no arquivo e que está mais pesada que o
-                // preset: o FPSX não inventa chave nem piora o que já está leve.
+                // preset: o RKZFPS não inventa chave nem piora o que já está leve.
                 var changes = preset.Settings
                     .Where(kv => game.Config.TryGetValue(kv.Key, out var current) && preset.ShouldApply(kv.Key, current))
                     .Select(kv => (Change)new GameConfigChange(profile.Id, kv.Key, kv.Value))
@@ -69,7 +69,7 @@ public sealed class GamePresetOptimization : IOptimization
             Reason = low
                 ? "Neste PC o hardware é o limite. Baixar sombras, efeitos e antisserrilhado é o que mais aumenta o FPS, bem mais do que qualquer ajuste do Windows."
                 : "Este PC roda bem, mas algumas opções custam muito FPS e mudam pouco a imagem. A configuração equilibrada baixa só essas.",
-            Warning = "Muda a aparência do jogo: sombras, efeitos e texturas ficam mais simples. Feche o jogo antes de aplicar. Tudo volta com Desfazer. Meça com o FPSX Benchmark antes e depois.",
+            Warning = "Muda a aparência do jogo: sombras, efeitos e texturas ficam mais simples. Feche o jogo antes de aplicar. Tudo volta com Desfazer. Meça com o RKZFPS Benchmark antes e depois.",
             Evidence = evidence,
             Proposals = proposals,
         };
