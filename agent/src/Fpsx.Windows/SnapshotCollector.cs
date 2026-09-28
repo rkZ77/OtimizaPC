@@ -36,6 +36,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         var power = Power();
         var displays = Displays();
         var security = Security();
+        var board = Wmi.Query("SELECT Manufacturer, Product FROM Win32_BaseBoard").FirstOrDefault();
 
         progress?.Invoke("Procurando jogos");
         var games = Games();
@@ -71,6 +72,8 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
             Security = security,
             Games = games,
             Discord = Discord(startup),
+            BoardManufacturer = board?.Str("Manufacturer").Trim() ?? "",
+            BoardProduct = board?.Str("Product").Trim() ?? "",
             SampleSeconds = options.SampleSeconds,
         };
     }

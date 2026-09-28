@@ -355,11 +355,44 @@ public sealed class AppHost : ObservableObject
 
     public static void OpenUrl(string url)
     {
+        // Ação do próprio app, antes de tudo: nunca vai para o shell do Windows.
+        if (url == Core.Diagnostics.FindingAction.RebootToFirmware)
+        {
+            RebootToFirmware();
+            return;
+        }
+
         // Só http(s) ou uma tela do Windows da lista fechada: link vindo de
         // catálogo/servidor nunca abre executável local.
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp))
             Process.Start(new ProcessStartInfo(uri.ToString()) { UseShellExecute = true });
         else if (new Core.Diagnostics.FindingAction("", url).IsAllowed)
             Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    }
+
+    /// <summary>
+    /// Reinicia o PC direto na tela da BIOS (UEFI), para a pessoa ligar o
+    /// perfil de memória sem precisar acertar a tecla na hora. O RKZFPS não
+    /// grava nada na BIOS: só leva até lá. Pede confirmação, porque fecha tudo.
+    /// </summary>
+    private static void RebootToFirmware()
+    {
+        if (!Dialogs.Confirm("Reiniciar direto na BIOS",
+                "O PC vai reiniciar e abrir a BIOS. Salve e feche o que estiver aberto antes.\n\n" +
+                "Na BIOS, siga o passo que aparece no RKZFPS e aperte F10 para salvar. Depois, abra o RKZFPS de novo: ele confere se a memória passou para a velocidade certa.",
+                "Reiniciar agora"))
+            return;
+        try
+        {
+            // /fw só funciona em PC com UEFI e exige administrador (o Windows pergunta).
+            using var p = Process.Start(new ProcessStartInfo("shutdown.exe", "/r /fw /t 5") { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden });
+            if (p is not null && p.WaitForExit(10000) && p.ExitCode != 0)
+                Dialogs.Info("Não deu para abrir a BIOS direto",
+                    "Este PC não permite reiniciar direto na BIOS. Reinicie normalmente e aperte Del (ou F2) várias vezes assim que a tela acender.");
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // A pessoa recusou a permissão do Windows: nada acontece.
+        }
     }
 }

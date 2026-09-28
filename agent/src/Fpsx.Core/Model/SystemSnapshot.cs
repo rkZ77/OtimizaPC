@@ -22,6 +22,11 @@ public sealed record SystemSnapshot
     public SecurityInfo? Security { get; init; }
     public IReadOnlyList<GameInstall> Games { get; init; } = [];
 
+    /// <summary>Fabricante e modelo da placa-mãe: define o caminho na BIOS de cada ajuste.</summary>
+    public string BoardManufacturer { get; init; } = "";
+
+    public string BoardProduct { get; init; } = "";
+
     /// <summary>Discord, que quase todo jogador deixa aberto junto com o jogo. null = não instalado.</summary>
     public DiscordInfo? Discord { get; init; }
 

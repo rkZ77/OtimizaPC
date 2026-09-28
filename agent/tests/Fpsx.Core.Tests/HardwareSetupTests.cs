@@ -97,4 +97,33 @@ public class HardwareSetupTests
         Assert.Contains("SSD (C:", f.Recommendation);
         Assert.Contains("Mover pasta de instalação", f.Recommendation);
     }
+
+    [Fact]
+    public void Passo_da_BIOS_segue_o_fabricante_da_placa_e_oferece_reiniciar_nela()
+    {
+        // Caso real: Gigabyte A320M-S2H com Ryzen, memória 3000 a 2666.
+        var s = Pc.Healthy() with
+        {
+            BoardManufacturer = "Gigabyte Technology Co., Ltd.",
+            Cpu = Pc.Healthy().Cpu! with { Manufacturer = "AuthenticAMD" },
+            Memory = Pc.Healthy().Memory! with { Modules = [Stick("DDR4 3000", 2666), Stick("DDR4 3000", 2666, "B")] },
+        };
+        var f = Assert.Single(Run(s));
+        Assert.Contains("Extreme Memory Profile (X.M.P.)", f.Recommendation);
+        Assert.Equal(FindingAction.RebootToFirmware, Assert.Single(f.Actions).Target);
+        Assert.True(f.Actions[0].IsAllowed);
+
+        Assert.Contains("Ai Overclock Tuner", BiosGuide.MemoryProfileSteps("ASUSTeK COMPUTER INC.", amd: false));
+        Assert.Contains("EXPO", BiosGuide.MemoryProfileSteps("Desconhecida", amd: true));
+        // Notebook não tem a opção: não oferece.
+        Assert.Empty(Run(s with { Power = s.Power! with { HasBattery = true } }));
+    }
+
+    [Fact]
+    public void Acao_de_app_nao_vira_protocolo_livre()
+    {
+        Assert.True(new FindingAction("x", FindingAction.RebootToFirmware).IsAllowed);
+        Assert.False(new FindingAction("x", "rkzfps:qualquer-coisa").IsAllowed);
+        Assert.False(new FindingAction("x", "file:///C:/Windows/System32/cmd.exe").IsAllowed);
+    }
 }

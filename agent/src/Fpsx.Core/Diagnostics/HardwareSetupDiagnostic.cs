@@ -49,6 +49,29 @@ public static partial class MemorySpeed
 }
 
 /// <summary>
+/// Onde fica o perfil de velocidade da memória na BIOS de cada fabricante.
+/// O RKZFPS não grava na BIOS (uma gravação que falha pode impedir o PC de
+/// ligar); ele reinicia direto na BIOS e diz exatamente onde clicar.
+/// </summary>
+public static class BiosGuide
+{
+    public static string MemoryProfileSteps(string boardManufacturer, bool amd)
+    {
+        var m = boardManufacturer.ToUpperInvariant();
+        var profile = amd ? "EXPO (ou DOCP)" : "XMP";
+        if (m.Contains("ASUS"))
+            return $"Na BIOS da ASUS: aperte F7 (modo avançado), abra Ai Tweaker, em Ai Overclock Tuner escolha {(amd ? "EXPO I ou D.O.C.P" : "XMP I")} e aperte F10 para salvar.";
+        if (m.Contains("MICRO-STAR") || m.Contains("MSI"))
+            return $"Na BIOS da MSI: no topo da tela inicial, ligue o botão {(amd ? "A-XMP ou EXPO" : "XMP")} no Profile 1 e aperte F10 para salvar.";
+        if (m.Contains("GIGABYTE"))
+            return "Na BIOS da Gigabyte: abra a aba Tweaker, em Extreme Memory Profile (X.M.P.) escolha Profile1 e aperte F10 para salvar.";
+        if (m.Contains("ASROCK"))
+            return "Na BIOS da ASRock: abra OC Tweaker, em DRAM Profile Setting (ou Load XMP Setting) escolha o Profile 1 e aperte F10 para salvar.";
+        return $"Na BIOS, procure a opção {profile} ou perfil de memória (costuma ficar em Overclock, Tweaker ou Avançado), escolha o Profile 1 e aperte F10 para salvar.";
+    }
+}
+
+/// <summary>
 /// Montagem do PC que tira FPS sem a pessoa saber, e que nenhum ajuste do
 /// Windows resolve: memória abaixo da velocidade de fábrica, um pente só,
 /// monitor ligado na placa-mãe e jogo no HD. O RKZFPS não mexe em BIOS nem
@@ -70,8 +93,14 @@ public sealed class HardwareSetupDiagnostic : IDiagnostic
             yield return f;
     }
 
+    /// <summary>Botão do app que reinicia o PC direto na BIOS (UEFI).</summary>
+    public static FindingAction RebootToBios => new("Reiniciar direto na BIOS", FindingAction.RebootToFirmware);
+
     private Finding? RamSpeed(SystemSnapshot s)
     {
+        // Notebook quase nunca tem a opção: a memória fica na velocidade que o fabricante travou.
+        if (s.Power?.HasBattery == true)
+            return null;
         var modules = s.Memory?.Modules ?? [];
         var slow = modules
             .Select(m => (Module: m, Rated: MemorySpeed.RatedFromPartNumber(m.PartNumber)))
@@ -93,9 +122,9 @@ public sealed class HardwareSetupDiagnostic : IDiagnostic
             Title = $"Memória rodando abaixo da velocidade de fábrica ({now} em vez de {rated})",
             Detail = $"Os pentes foram feitos para {rated}, mas estão a {now}. É o padrão de fábrica da placa-mãe: o perfil de velocidade vem desligado. " +
                      "Memória mais lenta segura o processador, e isso aparece como FPS mais baixo e mais travadas em jogos que pesam na CPU.",
-            Recommendation = amd
-                ? "Na BIOS (tecla Del ao ligar o PC), ligue o perfil EXPO ou DOCP (em algumas placas, A-XMP) e salve. É uma opção de fábrica da placa, não é overclock arriscado."
-                : "Na BIOS (tecla Del ao ligar o PC), ligue o perfil XMP e salve. É uma opção de fábrica da placa, não é overclock arriscado.",
+            Recommendation = BiosGuide.MemoryProfileSteps(s.BoardManufacturer, amd) +
+                             " É uma opção de fábrica da placa, não é overclock arriscado. Se a opção não aparecer, a placa não permite mudar a velocidade: não é defeito.",
+            Actions = [RebootToBios],
             Evidence = new Dictionary<string, string>
             {
                 ["velocidade_atual"] = now.ToString(CultureInfo.InvariantCulture),

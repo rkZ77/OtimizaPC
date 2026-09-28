@@ -71,8 +71,12 @@ public sealed record FindingAction(string Label, string Target)
         "ms-settings:display-advancedgraphics",
     };
 
+    /// <summary>Ação do próprio app: reiniciar o PC direto na tela da BIOS (UEFI).</summary>
+    public const string RebootToFirmware = "rkzfps:reboot-firmware";
+
     public bool IsAllowed =>
-        WindowsScreens.Contains(Target)
+        Target == RebootToFirmware
+        || WindowsScreens.Contains(Target)
         || (Uri.TryCreate(Target, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps);
 
     public static FindingAction WindowsUpdateDrivers => new("Drivers pelo Windows Update", "ms-settings:windowsupdate-optionalupdates");
