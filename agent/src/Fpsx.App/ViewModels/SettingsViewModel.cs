@@ -56,7 +56,8 @@ public sealed class SettingsViewModel : PageViewModel
         {
             if (Set(ref _telemetry, value))
             {
-                Save(s => s with { TelemetryConsent = value });
+                // Marcar aqui, com o texto atual ao lado, vale como o consentimento atual.
+                Save(s => s with { TelemetryConsent = value, TelemetryConsentVersion = Fpsx.Client.ClientSettings.CurrentConsentVersion });
                 if (!value)
                     _host.Ctx.Storage.ClearQueue();
             }

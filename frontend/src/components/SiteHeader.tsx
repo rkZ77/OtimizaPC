@@ -24,6 +24,7 @@ const LINKS = [
   { href: '/planos',         label: 'Planos' },
   { href: '/download',       label: 'Download' },
   { href: '/#faq',           label: 'Dúvidas' },
+  { href: '/quem-somos',     label: 'Quem somos' },
 ]
 
 export default function SiteHeader() {

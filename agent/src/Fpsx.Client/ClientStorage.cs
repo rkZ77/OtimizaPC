@@ -22,6 +22,19 @@ public sealed record ClientSettings
     /// <summary>null = ainda não perguntado. Telemetria só sai com true (seção 40).</summary>
     public bool? TelemetryConsent { get; init; }
 
+    /// <summary>
+    /// Qual texto de consentimento a pessoa aceitou. A versão 2 inclui as
+    /// partidas (FPS, gráfico e resumo do hardware). Quem aceitou a versão 1
+    /// não aceitou isso: o app pergunta de novo e, até lá, partida não sobe.
+    /// </summary>
+    public int TelemetryConsentVersion { get; init; }
+
+    public const int CurrentConsentVersion = 2;
+
+    /// <summary>Pode subir as partidas: aceitou o texto que fala delas.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool GameplayConsent => TelemetryConsent == true && TelemetryConsentVersion >= CurrentConsentVersion;
+
     public string Profile { get; init; } = "gaming";
     public string? PresentMonPath { get; init; }
 

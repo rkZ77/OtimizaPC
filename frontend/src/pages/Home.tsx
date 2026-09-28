@@ -51,6 +51,13 @@ const GUARANTEES = [
 const GAMES = ['Counter-Strike 2', 'EA SPORTS FC', 'Fortnite', 'Valorant', 'League of Legends', 'Minecraft', 'Roblox', 'GTA V',
   'Apex Legends', 'Call of Duty', 'PUBG', 'Rainbow Six Siege', 'Dota 2', 'Rocket League', 'Marvel Rivals']
 
+/* Duas letras do nome: "Counter-Strike 2" vira CS, "GTA V" vira GV. Sem logo
+ * oficial no site: logo de estudio num produto pago parece parceria. */
+function initials(name: string) {
+  const words = name.split(/[\s:-]+/).filter((w) => /^[\p{L}\d]/u.test(w))
+  return words.length === 1 ? words[0].slice(0, 2).toUpperCase() : (words[0][0] + words[1][0]).toUpperCase()
+}
+
 const NOT_DOING = [
   'Desligar antivírus, firewall ou Windows Update',
   'Desligar dezenas de serviços do Windows de uma vez',
@@ -141,10 +148,18 @@ export default function Home() {
       <section className="border-y border-line bg-surface-1/50">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <h2 className="font-display text-2xl font-bold text-ink-1">Jogos reconhecidos</h2>
-          <p className="mt-2 text-ink-3">A lista cresce a cada atualização. A medição não mexe no jogo e funciona com anti-cheat.</p>
-          <ul className="mt-6 flex flex-wrap gap-2">
-            {GAMES.map((g) => <li key={g} className="rounded-md border border-line bg-surface-0 px-3 py-1.5 text-sm text-ink-2">{g}</li>)}
+          <p className="mt-2 text-ink-3">A lista cresce a cada atualização. A medição não mexe no jogo e funciona com anti-cheat. No app, cada jogo aparece com o ícone do próprio jogo instalado no seu PC.</p>
+          <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {GAMES.map((g) => (
+              <li key={g} className="flex items-center gap-3 rounded-lg border border-line bg-surface-0 px-3 py-2.5">
+                <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-line bg-surface-2 font-display text-sm font-bold text-accent-ink">
+                  {initials(g)}
+                </span>
+                <span className="min-w-0 text-sm leading-tight text-ink-2">{g}</span>
+              </li>
+            ))}
           </ul>
+          <p className="mt-4 text-xs text-ink-4">Os nomes dos jogos são marcas dos seus donos. O FPSX é independente e não tem parceria com os estúdios.</p>
         </div>
       </section>
 

@@ -20,7 +20,13 @@ export function Privacidade() {
           <li>Pagamentos: plano, valor, status e o identificador do Mercado Pago. Dados de cartão ficam só com o Mercado Pago.</li>
         </ul>
         <h2>Dados de uso, só com permissão</h2>
-        <p>Se você permitir no app, enviamos: quais otimizações foram aplicadas, se funcionaram, resultados de benchmark, versão do app e do Windows. Nunca enviamos arquivos, nomes de programas, caminhos de pasta ou conteúdo pessoal. Você pode desligar a qualquer momento em Configurações, e a fila local é apagada.</p>
+        <p>Se você permitir no app, enviamos:</p>
+        <ul>
+          <li>quais otimizações foram aplicadas e se funcionaram, com a data e a versão do app;</li>
+          <li>o FPS das partidas medidas: números (FPS médio, 1% low, travadas), o gráfico da partida e quantas quedas vieram de cada tipo de causa (programa aberto, processador, placa de vídeo ou o próprio jogo);</li>
+          <li>um resumo do hardware: modelo do processador e da placa de vídeo, quantidade de memória e versão do Windows.</li>
+        </ul>
+        <p>Com isso o FPSX compara o seu PC com PCs parecidos (a comparação só aparece quando o grupo tem pelo menos 5 PCs, para ninguém ser identificado) e descobre, no conjunto, o que de fato melhora o FPS. Nunca enviamos arquivos, nomes de programas, o nome do PC, caminhos de pasta ou conteúdo pessoal. Você pode desligar a qualquer momento em Configurações, e a fila local é apagada.</p>
         <h2>Cookies</h2>
         <p>O site usa só o cookie essencial de sessão (para manter você conectado) e guarda no navegador a sua escolha de tema.</p>
         <h2>Seus direitos</h2>

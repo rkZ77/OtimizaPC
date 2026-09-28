@@ -143,13 +143,18 @@ public partial class App : Application
     private static void AskTelemetryOnce()
     {
         var ctx = AppHost.Current.Ctx;
-        if (ctx.Settings.TelemetryConsent is not null)
+        var s = ctx.Settings;
+        // Recusou: não pergunta de novo. Aceitou um texto antigo (sem as
+        // partidas): pergunta uma vez com o texto novo, porque o que sobe mudou.
+        if (s.TelemetryConsent == false || (s.TelemetryConsent == true && s.TelemetryConsentVersion >= ClientSettings.CurrentConsentVersion))
             return;
         var yes = Dialogs.Show("Ajude a melhorar o FPSX",
-            "Podemos enviar dados anônimos de uso? Somente: quais otimizações foram aplicadas, se funcionaram, resultados de benchmark, versão do app e do Windows.\n\n" +
-            "Nunca enviamos arquivos, nomes de programas, caminhos de pasta ou qualquer conteúdo pessoal. Você pode mudar isso a qualquer momento em Configurações.",
+            "Podemos enviar dados anônimos de uso? Somente: quais otimizações foram aplicadas e se funcionaram, o FPS das partidas medidas (números e o gráfico), " +
+            "um resumo do hardware (processador, placa de vídeo, memória e versão do Windows) e a versão do app.\n\n" +
+            "É com isso que o FPSX compara seu PC com PCs parecidos e descobre o que de fato melhora o FPS. " +
+            "Nunca enviamos arquivos, nomes de programas, nome do PC, caminhos de pasta ou qualquer conteúdo pessoal. Você pode mudar isso a qualquer momento em Configurações.",
             "Permitir", "Não permitir") == 0;
-        ctx.Storage.SaveSettings(ctx.Settings with { TelemetryConsent = yes });
+        ctx.Storage.SaveSettings(ctx.Settings with { TelemetryConsent = yes, TelemetryConsentVersion = ClientSettings.CurrentConsentVersion });
     }
 
     private static void OnUnhandled(object sender, DispatcherUnhandledExceptionEventArgs e)

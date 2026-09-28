@@ -7,6 +7,7 @@ import { SpinnerBlock } from './components/ui'
 import { useAuth } from './context/AuthContext'
 import Home from './pages/Home'
 import Planos from './pages/Planos'
+import Sobre from './pages/Sobre'
 import Download from './pages/Download'
 import Conta from './pages/Conta'
 import Admin from './pages/admin/Admin'
@@ -45,6 +46,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/planos" element={<Planos />} />
+        <Route path="/quem-somos" element={<Sobre />} />
         <Route path="/download" element={<Download />} />
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/cadastro" element={<Cadastro />} />

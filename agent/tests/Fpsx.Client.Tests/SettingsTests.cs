@@ -23,4 +23,13 @@ public class SettingsTests
         storage.SaveSettings(settings);
         Assert.DoesNotContain("api_url", File.ReadAllText(Path.Combine(dir, "settings.json")));
     }
+
+    [Fact]
+    public void Partida_so_sobe_com_o_consentimento_que_fala_de_partidas()
+    {
+        Assert.False(new ClientSettings { TelemetryConsent = true, TelemetryConsentVersion = 1 }.GameplayConsent);
+        Assert.False(new ClientSettings { TelemetryConsent = false, TelemetryConsentVersion = 2 }.GameplayConsent);
+        Assert.False(new ClientSettings().GameplayConsent);
+        Assert.True(new ClientSettings { TelemetryConsent = true, TelemetryConsentVersion = ClientSettings.CurrentConsentVersion }.GameplayConsent);
+    }
 }

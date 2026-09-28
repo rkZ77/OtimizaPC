@@ -38,7 +38,7 @@
                     <TextBlock Text="Privacidade" Style="{StaticResource H2}" />
                     <CheckBox IsChecked="{Binding Telemetry}" Content="Enviar dados anônimos de uso para melhorar o FPSX" />
                     <TextBlock Style="{StaticResource MutedText}" Margin="26,6,0,0"
-                               Text="Somente: otimizações aplicadas e se funcionaram, resultados de benchmark, versão do app e do Windows. Nunca arquivos, nomes de programas, caminhos ou conteúdo pessoal." />
+                               Text="Somente: otimizações aplicadas e se funcionaram, o FPS das partidas medidas (números e gráfico), um resumo do hardware (processador, placa de vídeo, memória, Windows) e a versão do app. É o que permite comparar seu PC com PCs parecidos. Nunca arquivos, nomes de programas, nome do PC, caminhos ou conteúdo pessoal." />
                     <Button Content="Política de privacidade" Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="20,6,0,0" Command="{Binding PrivacyCommand}" />
                 </StackPanel>
             </Border>

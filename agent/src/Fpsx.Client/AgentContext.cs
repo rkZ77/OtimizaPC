@@ -166,7 +166,7 @@ public sealed class AgentContext
     /// </summary>
     private async Task FlushGameplayAsync(ApiClient api, string token, CancellationToken ct)
     {
-        if (Settings.TelemetryConsent != true)
+        if (!Settings.GameplayConsent)
             return;
         var sent = Storage.UploadedGameplay();
         foreach (var match in Gameplay.All().Where(s => !sent.Contains(s.Id)).OrderBy(s => s.StartedAt).Take(GameplayBatch))
@@ -183,7 +183,7 @@ public sealed class AgentContext
     /// </summary>
     public async Task<PeerStats?> PeersAsync(string gameId, CancellationToken ct = default)
     {
-        if (Settings.TelemetryConsent != true || Storage.LoadToken() is not { } token)
+        if (!Settings.GameplayConsent || Storage.LoadToken() is not { } token)
             return null;
         try
         {
