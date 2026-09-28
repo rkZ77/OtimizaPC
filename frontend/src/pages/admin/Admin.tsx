@@ -7,6 +7,7 @@ import AdminFinanceiro from './AdminFinanceiro'
 import AdminFunil from './AdminFunil'
 import AdminUso from './AdminUso'
 import AdminEmails from './AdminEmails'
+import AdminPartidas from './AdminPartidas'
 import { AdminHead, Catalog, Coupons, Plans, ReadOnly, Releases, Settings } from './AdminConfig'
 
 /*
@@ -25,6 +26,8 @@ const ABAS = [
   // "onde as pessoas pararam", que e' esta aba.
   { key: 'funil', label: 'Funil e engajamento' },
   { key: 'uso', label: 'Uso do app' },
+  // Partidas reais: de onde sai a calibragem das regras por hardware.
+  { key: 'partidas', label: 'Partidas e FPS' },
   { key: 'otimizacoes', label: 'Otimizações' },
   { key: 'planos', label: 'Planos e preços' },
   { key: 'cupons', label: 'Cupons' },
@@ -65,6 +68,7 @@ export default function Admin() {
       {aba === 'financeiro' && <AdminFinanceiro />}
       {aba === 'funil' && <AdminFunil />}
       {aba === 'uso' && <AdminUso />}
+      {aba === 'partidas' && <AdminPartidas />}
       {aba === 'otimizacoes' && <Catalog />}
       {aba === 'planos' && <Plans />}
       {aba === 'cupons' && <Coupons />}
