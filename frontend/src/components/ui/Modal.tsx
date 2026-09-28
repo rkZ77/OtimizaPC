@@ -79,6 +79,8 @@ const WIDTH = {
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-2xl',
+  /** Ficha com duas colunas (usuario no admin). */
+  xxl: 'max-w-5xl',
 } as const
 
 export default function Modal({

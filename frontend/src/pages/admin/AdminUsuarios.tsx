@@ -3,15 +3,15 @@ import { AnimatePresence } from 'framer-motion'
 import { Laptop, Users } from 'lucide-react'
 import api, { errorMessage } from '../../services/api'
 import {
-  Alert, Badge, Button, Drawer, EmptyState, ErrorState, Pagination, Panel, PanelHead, PanelList, PanelRow,
+  Alert, Badge, Button, EmptyState, ErrorState, Modal, Pagination, Panel, PanelHead, PanelList, PanelRow,
   PillGroup, SearchInput, SkeletonRows, StatTile, Table, type BadgeTone,
 } from '../../components/ui'
-import { date, dateTime, money, planName, STATUS_LABEL, TIER_LABEL } from '../../lib/format'
+import { date, dateTime, money, paymentStatus, planName, STATUS_LABEL, TIER_LABEL } from '../../lib/format'
 
 /*
  * Usuarios, no desenho da aba do Pickia: a QUEBRA DA BASE em cartoes em cima
  * (estoque de hoje), filtro por segmento, busca e lista paginada, e a ficha
- * de cada pessoa numa gaveta ao lado com as acoes que existem sobre ela.
+ * de cada pessoa numa janela no centro, com as acoes que existem sobre ela.
  *
  * O segmento vem pronto do backend (mesma regra da licenca vigente que o app
  * usa): o front nao recalcula quem e' assinante.
@@ -190,6 +190,16 @@ interface Ficha {
   events: { event: string; optimization_id: string | null; success: boolean | null; created_at: string; device_name: string }[]
 }
 
+/* Licenca "vencida" com data no futuro nao venceu: foi encerrada quando
+ * outra entrou (o teste acaba na compra ou no plano concedido). Mostrar
+ * "Vencida" ali confundia quem olhava a ficha. */
+function statusLicenca(l: Ficha['licenses'][number]): { label: string; tone: BadgeTone } {
+  if (l.eff_status === 'expired' && new Date(l.expires_at).getTime() > Date.now()) return { label: 'Substituída', tone: 'neutral' }
+  if (l.eff_status === 'active') return { label: STATUS_LABEL.active, tone: 'green' }
+  if (l.eff_status === 'trial') return { label: STATUS_LABEL.trial, tone: 'amber' }
+  return { label: STATUS_LABEL[l.eff_status] ?? l.eff_status, tone: 'red' }
+}
+
 function FichaUsuario({ id, onClose, onChanged }: { id: number; onClose: () => void; onChanged: () => void }) {
   const [f, setF] = useState<Ficha | null>(null)
   const [error, setError] = useState('')
@@ -201,7 +211,10 @@ function FichaUsuario({ id, onClose, onChanged }: { id: number; onClose: () => v
   }, [id])
   useEffect(load, [load])
 
-  const agir = async (fn: () => Promise<unknown>) => {
+  const agir = async (fn: () => Promise<unknown>, confirmar?: string) => {
+    // Acao que muda o acesso da pessoa pede confirmacao: um clique errado na
+    // ficha bloqueava a conta ou dava admin sem aviso nenhum.
+    if (confirmar && !window.confirm(confirmar)) return
     setBusy(true)
     setError('')
     try {
@@ -217,108 +230,136 @@ function FichaUsuario({ id, onClose, onChanged }: { id: number; onClose: () => v
 
   const u = f?.user
   const vigente = f?.licenses.find((l) => l.eff_status === 'active' || l.eff_status === 'trial')
+  const pcsAtivos = f?.devices.filter((d) => !d.deactivated_at).length ?? 0
+  const totalPago = f?.payments.filter((p) => p.status === 'approved').reduce((t, p) => t + p.amount_cents, 0) ?? 0
 
   return (
-    <Drawer onClose={onClose} title={u?.email ?? 'Usuário'} description={u ? `${u.name || 'sem nome'}, conta criada em ${date(u.created_at)}` : undefined}>
-      {error && <Alert className="mb-4">{error}</Alert>}
-      {!f || !u ? (error ? <ErrorState onRetry={load} compact /> : <SkeletonRows rows={5} />) : (
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <SegmentBadge segment={u.segment} />
-            {u.tier && <Badge tone="blue">{TIER_LABEL[u.tier] ?? u.tier}</Badge>}
-            {!u.active && <Badge tone="red">Conta bloqueada</Badge>}
-          </div>
-
-          <div>
-            <p className="label-micro mb-2">Ações</p>
-            <div className="flex flex-wrap gap-2">
-              <select value={plano} onChange={(e) => setPlano(e.target.value)} className="input !w-auto" aria-label="Plano a conceder">
-                {['starter', 'pro', 'ultimate'].map((p) => <option key={p} value={p}>{TIER_LABEL[p]}</option>)}
-              </select>
-              <Button size="sm" loading={busy} onClick={() => agir(() => api.post('/admin/licenses/grant', { user_id: u.id, plan_key: plano }))}>Conceder plano</Button>
-              {vigente && <Button size="sm" variant="subtle" disabled={busy} onClick={() => agir(() => api.post(`/admin/licenses/${vigente.id}/extend`, { days: 30 }))}>+30 dias</Button>}
-              {vigente && (
-                <Button size="sm" variant="danger" disabled={busy} onClick={() => {
-                  const reason = window.prompt('Motivo do bloqueio da licença (fica na auditoria):')
-                  if (reason !== null) agir(() => api.post(`/admin/licenses/${vigente.id}/block`, { blocked: true, reason }))
-                }}>Bloquear licença</Button>
-              )}
-              <Button size="sm" variant={u.active ? 'danger' : 'ghost'} disabled={busy}
-                      onClick={() => agir(() => api.post(`/admin/users/${u.id}/active`, { active: !u.active }))}>
-                {u.active ? 'Bloquear conta' : 'Reativar conta'}
-              </Button>
-              <Button size="sm" variant="ghost" disabled={busy}
-                      onClick={() => agir(() => api.post(`/admin/users/${u.id}/role`, { role: u.role === 'admin' ? 'user' : 'admin' }))}>
-                {u.role === 'admin' ? 'Remover admin' : 'Tornar admin'}
-              </Button>
+    <Modal onClose={onClose} width="xxl" sheetOnMobile={false} title={u?.email ?? 'Usuário'}
+           description={u ? `${u.name || 'sem nome'}, conta criada em ${date(u.created_at)}` : undefined}>
+      <div className="p-5 space-y-5">
+        {error && <Alert>{error}</Alert>}
+        {!f || !u ? (error ? <ErrorState onRetry={load} compact /> : <SkeletonRows rows={5} />) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <SegmentBadge segment={u.segment} />
+              {u.tier && <Badge tone="blue">{TIER_LABEL[u.tier] ?? u.tier}</Badge>}
+              {u.role === 'admin' && <Badge tone="amber">Admin</Badge>}
+              {!u.active && <Badge tone="red">Conta bloqueada</Badge>}
             </div>
-          </div>
 
-          <Panel>
-            <PanelHead label="Licenças" meta={f.licenses.length} />
-            <PanelList>
-              {f.licenses.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Nenhuma licença: conta no plano Free.</span></PanelRow> : f.licenses.map((l) => (
-                <PanelRow key={l.id}>
-                  <div className="flex-1 min-w-0 text-sm">
-                    <p className="text-ink-1">{TIER_LABEL[l.tier] ?? l.plan_key}, até {l.max_devices} PC(s)</p>
-                    <p className="text-xs text-ink-3">Vence {dateTime(l.expires_at)}{l.blocked_reason ? `. Bloqueio: ${l.blocked_reason}` : ''}</p>
-                  </div>
-                  <Badge tone={l.eff_status === 'active' ? 'green' : l.eff_status === 'trial' ? 'amber' : 'red'}>{STATUS_LABEL[l.eff_status] ?? l.eff_status}</Badge>
-                  {l.eff_status === 'blocked' && (
-                    <Button size="sm" variant="link" disabled={busy} onClick={() => agir(() => api.post(`/admin/licenses/${l.id}/block`, { blocked: false }))}>Desbloquear</Button>
-                  )}
-                </PanelRow>
-              ))}
-            </PanelList>
-          </Panel>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <StatTile label="Plano vigente" value={vigente ? (TIER_LABEL[vigente.tier] ?? vigente.plan_key) : 'Free'} />
+              <StatTile label="Vence em" value={vigente ? date(vigente.expires_at) : 'Sem plano'} tone="muted" />
+              <StatTile label="PCs ativos" value={`${pcsAtivos} de ${vigente?.max_devices ?? 1}`} />
+              <StatTile label="Total pago" value={money(totalPago)} tone={totalPago > 0 ? 'green' : 'muted'} />
+            </div>
 
-          <Panel>
-            <PanelHead label="PCs" meta={f.devices.filter((d) => !d.deactivated_at).length + ' ativos'} />
-            <PanelList>
-              {f.devices.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Nunca ativou o app em um PC.</span></PanelRow> : f.devices.map((d) => (
-                <PanelRow key={d.id}>
-                  <Laptop className="w-4 h-4 shrink-0 text-ink-3" aria-hidden />
-                  <div className="flex-1 min-w-0 text-sm">
-                    <p className="text-ink-1 truncate">{d.name || 'PC sem nome'}</p>
-                    <p className="text-xs text-ink-3">Windows {d.windows_build || '?'}, app {d.agent_version || '?'}, visto {dateTime(d.last_seen_at)}</p>
-                  </div>
-                  {d.deactivated_at && <Badge>desativado</Badge>}
-                </PanelRow>
-              ))}
-            </PanelList>
-          </Panel>
+            <div className="rounded-lg border border-line bg-surface-0/40 p-4">
+              <p className="label-micro mb-3">Ações</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <select value={plano} onChange={(e) => setPlano(e.target.value)} className="input !h-9 !w-auto !py-0 text-sm" aria-label="Plano a conceder">
+                  {['starter', 'pro', 'ultimate'].map((p) => <option key={p} value={p}>{TIER_LABEL[p]}</option>)}
+                </select>
+                <Button size="sm" loading={busy} onClick={() => agir(() => api.post('/admin/licenses/grant', { user_id: u.id, plan_key: plano }))}>Conceder plano</Button>
+                {vigente && <Button size="sm" variant="subtle" disabled={busy} onClick={() => agir(() => api.post(`/admin/licenses/${vigente.id}/extend`, { days: 30 }))}>+30 dias</Button>}
+                <span className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden />
+                <Button size="sm" variant="ghost" disabled={busy}
+                        onClick={() => agir(() => api.post(`/admin/users/${u.id}/role`, { role: u.role === 'admin' ? 'user' : 'admin' }),
+                          u.role === 'admin' ? `Remover o acesso de admin de ${u.email}?` : `Dar acesso de admin para ${u.email}? A pessoa passa a ver e mudar tudo no painel.`)}>
+                  {u.role === 'admin' ? 'Remover admin' : 'Tornar admin'}
+                </Button>
+                {vigente && (
+                  <Button size="sm" variant="danger" disabled={busy} onClick={() => {
+                    const reason = window.prompt('Motivo do bloqueio da licença (fica na auditoria):')
+                    if (reason !== null) agir(() => api.post(`/admin/licenses/${vigente.id}/block`, { blocked: true, reason }))
+                  }}>Bloquear licença</Button>
+                )}
+                <Button size="sm" variant={u.active ? 'danger' : 'ghost'} disabled={busy}
+                        onClick={() => agir(() => api.post(`/admin/users/${u.id}/active`, { active: !u.active }),
+                          u.active ? `Bloquear a conta de ${u.email}? O app e o site param de responder para essa pessoa na hora.` : undefined)}>
+                  {u.active ? 'Bloquear conta' : 'Reativar conta'}
+                </Button>
+              </div>
+            </div>
 
-          <Panel>
-            <PanelHead label="Pagamentos" meta={f.payments.length} />
-            <PanelList>
-              {f.payments.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Nenhum pagamento.</span></PanelRow> : f.payments.map((p) => (
-                <PanelRow key={p.id}>
-                  <div className="flex-1 min-w-0 text-sm">
-                    <p className="text-ink-1">{planName(p.plan_key)}{p.coupon_code ? `, cupom ${p.coupon_code}` : ''}</p>
-                    <p className="text-xs text-ink-3">{dateTime(p.created_at)}</p>
-                  </div>
-                  <span className="font-mono text-sm text-ink-1">{money(p.amount_cents)}</span>
-                </PanelRow>
-              ))}
-            </PanelList>
-          </Panel>
+            <div className="grid gap-4 md:grid-cols-2 [&>*]:min-w-0">
+              <Panel>
+                <PanelHead label="Licenças" meta={f.licenses.length} />
+                <PanelList>
+                  {f.licenses.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Nenhuma licença: conta no plano Free.</span></PanelRow> : f.licenses.map((l) => {
+                    const st = statusLicenca(l)
+                    return (
+                      <PanelRow key={l.id}>
+                        <div className="flex-1 min-w-0 text-sm">
+                          <p className="text-ink-1">{TIER_LABEL[l.tier] ?? l.plan_key}, até {l.max_devices} PC(s)</p>
+                          <p className="text-xs text-ink-3">Vence {dateTime(l.expires_at)}{l.blocked_reason ? `. Bloqueio: ${l.blocked_reason}` : ''}</p>
+                        </div>
+                        <Badge tone={st.tone}>{st.label}</Badge>
+                        {l.eff_status === 'blocked' && (
+                          <Button size="sm" variant="link" disabled={busy} onClick={() => agir(() => api.post(`/admin/licenses/${l.id}/block`, { blocked: false }))}>Desbloquear</Button>
+                        )}
+                      </PanelRow>
+                    )
+                  })}
+                </PanelList>
+              </Panel>
 
-          <Panel>
-            <PanelHead label="Uso recente" meta="telemetria consentida" />
-            <PanelList>
-              {f.events.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Sem eventos (ou a pessoa não permitiu o envio).</span></PanelRow> : f.events.map((e, i) => (
-                <PanelRow key={i}>
-                  <div className="flex-1 min-w-0 text-sm">
-                    <p className="text-ink-1 truncate">{EVENTO[e.event] ?? e.event}{e.optimization_id ? `: ${e.optimization_id}` : ''}</p>
-                    <p className="text-xs text-ink-3">{e.device_name}, {dateTime(e.created_at)}</p>
-                  </div>
-                  {e.success === false && <Badge tone="red">falhou</Badge>}
-                </PanelRow>
-              ))}
-            </PanelList>
-          </Panel>
-        </div>
-      )}
-    </Drawer>
+              <Panel>
+                <PanelHead label="PCs" meta={`${pcsAtivos} ativos`} />
+                <PanelList>
+                  {f.devices.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Nunca ativou o app em um PC.</span></PanelRow> : f.devices.map((d) => (
+                    <PanelRow key={d.id}>
+                      <Laptop className="w-4 h-4 shrink-0 text-ink-3" aria-hidden />
+                      <div className="flex-1 min-w-0 text-sm">
+                        <p className="text-ink-1 truncate">{d.name || 'PC sem nome'}</p>
+                        <p className="text-xs text-ink-3">Windows {d.windows_build || '?'}, app {d.agent_version || '?'}, visto {dateTime(d.last_seen_at)}</p>
+                      </div>
+                      {d.deactivated_at && <Badge>desativado</Badge>}
+                    </PanelRow>
+                  ))}
+                </PanelList>
+              </Panel>
+
+              <Panel>
+                <PanelHead label="Pagamentos" meta={f.payments.length} />
+                <PanelList>
+                  {f.payments.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Nenhum pagamento.</span></PanelRow> : f.payments.map((p) => {
+                    const st = paymentStatus(p.status)
+                    return (
+                      <PanelRow key={p.id}>
+                        <div className="flex-1 min-w-0 text-sm">
+                          <p className="text-ink-1">{planName(p.plan_key)}{p.coupon_code ? `, cupom ${p.coupon_code}` : ''}</p>
+                          <p className="text-xs text-ink-3">{dateTime(p.created_at)}</p>
+                        </div>
+                        <Badge tone={st.tone}>{st.label}</Badge>
+                        <span className="font-mono text-sm text-ink-1">{money(p.amount_cents)}</span>
+                      </PanelRow>
+                    )
+                  })}
+                </PanelList>
+              </Panel>
+
+              <Panel>
+                <PanelHead label="Uso recente" meta="telemetria consentida" />
+                {/* Lista longa rola dentro do quadro, sem esticar a janela. */}
+                <div className="max-h-72 overflow-y-auto">
+                  <PanelList>
+                    {f.events.length === 0 ? <PanelRow><span className="text-sm text-ink-3">Sem eventos (ou a pessoa não permitiu o envio).</span></PanelRow> : f.events.map((e, i) => (
+                      <PanelRow key={i}>
+                        <div className="flex-1 min-w-0 text-sm">
+                          <p className="text-ink-1 truncate">{EVENTO[e.event] ?? e.event}{e.optimization_id ? `: ${e.optimization_id}` : ''}</p>
+                          <p className="text-xs text-ink-3">{e.device_name}, {dateTime(e.created_at)}</p>
+                        </div>
+                        {e.success === false && <Badge tone="red">falhou</Badge>}
+                      </PanelRow>
+                    ))}
+                  </PanelList>
+                </div>
+              </Panel>
+            </div>
+          </>
+        )}
+      </div>
+    </Modal>
   )
 }
