@@ -174,7 +174,7 @@ export function Cadastro() {
     setError('')
     try {
       await register(name, email, password)
-      navigate(plan ? '/planos' : '/conta?bemvindo=1')
+      navigate(plan ? `/pagamento?plano=${encodeURIComponent(plan)}` : '/conta?bemvindo=1')
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -200,7 +200,7 @@ export function Cadastro() {
         </form>
       </Card>
       <p className="mt-4 text-center text-sm text-ink-3">
-        Já tem conta? <Link to="/entrar" className="font-semibold text-accent-ink">Entrar</Link>
+        Já tem conta? <Link to={plan ? `/entrar?voltar=${encodeURIComponent(`/pagamento?plano=${plan}`)}` : '/entrar'} className="font-semibold text-accent-ink">Entrar</Link>
       </p>
     </PageShell>
   )

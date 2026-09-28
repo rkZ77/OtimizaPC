@@ -11,7 +11,7 @@ import Logo from './Logo'
  * altura empilhado erra o toque (medido no Pickia).
  */
 const LINKS: Array<{ label: string; to: string }> = [
-  { label: 'Como funciona', to: '/#como-funciona' },
+  { label: 'Como funciona', to: '/como-funciona' },
   { label: 'O que não fazemos', to: '/#o-que-nao-fazemos' },
   { label: 'Quem somos', to: '/quem-somos' },
   { label: 'Planos', to: '/planos' },

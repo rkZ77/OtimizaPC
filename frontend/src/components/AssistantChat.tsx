@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { MessageCircle, Send, X } from 'lucide-react'
 import api, { errorMessage } from '../services/api'
 import { cn } from '../lib/cn'
+import { aoAbrirAssistente, assistenteLigado } from '../lib/assistente'
 
 /*
  * Assistente do site: tira duvida sobre o RKZFPS e ajuda a escolher o plano.
@@ -29,9 +30,9 @@ export default function AssistantChat() {
   const [error, setError] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    api.get<{ enabled: boolean }>('/public/assistant').then(({ data }) => setEnabled(data.enabled)).catch(() => setEnabled(false))
-  }, [])
+  useEffect(() => { assistenteLigado().then(setEnabled) }, [])
+  // O item "Assistente com IA" do menu lateral abre o chat por aqui.
+  useEffect(() => aoAbrirAssistente(() => setOpen(true)), [])
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }) }, [msgs, busy, open])
 

@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { cn } from '../lib/cn'
 import PublicNav from './PublicNav'
 import Footer from './Footer'
-import BackButton from './BackButton'
+import { NavVoltar } from './BackButton'
 import { PAGE_WIDTH, type PageWidth } from '../lib/pageWidth'
 import { useRevelacao, classesRevelacao, FADE_REVELACAO_MS } from '../hooks/useRevelacao'
 
@@ -45,8 +45,8 @@ export interface PageBar {
   subMobile?: boolean
   /** Botões à direita. */
   actions?: React.ReactNode
-  /** true volta uma no histórico; string navega para a rota. */
-  back?: boolean | string
+  /** Para onde o voltar leva. Sem valor, volta uma no histórico (ou vai ao início). */
+  back?: string
 }
 
 export default function PageShell({
@@ -116,6 +116,10 @@ export default function PageShell({
    * Página com noindex não declara canonical de propósito. Ela não deve entrar
    * no índice, e apontar uma URL canônica é justamente pedir para entrar.
    */
+  /* Voltar e casinha em toda pagina menos a home: quem cai direto no login ou
+     nos planos (link do Instagram, anuncio) precisa de uma saida visivel. */
+  const temVoltar = pathname !== '/'
+
   const canonicalFinal = noindex ? null : (canonical ?? `${ORIGEM}${pathname}`)
 
   return (
@@ -142,7 +146,7 @@ export default function PageShell({
               título fica legível, que é a ordem certa de prioridade. */}
           <div className={cn('mx-auto py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2', PAGE_WIDTH[width])}>
             <div className="flex items-center gap-3 min-w-0">
-              {bar.back && <BackButton to={typeof bar.back === 'string' ? bar.back : undefined} />}
+              {temVoltar && <NavVoltar to={bar.back} />}
               <div className="min-w-0">
                 <h1 className="font-display text-base font-semibold text-ink-1 leading-tight truncate">
                   {bar.title}
@@ -189,6 +193,7 @@ export default function PageShell({
         style={{ transitionDuration: `${FADE_REVELACAO_MS}ms` }}
         aria-busy={!revelado}
       >
+        {!bar && temVoltar && <NavVoltar className="mb-5" />}
         {children}
       </main>
 

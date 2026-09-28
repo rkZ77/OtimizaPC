@@ -45,3 +45,18 @@ export const STATUS_LABEL: Record<string, string> = {
   expired: 'Vencida',
   blocked: 'Bloqueada',
 }
+
+/** Status do pagamento como o Mercado Pago devolve, em palavras de gente. */
+export const PAYMENT_STATUS: Record<string, { label: string; tone: 'green' | 'amber' | 'red' | 'neutral' }> = {
+  approved: { label: 'Aprovado', tone: 'green' },
+  pending: { label: 'Em processamento', tone: 'amber' },
+  in_process: { label: 'Em processamento', tone: 'amber' },
+  rejected: { label: 'Recusado', tone: 'red' },
+  cancelled: { label: 'Cancelado', tone: 'neutral' },
+  refunded: { label: 'Reembolsado', tone: 'neutral' },
+  charged_back: { label: 'Contestado no cartão', tone: 'red' },
+}
+
+export function paymentStatus(status: string) {
+  return PAYMENT_STATUS[status] ?? { label: status, tone: 'neutral' as const }
+}

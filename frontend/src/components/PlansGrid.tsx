@@ -5,7 +5,7 @@ import api, { errorMessage, type Plan, type PlansResponse } from '../services/ap
 import { useAuth } from '../context/AuthContext'
 import { money } from '../lib/format'
 import { cn } from '../lib/cn'
-import { Alert, Button, Input, SkeletonCard } from './ui'
+import { Alert, Button, SkeletonCard } from './ui'
 
 type Period = 'monthly' | 'quarterly' | 'annual'
 
@@ -25,8 +25,6 @@ const TIERS = ['free', 'starter', 'pro', 'ultimate']
 export default function PlansGrid({ compact }: { compact?: boolean }) {
   const [data, setData] = useState<PlansResponse | null>(null)
   const [error, setError] = useState('')
-  const [buying, setBuying] = useState<string | null>(null)
-  const [coupon, setCoupon] = useState('')
   const [period, setPeriod] = useState<Period>('annual')
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -46,24 +44,14 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
 
   const savings = (p: Period) => Math.max(0, ...(data?.plans.filter((x) => x.period === p).map((x) => x.savings_percent) ?? [0]))
 
-  const buy = async (plan: Plan) => {
+  const buy = (plan: Plan) => {
     if (plan.price_cents === 0) {
       navigate('/download')
       return
     }
-    if (!user) {
-      navigate(`/cadastro?plano=${plan.key}`)
-      return
-    }
-    setBuying(plan.key)
-    setError('')
-    try {
-      const { data } = await api.post<{ checkout_url: string }>('/payments/checkout', { plan_key: plan.key, coupon: coupon.trim() || null })
-      window.location.href = data.checkout_url
-    } catch (e) {
-      setError(errorMessage(e))
-      setBuying(null)
-    }
+    // Logado vai para a pagina de pagamento (resumo, periodo e cupom); sem
+    // conta, cria a conta e cai direto nela.
+    navigate(user ? `/pagamento?plano=${plan.key}` : `/cadastro?plano=${plan.key}`)
   }
 
   if (error && !data) return <Alert>{error}</Alert>
@@ -120,7 +108,7 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
                 {!free && <span className="text-sm text-ink-3"> /mês</span>}
               </p>
               <p className="mt-1 min-h-[20px] text-xs text-ink-3">
-                {free ? 'Para sempre' : period === 'monthly' ? 'Cobrado todo mês, cancele quando quiser' : `${money(plan.price_cents)} ${every}`}
+                {free ? 'Para sempre' : period === 'monthly' ? `Pagamento único de ${plan.days} dias, sem renovação automática` : `${money(plan.price_cents)} ${every}`}
                 {plan.savings_percent > 0 && <span className="ml-1 font-semibold text-accent-ink">(economia de {plan.savings_percent}%)</span>}
               </p>
               <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-3"><Monitor className="h-3.5 w-3.5" aria-hidden />1 PC por assinatura</p>
@@ -131,7 +119,7 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
                   ))}
                 </ul>
               )}
-              <Button className="mt-5" block variant={destaque ? 'primary' : 'ghost'} loading={buying === plan.key} onClick={() => buy(plan)}>
+              <Button className="mt-5" block variant={destaque ? 'primary' : 'ghost'} onClick={() => buy(plan)}>
                 {free ? 'Baixar grátis' : 'Assinar'}
               </Button>
             </div>
@@ -143,11 +131,6 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
         {data.trial_days > 0 && <p>Conta nova ganha {data.trial_days} dias do plano Pro para testar, sem cartão.</p>}
         <p className="inline-flex items-center gap-1.5"><RotateCcw className="h-3.5 w-3.5" aria-hidden />Desfazer qualquer alteração continua liberado em todos os planos, mesmo depois de cancelar.</p>
       </div>
-      {!compact && user && (
-        <div className="mx-auto max-w-xs">
-          <Input label="Tem cupom?" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} placeholder="CÓDIGO" />
-        </div>
-      )}
     </div>
   )
 }

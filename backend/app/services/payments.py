@@ -14,6 +14,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Protocol
+from urllib.parse import quote_plus
 
 from app import database, settings
 from app.services import licenses, plans
@@ -105,6 +106,10 @@ class MercadoPagoProvider:
         self._sdk = mercadopago.SDK(access_token)
 
     def create_checkout(self, *, title: str, amount_cents: int, reference: str, payer_email: str) -> str:
+        # Recusado volta para a pagina de pagamento DO MESMO plano, com o
+        # aviso: tentar de novo e' um clique, sem escolher o plano outra vez.
+        ref = parse_reference(reference)
+        failure = f"{settings.PUBLIC_URL}/pagamento?plano={quote_plus(ref.plan_key)}&pagamento=recusado" if ref else f"{settings.PUBLIC_URL}/planos"
         pref = self._sdk.preference().create({
             "items": [{"title": title, "quantity": 1, "currency_id": "BRL", "unit_price": amount_cents / 100}],
             "payer": {"email": payer_email},
@@ -113,9 +118,9 @@ class MercadoPagoProvider:
             # nome da conta do Mercado Pago, e a pessoa nao reconhece a compra.
             "statement_descriptor": "RKZFPS",
             "back_urls": {
-                "success": f"{settings.PUBLIC_URL}/conta?pagamento=aprovado",
-                "pending": f"{settings.PUBLIC_URL}/conta?pagamento=pendente",
-                "failure": f"{settings.PUBLIC_URL}/planos?pagamento=recusado",
+                "success": f"{settings.PUBLIC_URL}/meu-plano?pagamento=aprovado",
+                "pending": f"{settings.PUBLIC_URL}/meu-plano?pagamento=pendente",
+                "failure": failure,
             },
             "auto_return": "approved",
             "notification_url": f"{settings.PUBLIC_URL}/api/payments/webhook",

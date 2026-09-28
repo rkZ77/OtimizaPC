@@ -10,6 +10,9 @@ import Home from './pages/Home'
 import Planos from './pages/Planos'
 import Sobre from './pages/Sobre'
 import Download from './pages/Download'
+import ComoFunciona from './pages/ComoFunciona'
+import Pagamento from './pages/Pagamento'
+import MeuPlano from './pages/MeuPlano'
 import Conta from './pages/Conta'
 import Admin from './pages/admin/Admin'
 import { Cadastro, Entrar, RecuperarSenha } from './pages/Auth'
@@ -49,6 +52,7 @@ export default function App() {
         <Route path="/planos" element={<Planos />} />
         <Route path="/quem-somos" element={<Sobre />} />
         <Route path="/download" element={<Download />} />
+        <Route path="/como-funciona" element={<ComoFunciona />} />
         <Route path="/entrar" element={<Entrar />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<RecuperarSenha etapa="pedir" />} />
@@ -56,6 +60,8 @@ export default function App() {
         <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/termos" element={<Termos />} />
         <Route path="/conta" element={<RequireAuth><Conta /></RequireAuth>} />
+        <Route path="/meu-plano" element={<RequireAuth><MeuPlano /></RequireAuth>} />
+        <Route path="/pagamento" element={<RequireAuth><Pagamento /></RequireAuth>} />
         <Route path="/admin" element={<RequireAuth admin><Admin /></RequireAuth>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

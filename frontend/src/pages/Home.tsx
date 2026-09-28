@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ArrowRight, BadgeCheck, CircleSlash, CreditCard, Download, RotateCcw, ShieldCheck, Undo2,
 } from 'lucide-react'
@@ -7,6 +7,7 @@ import PageShell from '../components/PageShell'
 import SiteHeader from '../components/SiteHeader'
 import PlansGrid from '../components/PlansGrid'
 import { Button } from '../components/ui'
+import { GAMES, GameGrid, Row, Screenshot } from '../components/Vitrine'
 import { date } from '../lib/format'
 
 /*
@@ -19,50 +20,12 @@ import { date } from '../lib/format'
 
 interface Version { version: string; notes: string; published_at: string }
 
-function Screenshot({ src, alt }: { src: string; alt: string }) {
-  return (
-    <figure className="min-w-0">
-      <img src={src} alt={alt} width={1180} height={780} loading="lazy"
-           className="w-full h-auto rounded-lg border border-line shadow-elev" />
-      <figcaption className="mt-2 text-xs text-ink-4">Tela real do app, sem edição.</figcaption>
-    </figure>
-  )
-}
-
-function Row({ title, children, img, alt, flip }: { title: string; children: ReactNode; img: string; alt: string; flip?: boolean }) {
-  return (
-    <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
-      <div className={flip ? 'lg:order-2' : undefined}>
-        <h3 className="font-display text-2xl font-bold text-ink-1">{title}</h3>
-        <div className="mt-4 space-y-3 text-ink-2 leading-relaxed">{children}</div>
-      </div>
-      <Screenshot src={img} alt={alt} />
-    </div>
-  )
-}
-
 const GUARANTEES = [
   { icon: CreditCard, t: 'Pagamento pelo Mercado Pago', d: 'PIX ou cartão. O RKZFPS não vê nem guarda os dados do seu cartão.' },
   { icon: Undo2, t: '7 dias para desistir', d: 'Não gostou? Peça o reembolso em até 7 dias da compra, como manda o Código de Defesa do Consumidor.' },
   { icon: RotateCcw, t: 'Desfazer tudo, sempre', d: 'Toda alteração guarda o estado anterior. Desfazer funciona em qualquer plano, mesmo depois de cancelar.' },
   { icon: ShieldCheck, t: 'Segurança do Windows intocada', d: 'Antivírus, firewall e Windows Update ficam exatamente como estão.' },
 ]
-
-/* Icone de cada jogo em /img/games (baixado uma vez e servido pelo proprio
- * site). Sem icone, o quadro mostra as iniciais. */
-const GAMES: Array<[name: string, icon?: string]> = [
-  ['Counter-Strike 2', 'cs2.jpg'], ['EA SPORTS FC', 'eafc.jpg'], ['Fortnite'], ['Valorant', 'valorant.png'],
-  ['League of Legends', 'lol.svg'], ['Minecraft', 'minecraft.png'], ['Roblox', 'roblox.png'], ['GTA V', 'gta5.jpg'],
-  ['Apex Legends', 'apex.jpg'], ['Call of Duty', 'warzone.jpg'], ['PUBG', 'pubg.jpg'], ['Rainbow Six Siege', 'r6.jpg'],
-  ['Dota 2', 'dota2.jpg'], ['Rocket League', 'rocketleague.jpg'], ['Marvel Rivals', 'marvelrivals.jpg'],
-]
-
-/* Duas letras do nome: "Counter-Strike 2" vira CS, "GTA V" vira GV. Sem logo
- * oficial no site: logo de estudio num produto pago parece parceria. */
-function initials(name: string) {
-  const words = name.split(/[\s:-]+/).filter((w) => /^[\p{L}\d]/u.test(w))
-  return words.length === 1 ? words[0].slice(0, 2).toUpperCase() : (words[0][0] + words[1][0]).toUpperCase()
-}
 
 const NOT_DOING = [
   'Desligar antivírus, firewall ou Windows Update',
@@ -80,7 +43,7 @@ const FAQ: [string, string][] = [
   ['Funciona com anti-cheat (Vanguard, Easy Anti-Cheat)?', 'Sim. A medição de FPS usa o registro de quadros do próprio Windows e não injeta nada no jogo. O RKZFPS também nunca fecha nem mexe em anti-cheat.'],
   ['Preciso ser administrador do PC?', 'Não para usar. Quando uma correção mexe em configuração do sistema, o Windows pede a sua permissão só para ela, e você vê antes o que vai mudar.'],
   ['Posso usar em mais de um PC?', 'Cada assinatura vale para 1 PC por vez. Trocou de PC? Desative o antigo em Minha conta e entre no novo.'],
-  ['Como cancelo?', 'Na sua conta, quando quiser. O plano vale até o fim do período pago e o desfazer continua liberado depois.'],
+  ['Como cancelo?', 'Não precisa cancelar: cada compra é um pagamento único, sem renovação automática. O plano vale até o fim do período pago, e o desfazer continua liberado depois. Desistiu em até 7 dias? Peça o reembolso pelo suporte.'],
   ['O app recebe atualizações?', 'Sim. Novos jogos, novas correções e ajustes para versões novas do Windows e dos jogos entram nas atualizações, sem custo a mais para quem assina. O histórico está nesta página.'],
 ]
 
@@ -147,30 +110,16 @@ export default function Home() {
             <p>Com o RKZFPS aberto (pode ser perto do relógio), cada partida é medida sozinha: FPS médio, 1% low e travadas por minuto. Só entram os minutos com o jogo na tela.</p>
             <p>Depois de otimizar, o app compara as partidas de antes e de depois. Se a diferença estiver dentro da variação normal, ele diz que não houve ganho.</p>
           </Row>
+          <Button variant="ghost" to="/como-funciona" IconRight={ArrowRight}>Ver tudo o que o RKZFPS analisa e corrige</Button>
         </div>
       </section>
 
       {/* Jogos */}
-      <section className="border-y border-line bg-surface-1/50">
+      <section id="jogos" className="scroll-mt-16 border-y border-line bg-surface-1/50">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <h2 className="font-display text-2xl font-bold text-ink-1">Jogos reconhecidos</h2>
           <p className="mt-2 text-ink-3">A lista cresce a cada atualização. A medição não mexe no jogo e funciona com anti-cheat. </p>
-          <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {GAMES.map(([g, icon]) => (
-              <li key={g} className="flex items-center gap-3 rounded-lg border border-line bg-surface-0 px-3 py-2.5">
-                {icon ? (
-                  <img src={`/img/games/${icon}`} alt="" width={36} height={36} loading="lazy"
-                       className="h-9 w-9 shrink-0 rounded-md border border-line bg-surface-2 object-contain" />
-                ) : (
-                  <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-line bg-surface-2 font-display text-sm font-bold text-accent-ink">
-                    {initials(g)}
-                  </span>
-                )}
-                <span className="min-w-0 text-sm leading-tight text-ink-2">{g}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-xs text-ink-4">Os nomes dos jogos são marcas dos seus donos. O RKZFPS é independente e não tem parceria com os estúdios.</p>
+          <GameGrid />
         </div>
       </section>
 
@@ -229,7 +178,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
             <h2 className="font-display text-2xl font-bold text-ink-1">Perguntas frequentes</h2>
-            <p className="mt-3 text-ink-3">Não achou sua dúvida? Fale com a gente pelo suporte, no rodapé.</p>
+            <p className="mt-3 text-ink-3">Não achou sua dúvida? Pergunte ao assistente ou fale com o suporte pelo menu.</p>
           </div>
           <div className="divide-y divide-line rounded-lg border border-line">
             {FAQ.map(([q, a]) => (

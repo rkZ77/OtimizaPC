@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import { Download, Gauge, History, Laptop, LogOut, Receipt } from 'lucide-react'
+import { Crown, Download, Gauge, History, Laptop, LogOut, Receipt } from 'lucide-react'
 import api, { errorMessage, type Overview } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import PageShell from '../components/PageShell'
@@ -9,7 +9,7 @@ import {
   Alert, Badge, Button, EmptyState, ErrorState, Modal, ModalFooter, Panel, PanelHead, PanelList, PanelRow,
   PlanBadge, SkeletonRows, StatTile, Table, Tabs,
 } from '../components/ui'
-import { date, dateTime, money, planName, STATUS_LABEL, TIER_LABEL } from '../lib/format'
+import { date, dateTime, money, paymentStatus, planName, STATUS_LABEL, TIER_LABEL } from '../lib/format'
 
 interface Payment { id: number; plan_key: string; status: string; amount_cents: number; coupon_code: string | null; created_at: string }
 interface Bench { id: number; device_name: string; game_id: string; label: string; avg_fps: number; low1_fps: number; low01_fps: number; frametime_ms: number; created_at: string }
@@ -111,7 +111,8 @@ export default function Conta() {
           <StatTile label="Cliente desde" value={date(data.user.created_at)} tone="muted" />
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Button to="/planos">{lic.status === 'active' ? 'Renovar ou mudar de plano' : 'Ver planos'}</Button>
+          <Button to="/meu-plano" Icon={Crown}>Meu plano</Button>
+          <Button variant="ghost" to="/planos">{lic.status === 'active' ? 'Renovar ou mudar de plano' : 'Ver planos'}</Button>
           <Button variant="ghost" to="/download" Icon={Download}>Baixar o app</Button>
         </div>
       </div>
@@ -155,7 +156,7 @@ export default function Conta() {
                   { key: 'plano', header: 'Plano', cell: (p) => <span className="text-ink-1">{planName(p.plan_key)}{p.coupon_code ? `, cupom ${p.coupon_code}` : ''}</span> },
                   { key: 'data', header: 'Data', cell: (p) => dateTime(p.created_at), hideOnMobile: true },
                   { key: 'valor', header: 'Valor', align: 'right', cell: (p) => <span className="font-mono">{money(p.amount_cents)}</span> },
-                  { key: 'status', header: 'Status', align: 'right', cell: (p) => <Badge tone={p.status === 'approved' ? 'green' : 'amber'}>{p.status === 'approved' ? 'Aprovado' : p.status}</Badge> },
+                  { key: 'status', header: 'Status', align: 'right', cell: (p) => { const s = paymentStatus(p.status); return <Badge tone={s.tone}>{s.label}</Badge> } },
                 ]}
               />
             ))}
