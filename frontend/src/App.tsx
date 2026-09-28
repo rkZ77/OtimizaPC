@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import TopProgressBar from './components/TopProgressBar'
 import ErrorToast from './components/ErrorToast'
 import CookieBanner from './components/CookieBanner'
+import AssistantChat from './components/AssistantChat'
 import { SpinnerBlock } from './components/ui'
 import { useAuth } from './context/AuthContext'
 import Home from './pages/Home'
@@ -60,6 +61,7 @@ export default function App() {
       </Routes>
       <ErrorToast />
       <CookieBanner />
+      <AssistantChat />
     </>
   )
 }

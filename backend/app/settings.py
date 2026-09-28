@@ -36,6 +36,10 @@ MERCADOPAGO_WEBHOOK_SECRET = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 #: Remetente de dominio verificado no Resend, ex.: "RKZFPS <nao-responda@fpsx.com.br>".
 RESEND_FROM = os.getenv("RESEND_FROM", "")
+
+#: Assistente do site (OpenAI). Sem chave, o chat some do site.
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 #: Endereco que recebe as respostas ("Responder" no e-mail). Opcional.
 EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "")
 
