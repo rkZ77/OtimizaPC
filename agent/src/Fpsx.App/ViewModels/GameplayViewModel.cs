@@ -128,7 +128,7 @@ public sealed class GameplayViewModel : PageViewModel
                 return "Partida medida antes do gráfico existir: só os números ficaram guardados.";
             var drops = GameplayAnalyzer.Drops(s.Timeline, s.Stats.AvgFps);
             return string.Format(Pt, "Média {0:0} FPS, 1% low {1:0}. {2}", s.Stats.AvgFps, s.Stats.Low1Fps,
-                drops == 0 ? "Nenhuma queda forte: FPS estável na partida." : $"{drops} {(drops == 1 ? "queda forte" : "quedas fortes")} (quadro 3 vezes mais lento que a média): passe o mouse no gráfico para ver quando.");
+                drops == 0 ? "Nenhuma queda forte: FPS estável na partida." : $"{drops} {(drops == 1 ? "queda forte" : "quedas fortes")} (um quadro 3 vezes mais lento que a média e acima de 33 ms): passe o mouse no gráfico para ver quando.");
         }
     }
 
@@ -262,7 +262,8 @@ public sealed class GameplayViewModel : PageViewModel
         }
 
         var gameId = sessions.FirstOrDefault(s => s.GameName == _game)?.GameId ?? sessions[0].GameId;
-        var cmp = GameplayComparer.Compare(sessions, gameId, _game ?? sessions[0].GameName, _pivot.Session.StartedAt, _pivot.Label);
+        var cmp = GameplayComparer.Compare(sessions, gameId, _game ?? sessions[0].GameName, _pivot.Session.StartedAt, _pivot.Label,
+            GameplayComparer.ShaderClears(_host.Ctx.Store.All()));
         CompareStatus = cmp.Status;
         if (cmp.Result is not { } r)
             return;

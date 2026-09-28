@@ -58,12 +58,20 @@ public sealed class BackgroundProcessCloseOptimization : IOptimization
             return Evaluation.Unknown("Processos não amostrados.");
 
         var memoryTight = s.Memory is { } m && m.UsedPercent >= 80;
+        // Um programa, não um processo: o Chrome tem dezenas, e o que pesa não é
+        // o da janela. Soma tudo com o mesmo nome e manda o pedido de fechar
+        // para o processo que tem janela. Sem janela não há como pedir com
+        // educação, e o FPSX não força: então nem oferece.
         var candidates = s.Processes
             .Where(p => ProcessClassifier.Classify(p.Name) == ProcessCategory.User)
             .Where(p => !StartupClassifier.IsProtected(StartupClassifier.Classify(new StartupEntry { Name = p.Name })))
-            .Where(p => p.CpuPercent >= 5 || (memoryTight && p.WorkingSetBytes >= HeavyRam))
-            .OrderByDescending(p => p.CpuPercent).ThenByDescending(p => p.WorkingSetBytes)
+            .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g => (Window: g.FirstOrDefault(p => p.HasWindow), Cpu: g.Sum(p => p.CpuPercent), Ram: g.Sum(p => p.WorkingSetBytes)))
+            .Where(x => x.Window is not null)
+            .Where(x => x.Cpu >= 5 || (memoryTight && x.Ram >= HeavyRam))
+            .OrderByDescending(x => x.Cpu).ThenByDescending(x => x.Ram)
             .Take(8)
+            .Select(x => x.Window! with { CpuPercent = x.Cpu, WorkingSetBytes = x.Ram })
             .ToList();
 
         if (candidates.Count == 0)

@@ -25,7 +25,7 @@ public class FixTests
         var s = Pc.Healthy() with
         {
             Memory = new MemoryInfo { TotalBytes = 8 * Gb, AvailableBytes = 5 * Gb, PagefilePresent = false },
-            Processes = [new ProcessSample { Pid = 500, Name = "chrome", CpuPercent = 22, WorkingSetBytes = Gb }],
+            Processes = [new ProcessSample { Pid = 500, Name = "chrome", CpuPercent = 22, WorkingSetBytes = Gb, HasWindow = true }],
         };
         var scan = TestData.Engine().Evaluate(s, "gaming", "ultimate");
         Assert.Contains(scan.Findings, f => f.FixOptimizationId == "pagefile-restore-automatic");
@@ -66,7 +66,7 @@ public class FixTests
         {
             Processes =
             [
-                new ProcessSample { Pid = 10, Name = "chrome", CpuPercent = 30, WorkingSetBytes = Gb },
+                new ProcessSample { Pid = 10, Name = "chrome", CpuPercent = 30, WorkingSetBytes = Gb, HasWindow = true },
                 new ProcessSample { Pid = 11, Name = "svchost", CpuPercent = 40 },
                 new ProcessSample { Pid = 12, Name = "MsMpEng", CpuPercent = 25 },
                 new ProcessSample { Pid = 13, Name = "steam", CpuPercent = 15 },
@@ -80,6 +80,29 @@ public class FixTests
         Assert.False(close.AutoSelected);
         var proposal = Assert.Single(close.Evaluation.Proposals);
         Assert.Equal("background-process-close:10", proposal.Id);
+    }
+
+    [Fact]
+    public void Programa_de_varios_processos_soma_o_peso_e_pede_para_a_janela()
+    {
+        // Caso real: o Chrome não fechava porque o pedido ia para um processo
+        // de aba, sem janela. Agora vai para o da janela, com o peso somado.
+        var s = Pc.Healthy() with
+        {
+            Processes =
+            [
+                new ProcessSample { Pid = 1316, Name = "chrome", CpuPercent = 4, WorkingSetBytes = Gb },
+                new ProcessSample { Pid = 1400, Name = "chrome", CpuPercent = 3, WorkingSetBytes = Gb },
+                new ProcessSample { Pid = 900, Name = "chrome", CpuPercent = 0.5, WorkingSetBytes = Gb / 4, HasWindow = true },
+                new ProcessSample { Pid = 77, Name = "helperSemJanela", CpuPercent = 30 },
+            ],
+        };
+        var close = Result(TestData.Engine().Evaluate(s, "gaming", "ultimate"), "background-process-close");
+        var proposal = Assert.Single(close.Evaluation.Proposals);
+        Assert.Equal("background-process-close:900", proposal.Id);
+        var change = Assert.IsType<ProcessCloseChange>(Assert.Single(proposal.Changes));
+        Assert.Equal((900, "chrome"), (change.Pid, change.Name));
+        Assert.Contains("8% CPU", proposal.Title);
     }
 
     [Fact]

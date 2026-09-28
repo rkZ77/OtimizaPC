@@ -147,9 +147,9 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
             .Where(a => before.ContainsKey(a.Key))
             .Select(a =>
             {
-                var (name, cpuTime, ws) = a.Value;
+                var (name, cpuTime, ws, window) = a.Value;
                 var delta = (cpuTime - before[a.Key].Cpu).TotalSeconds;
-                return new ProcessSample { Pid = a.Key, Name = name, CpuPercent = Math.Max(0, 100.0 * delta / (elapsed * cores)), WorkingSetBytes = ws };
+                return new ProcessSample { Pid = a.Key, Name = name, CpuPercent = Math.Max(0, 100.0 * delta / (elapsed * cores)), WorkingSetBytes = ws, HasWindow = window };
             })
             .Where(p => p.Pid != Environment.ProcessId)
             .OrderByDescending(p => p.CpuPercent).ThenByDescending(p => p.WorkingSetBytes)
@@ -157,8 +157,14 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
 
         // Só os relevantes vão para o snapshot: o resto é ruído no relatório
         // e dado que não precisamos guardar.
-        var relevant = processes.Where(p => p.CpuPercent >= 0.5).Take(25)
+        var top = processes.Where(p => p.CpuPercent >= 0.5).Take(25)
             .Concat(processes.OrderByDescending(p => p.WorkingSetBytes).Take(15))
+            .ToList();
+        // Navegador e afins rodam em vários processos, e o que pesa quase nunca
+        // é o da janela. Os irmãos com o mesmo nome entram para somar o peso do
+        // programa inteiro e achar quem recebe o pedido de fechar.
+        var names = top.Select(p => p.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var relevant = top.Concat(processes.Where(p => names.Contains(p.Name)))
             .DistinctBy(p => p.Pid).ToList();
 
         CpuInfo? cpu = proc is null ? null : new CpuInfo
@@ -185,16 +191,16 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         GC.KeepAlive(x);
     }
 
-    private static Dictionary<int, (string Name, TimeSpan Cpu, long Ws)> ProcessTimes()
+    private static Dictionary<int, (string Name, TimeSpan Cpu, long Ws, bool Window)> ProcessTimes()
     {
-        var result = new Dictionary<int, (string, TimeSpan, long)>();
+        var result = new Dictionary<int, (string, TimeSpan, long, bool)>();
         foreach (var p in Process.GetProcesses())
         {
             using (p)
             {
                 try
                 {
-                    result[p.Id] = (p.ProcessName, p.TotalProcessorTime, p.WorkingSet64);
+                    result[p.Id] = (p.ProcessName, p.TotalProcessorTime, p.WorkingSet64, p.MainWindowHandle != IntPtr.Zero);
                 }
                 catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or UnauthorizedAccessException)
                 {

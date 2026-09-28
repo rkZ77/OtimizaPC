@@ -108,17 +108,22 @@ public static class GameplayAnalyzer
     }
 
     /// <summary>
-    /// Quedas fortes: trechos seguidos em que o pior quadro caiu abaixo de um
-    /// terço da média, ou seja, um quadro 3 vezes mais lento que o normal. É a
-    /// travada que se sente, e conta uma vez por queda.
+    /// Quedas fortes: trechos seguidos em que o pior quadro foi 3 vezes mais
+    /// lento que a média E passou de 33 ms (abaixo de 30 FPS naquele quadro).
+    /// Os dois juntos: a 170 FPS, um quadro de 18 ms é 3 vezes a média e
+    /// ninguém sente; na partida real que calibrou isso, só a regra relativa
+    /// contava 72 quedas numa partida estável, e as duas juntas contam 11.
     /// </summary>
+    /// <summary>Quadro abaixo disto (acima de 33 ms) é travada perceptível em qualquer jogo.</summary>
+    public const double DropFps = 30;
+
     public static int Drops(IReadOnlyList<FpsPoint> timeline, double avgFps)
     {
         var count = 0;
         var inDrop = false;
         foreach (var p in timeline)
         {
-            var drop = p.Low < avgFps / 3;
+            var drop = p.Low < Math.Min(avgFps / 3, DropFps);
             if (drop && !inDrop)
                 count++;
             inDrop = drop;
@@ -179,9 +184,12 @@ public static class GameplayComparer
     public const string RealWorldWarning =
         "Partidas reais variam com mapa, modo e número de jogadores. Para uma comparação controlada, use o FPSX Benchmark no mesmo cenário.";
 
-    public static GameplayComparison Compare(IReadOnlyList<GameplaySession> sessions, string gameId, string gameName, DateTimeOffset pivotAt, string pivotLabel)
+    public static GameplayComparison Compare(IReadOnlyList<GameplaySession> sessions, string gameId, string gameName, DateTimeOffset pivotAt, string pivotLabel,
+        IReadOnlyList<DateTimeOffset>? shaderClears = null)
     {
-        var game = sessions.Where(s => s.GameId == gameId).ToList();
+        var all = sessions.Where(s => s.GameId == gameId).ToList();
+        var tainted = Tainted(all, shaderClears ?? []);
+        var game = all.Where(s => !tainted.Contains(s.Id)).ToList();
         var before = game.Where(s => s.EndedAt <= pivotAt).OrderByDescending(s => s.StartedAt).Take(MaxPerSide).ToList();
         var after = game.Where(s => s.StartedAt >= pivotAt).OrderBy(s => s.StartedAt).Take(MaxPerSide).ToList();
         var baseResult = new GameplayComparison
@@ -202,6 +210,8 @@ public static class GameplayComparer
 
         var result = BenchmarkComparer.Compare(before.Select(s => s.Stats).ToList(), after.Select(s => s.Stats).ToList());
         var warnings = result.Warnings.Append(RealWorldWarning).ToList();
+        if (tainted.Count > 0)
+            warnings.Add($"{tainted.Count} partida(s) logo depois de limpar o cache de shaders ficaram fora da conta: o jogo recria os shaders nela e trava mais, o que faria qualquer otimização seguinte parecer melhor do que é.");
         if (before.Concat(after).Any(s => s.DisplayHz is { } hz && s.Stats.AvgFps >= hz * 0.97))
             warnings.Add("O FPS ficou preso perto da taxa do monitor em alguma partida. Com V-Sync ou limite de FPS ligado, otimização não aparece em FPS médio: olhe o 1% low e as travadas.");
         return baseResult with
@@ -214,10 +224,32 @@ public static class GameplayComparer
         };
     }
 
-    /// <summary>Sessões de otimização que servem de marco: aplicadas e não desfeitas.</summary>
+    /// <summary>
+    /// Sessões de otimização que servem de marco: aplicadas, não desfeitas e
+    /// com alguma mudança que pode mexer no FPS. Limpar cache e reparar rede
+    /// não são otimização de desempenho, e comparar em volta delas só mede ruído.
+    /// </summary>
     public static IEnumerable<SessionRecord> Pivots(IEnumerable<SessionRecord> sessions) =>
-        sessions.Where(s => s.Status == SessionStatus.Completed && s.Changes.Any(c => c.Status == ChangeStatus.Applied))
+        sessions.Where(s => s.Status == SessionStatus.Completed
+                            && s.Changes.Any(c => c.Status == ChangeStatus.Applied && c.Applied is not (Model.CacheClearChange or Model.NetworkRepairChange)))
             .OrderByDescending(s => s.StartedAt);
+
+    private static readonly Model.CacheTarget[] ShaderCaches =
+        [Model.CacheTarget.DirectXShaderCache, Model.CacheTarget.NvidiaDxCache, Model.CacheTarget.AmdDxCache, Model.CacheTarget.SteamShaderCacheCs2];
+
+    /// <summary>Quando o cache de shaders foi limpo (a primeira partida depois disso trava mais por natureza).</summary>
+    public static IReadOnlyList<DateTimeOffset> ShaderClears(IEnumerable<SessionRecord> sessions) =>
+        sessions.SelectMany(s => s.Changes)
+            .Where(c => c.Status == ChangeStatus.Applied && c.Applied is Model.CacheClearChange cc && ShaderCaches.Contains(cc.Target))
+            .Select(c => c.At)
+            .Distinct()
+            .ToList();
+
+    /// <summary>A primeira partida de cada jogo depois de cada limpeza de cache de shaders.</summary>
+    private static HashSet<string> Tainted(IReadOnlyList<GameplaySession> game, IReadOnlyList<DateTimeOffset> clears) =>
+        clears.Select(c => game.Where(s => s.EndedAt > c).OrderBy(s => s.StartedAt).FirstOrDefault()?.Id)
+            .OfType<string>()
+            .ToHashSet();
 }
 
 /// <summary>Uma partida por arquivo, em %LOCALAPPDATA%\FPSX\gameplay. Só números, nenhum dado pessoal.</summary>

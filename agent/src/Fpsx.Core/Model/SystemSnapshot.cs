@@ -175,6 +175,9 @@ public sealed record ProcessSample
     public string Name { get; init; } = "";
     public double CpuPercent { get; init; }
     public long WorkingSetBytes { get; init; }
+
+    /// <summary>Tem janela principal: só esse processo recebe o pedido de fechar (o X).</summary>
+    public bool HasWindow { get; init; }
 }
 
 public sealed record DisplayInfo

@@ -134,7 +134,7 @@ public class GameplayTests
         SessionRecord S(string id, SessionStatus status, ChangeStatus change, int day) => new()
         {
             Id = id, Status = status, StartedAt = T0.AddDays(day),
-            Changes = [new ChangeRecord { Status = change, Applied = new Model.CacheClearChange(Model.CacheTarget.UserTemp) }],
+            Changes = [new ChangeRecord { Status = change, Applied = new Model.GameConfigChange("cs2", "setting.msaa_samples", "2") }],
         };
         var pivots = GameplayComparer.Pivots([S("a", SessionStatus.Completed, ChangeStatus.Applied, 1), S("b", SessionStatus.RolledBack, ChangeStatus.RolledBack, 2), S("c", SessionStatus.Completed, ChangeStatus.Failed, 3)]);
         Assert.Equal(["a"], pivots.Select(p => p.Id));
@@ -196,9 +196,50 @@ public class GameplayTests
     {
         var tl = new List<FpsPoint>
         {
-            new(0, 100, 90), new(1, 100, 40), new(2, 100, 30), new(3, 100, 95), new(4, 100, 20), new(5, 100, 49.9),
+            new(0, 100, 90), new(1, 100, 40), new(2, 100, 25), new(3, 100, 95), new(4, 100, 20), new(5, 100, 49.9),
         };
         Assert.Equal(2, GameplayAnalyzer.Drops(tl, 100));
         Assert.Equal(0, GameplayAnalyzer.Drops([new(0, 100, 60)], 100));
+        // A 170 FPS, um quadro de 18 ms (55 FPS) é 3 vezes a média, mas não se sente.
+        Assert.Equal(0, GameplayAnalyzer.Drops([new(0, 170, 55), new(1, 170, 160)], 170));
+        Assert.Equal(1, GameplayAnalyzer.Drops([new(0, 170, 25), new(1, 170, 160)], 170));
+    }
+
+    [Fact]
+    public void Partida_logo_depois_de_limpar_cache_de_shaders_nao_serve_de_antes()
+    {
+        // Caso real: limpeza de cache às 20:01, partida travando às 20:28,
+        // preset às 21:02, partida boa no dia seguinte. A de 20:28 não é "antes".
+        var clear = T0;
+        var sessions = new List<GameplaySession>
+        {
+            Match(T0.AddMinutes(-90), 150),   // antes, limpa
+            Match(T0.AddMinutes(27), 90),     // logo depois da limpeza: contaminada
+            Match(T0.AddHours(20), 155),      // depois do preset
+        };
+        var cmp = GameplayComparer.Compare(sessions, "cs2", "Counter-Strike 2", T0.AddMinutes(61), "preset", [clear]);
+
+        Assert.True(cmp.Ready);
+        Assert.Equal(1, cmp.BeforeCount);
+        Assert.Contains(cmp.Result!.Warnings, w => w.Contains("cache de shaders"));
+        var withoutFilter = GameplayComparer.Compare(sessions, "cs2", "Counter-Strike 2", T0.AddMinutes(61), "preset");
+        Assert.Equal(2, withoutFilter.BeforeCount);
+    }
+
+    [Fact]
+    public void Limpeza_de_cache_e_reparo_de_rede_nao_viram_marco_de_comparacao()
+    {
+        SessionRecord Session(Fpsx.Core.Model.Change change) => new()
+        {
+            Id = Guid.NewGuid().ToString("N"), StartedAt = T0, Status = SessionStatus.Completed,
+            Changes = [new ChangeRecord { Id = "c", OptimizationId = "x", ProposalId = "x", Applied = change, Status = ChangeStatus.Applied, At = T0 }],
+        };
+        var pivots = GameplayComparer.Pivots(
+        [
+            Session(new Fpsx.Core.Model.CacheClearChange(Fpsx.Core.Model.CacheTarget.DirectXShaderCache)),
+            Session(new Fpsx.Core.Model.NetworkRepairChange(Fpsx.Core.Model.NetworkRepairKind.FlushDns)),
+            Session(new Fpsx.Core.Model.GameConfigChange("cs2", "setting.msaa_samples", "2")),
+        ]).ToList();
+        Assert.IsType<Fpsx.Core.Model.GameConfigChange>(Assert.Single(pivots).Changes[0].Applied);
     }
 }
