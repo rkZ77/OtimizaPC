@@ -110,8 +110,20 @@ public sealed class GameplayViewModel : PageViewModel
             Raise(nameof(ChartHz));
             Raise(nameof(ChartTitle));
             Raise(nameof(ChartNote));
+            Raise(nameof(ChartDrops));
+            Raise(nameof(ChartCauses));
         }
     }
+
+    /// <summary>Quedas da partida escolhida com o que estava pesando no PC naquele momento.</summary>
+    public IReadOnlyList<DropCause>? ChartDrops => _selected is { } sel
+        ? StutterExplainer.Explain(sel.Session.Timeline, sel.Session.Load, sel.Session.Stats.AvgFps)
+        : null;
+
+    /// <summary>A causa mais comum das quedas, em uma frase. Vazio em partida antiga (sem leitura de uso).</summary>
+    public string ChartCauses => _selected is { } sel && sel.Session.Load.Count > 0 && ChartDrops is { Count: > 0 } drops
+        ? StutterExplainer.Summary(drops)
+        : "";
 
     public IReadOnlyList<FpsPoint>? ChartPoints => _selected?.Session.Timeline;
     public int? ChartHz => _selected?.Session.DisplayHz;
@@ -128,7 +140,7 @@ public sealed class GameplayViewModel : PageViewModel
                 return "Partida medida antes do gráfico existir: só os números ficaram guardados.";
             var drops = GameplayAnalyzer.Drops(s.Timeline, s.Stats.AvgFps);
             return string.Format(Pt, "Média {0:0} FPS, 1% low {1:0}. {2}", s.Stats.AvgFps, s.Stats.Low1Fps,
-                drops == 0 ? "Nenhuma queda forte: FPS estável na partida." : $"{drops} {(drops == 1 ? "queda forte" : "quedas fortes")} (um quadro 3 vezes mais lento que a média e acima de 33 ms): passe o mouse no gráfico para ver quando.");
+                drops == 0 ? "Nenhuma queda forte: FPS estável na partida." : $"{drops} {(drops == 1 ? "queda forte" : "quedas fortes")} (um quadro 3 vezes mais lento que a média e acima de 33 ms), marcadas em vermelho: passe o mouse para ver quando e o que estava pesando no PC.");
         }
     }
 

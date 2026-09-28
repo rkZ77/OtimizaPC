@@ -45,6 +45,17 @@ public sealed class ClientStorage(string dataDir)
     private string TokenPath => Path.Combine(dataDir, "license.token");
     private string OverridesPath => Path.Combine(dataDir, "catalog-overrides.token");
     private string QueuePath => Path.Combine(dataDir, "telemetry-queue.jsonl");
+    private string UploadedPath => Path.Combine(dataDir, "gameplay-uploaded.txt");
+
+    /// <summary>Partidas que o servidor já recebeu (uma por linha).</summary>
+    public HashSet<string> UploadedGameplay() =>
+        File.Exists(UploadedPath) ? File.ReadLines(UploadedPath).Where(l => l.Length > 0).ToHashSet(StringComparer.Ordinal) : [];
+
+    public void MarkGameplayUploaded(string sessionId)
+    {
+        Directory.CreateDirectory(dataDir);
+        File.AppendAllText(UploadedPath, sessionId + Environment.NewLine);
+    }
 
     public ClientSettings LoadSettings()
     {
@@ -100,6 +111,7 @@ public sealed class ClientStorage(string dataDir)
     public void Enqueue(TelemetryEvent e)
     {
         Directory.CreateDirectory(dataDir);
+        e = e with { OccurredAt = e.OccurredAt ?? DateTimeOffset.UtcNow, AgentVersion = e.AgentVersion ?? AgentContext.Version };
         File.AppendAllText(QueuePath, JsonSerializer.Serialize(e, FpsxJson.Compact) + Environment.NewLine);
     }
 

@@ -54,9 +54,14 @@ public sealed class OptimizationsViewModel : PageViewModel
             }
 
             Add("Recomendadas", "Há benefício esperado neste PC. As marcadas vêm do seu perfil.", i => i.Result.Decision == Decision.Recommended);
-            Add("Opcionais", "Disponíveis por escolha sua: troubleshooting, itens de inicialização e experimentais.", i => i.Result.Decision == Decision.Optional);
+            // Reparo não é otimização: limpar cache ou resetar a rede não sobe
+            // FPS, e no teste real foram clicados duas vezes "por garantia".
+            // Ficam separados, no fim, dizendo para que servem.
+            static bool IsRepair(OptimizationItem i) => i.Result.Definition.Category is "troubleshooting" or "network";
+            Add("Opcionais", "Disponíveis por escolha sua: itens de inicialização e experimentais.", i => i.Result.Decision == Decision.Optional && !IsRepair(i));
             Add("Disponíveis em outro plano", "Resolveriam algo encontrado no seu PC. Cada uma diz o quê: para aplicar, é só assinar o plano indicado.", i => i.Result.Decision == Decision.Blocked);
             Add("Já otimizado", "Já estão na configuração certa. O FPSX não mexe no que já está bom.", i => i.Result.Decision == Decision.AlreadyOptimal);
+            Add("Reparos (não aumentam FPS)", "Só para quando o problema descrito em cada um acontecer: travadas estranhas depois de atualizar o jogo ou o driver, sites que não abrem, internet que caiu depois de remover VPN. Sem o problema, não fazem diferença.", i => i.Result.Decision == Decision.Optional && IsRepair(i));
             Add("Não se aplicam a este PC", "Hardware, sistema ou jogo não atendem aos critérios.", i => i.Result.Decision is Decision.NotApplicable or Decision.Unknown);
         }
 

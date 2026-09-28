@@ -36,6 +36,127 @@ public sealed record GameplaySession
     /// para baixo que a pessoa sente no jogo. Vazio em partidas antigas.
     /// </summary>
     public IReadOnlyList<FpsPoint> Timeline { get; init; } = [];
+
+    /// <summary>Uso do PC a cada 5 s durante a partida, para explicar as quedas.</summary>
+    public IReadOnlyList<LoadSample> Load { get; init; } = [];
+
+    /// <summary>Resumo do hardware na hora da partida (para comparar com PCs parecidos).</summary>
+    public HardwareSummary? Hardware { get; init; }
+}
+
+/// <param name="T">Segundo da partida, na mesma escala do <see cref="FpsPoint.T"/>.</param>
+/// <param name="App">Programa (fora o jogo e o FPSX) que mais usou processador no trecho. Fica só no PC.</param>
+public sealed record LoadSample(int T, double? Cpu, double? Gpu, string? App, double AppCpu);
+
+/// <summary>Por que uma queda aconteceu, na medida do que dá para afirmar.</summary>
+public enum DropCauseKind
+{
+    /// <summary>Outro programa usando processador no mesmo momento.</summary>
+    App,
+    /// <summary>Processador inteiro no limite.</summary>
+    Cpu,
+    /// <summary>Placa de vídeo no limite.</summary>
+    Gpu,
+    /// <summary>Nada fora do normal no PC: o próprio jogo (carregamento, efeito, rede).</summary>
+    Game,
+    /// <summary>Sem amostra de uso perto da queda.</summary>
+    Unknown,
+}
+
+public sealed record DropCause(int T, DropCauseKind Kind, string Text, string? App);
+
+/// <summary>
+/// Cruza cada queda forte com o uso do PC no mesmo momento. É correlação, não
+/// prova: o texto diz "coincidiu com", e quando nada no PC estava fora do
+/// normal ele diz isso em vez de culpar alguém.
+/// </summary>
+public static class StutterExplainer
+{
+    /// <summary>Programa acima disto no mesmo trecho entra como suspeito.</summary>
+    public const double AppCpuPercent = 10;
+
+    public const double CpuLimit = 90;
+    public const double GpuLimit = 97;
+
+    /// <summary>Distância máxima entre a queda e a amostra de uso (a amostra é a cada 5 s).</summary>
+    public const int MaxGapSeconds = 6;
+
+    public static IReadOnlyList<DropCause> Explain(IReadOnlyList<FpsPoint> timeline, IReadOnlyList<LoadSample> load, double avgFps)
+    {
+        var causes = new List<DropCause>();
+        var inDrop = false;
+        foreach (var p in timeline)
+        {
+            var drop = p.Low < Math.Min(avgFps / 3, GameplayAnalyzer.DropFps);
+            if (drop && !inDrop)
+                causes.Add(Cause(p.T, load));
+            inDrop = drop;
+        }
+
+        return causes;
+    }
+
+    private static DropCause Cause(int t, IReadOnlyList<LoadSample> load)
+    {
+        var near = load.Where(l => Math.Abs(l.T - t) <= MaxGapSeconds).OrderBy(l => Math.Abs(l.T - t)).FirstOrDefault();
+        var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+        if (near is null)
+            return new DropCause(t, DropCauseKind.Unknown, "Sem leitura do uso do PC neste momento.", null);
+        if (near.App is { } app && near.AppCpu >= AppCpuPercent)
+            return new DropCause(t, DropCauseKind.App, string.Format(pt, "Coincidiu com {0} usando {1:0}% do processador.", app, near.AppCpu), app);
+        if (near.Cpu >= CpuLimit)
+            return new DropCause(t, DropCauseKind.Cpu, string.Format(pt, "Processador no limite ({0:0}%) neste momento.", near.Cpu), null);
+        if (near.Gpu >= GpuLimit)
+            return new DropCause(t, DropCauseKind.Gpu, string.Format(pt, "Placa de vídeo no limite ({0:0}%) neste momento.", near.Gpu), null);
+        return new DropCause(t, DropCauseKind.Game, "Nada fora do normal no PC: provavelmente o próprio jogo (carregamento de área, efeito pesado ou rede).", null);
+    }
+
+    /// <summary>Uma frase com o que mais apareceu, para quem não vai passar o mouse no gráfico.</summary>
+    public static string Summary(IReadOnlyList<DropCause> causes)
+    {
+        if (causes.Count == 0)
+            return "";
+        var apps = causes.Where(c => c.Kind == DropCauseKind.App).GroupBy(c => c.App!).OrderByDescending(g => g.Count()).FirstOrDefault();
+        var total = causes.Count;
+        if (apps is not null && apps.Count() * 3 >= total)
+            return $"{apps.Count()} de {total} quedas coincidiram com o {apps.Key} usando o processador. Feche o {apps.Key} antes de jogar e compare na próxima partida.";
+        var cpu = causes.Count(c => c.Kind == DropCauseKind.Cpu);
+        if (cpu * 3 >= total)
+            return $"{cpu} de {total} quedas foram com o processador no limite. Nesse caso ajuda baixar opções que pesam na CPU (distância de visão, física, jogadores) ou fechar programas.";
+        var gpu = causes.Count(c => c.Kind == DropCauseKind.Gpu);
+        if (gpu * 3 >= total)
+            return $"{gpu} de {total} quedas foram com a placa de vídeo no limite. Baixar resolução, sombras ou antialiasing alivia.";
+        var game = causes.Count(c => c.Kind == DropCauseKind.Game);
+        return $"{game} de {total} quedas aconteceram com o PC tranquilo: são do próprio jogo (carregamento, efeito ou rede), não de algo rodando junto.";
+    }
+}
+
+/// <summary>Só o que descreve a máquina para comparar desempenho. Sem nome do PC, usuário ou arquivos.</summary>
+public sealed record HardwareSummary
+{
+    public string Tier { get; init; } = "";
+    public string Cpu { get; init; } = "";
+    public int Threads { get; init; }
+    public string Gpu { get; init; } = "";
+    public double VramGb { get; init; }
+    public double RamGb { get; init; }
+    public int WindowsBuild { get; init; }
+
+    public static HardwareSummary From(Model.SystemSnapshot s)
+    {
+        const double gb = 1024.0 * 1024 * 1024;
+        var gpu = s.Gpus.FirstOrDefault(g => !g.LikelyIntegrated) ?? s.Gpus.FirstOrDefault();
+        return new HardwareSummary
+        {
+            Tier = Diagnostics.HardwareTierClassifier.Assess(s).Tier.ToString().ToUpperInvariant(),
+            Cpu = s.Cpu?.Name.Trim() ?? "",
+            Threads = s.Cpu?.Threads ?? 0,
+            Gpu = gpu?.Name.Trim() ?? "",
+            VramGb = Math.Round((gpu?.VramBytes ?? 0) / gb, 1),
+            RamGb = Math.Round((s.Memory?.TotalBytes ?? 0) / gb, 1),
+            WindowsBuild = s.Os.Build,
+        };
+    }
 }
 
 /// <param name="T">Segundo da partida (desde o início da medição).</param>
@@ -135,7 +256,7 @@ public static class GameplayAnalyzer
     /// <summary>A sessão, ou null com o motivo quando a partida não serve para medir.</summary>
     public static (GameplaySession? Session, string Reason) Build(
         IReadOnlyList<double> frametimes, string gameId, string gameName, DateTimeOffset startedAt, DateTimeOffset endedAt,
-        double? cpu, double? gpu, int? displayHz, string appVersion, IReadOnlyList<FpsPoint>? timeline = null)
+        double? cpu, double? gpu, int? displayHz, string appVersion, IReadOnlyList<FpsPoint>? timeline = null, IReadOnlyList<LoadSample>? load = null)
     {
         var stats = FrameStats.From(frametimes);
         var measured = frametimes.Sum() / 1000.0;
@@ -156,6 +277,7 @@ public static class GameplayAnalyzer
             DisplayHz = displayHz,
             AppVersion = appVersion,
             Timeline = timeline ?? [],
+            Load = load ?? [],
         }, "");
     }
 }

@@ -94,8 +94,12 @@ internal sealed class SystemSampler : IDisposable
         while (!_cts.IsCancellationRequested)
         {
             var cpu = Wmi.Query("SELECT PercentProcessorUtility, PercentProcessorTime FROM Win32_PerfFormattedData_Counters_ProcessorInformation WHERE Name='_Total'").FirstOrDefault();
+            double? lastCpu = null, lastGpu = null;
             if (cpu is not null && (cpu.Long("PercentProcessorUtility") ?? cpu.Long("PercentProcessorTime")) is { } c)
-                lock (_cpu) _cpu.Add(Math.Min(100, c));
+            {
+                lastCpu = Math.Min(100, c);
+                lock (_cpu) _cpu.Add(lastCpu.Value);
+            }
 
             // Soma do engine 3D de todos os processos, por adaptador; o maior
             // adaptador é o que o jogo usa.
@@ -107,7 +111,12 @@ internal sealed class SystemSampler : IDisposable
                 .DefaultIfEmpty(-1)
                 .Max();
             if (byAdapter >= 0)
-                lock (_gpu) _gpu.Add(Math.Min(100, byAdapter));
+            {
+                lastGpu = Math.Min(100, byAdapter);
+                lock (_gpu) _gpu.Add(lastGpu.Value);
+            }
+
+            Latest = (lastCpu, lastGpu);
 
             var mem = new Native.MemoryStatusEx { Length = (uint)Marshal.SizeOf<Native.MemoryStatusEx>() };
             if (Native.GlobalMemoryStatusEx(ref mem))
@@ -130,6 +139,9 @@ internal sealed class SystemSampler : IDisposable
         var j = name.IndexOf("_phys", StringComparison.OrdinalIgnoreCase);
         return i >= 0 && j > i ? name[i..j] : "";
     }
+
+    /// <summary>Última leitura (para anotar o momento de cada trecho da partida).</summary>
+    public (double? Cpu, double? Gpu) Latest { get; private set; }
 
     public (double? Cpu, double? Gpu, double? Ram) Stop()
     {

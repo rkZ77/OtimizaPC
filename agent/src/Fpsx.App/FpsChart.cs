@@ -23,6 +23,17 @@ public sealed class FpsChart : FrameworkElement
         nameof(MonitorHz), typeof(int?), typeof(FpsChart),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>Quedas fortes com a causa provável: marca no gráfico e texto ao passar o mouse.</summary>
+    public static readonly DependencyProperty DropsProperty = DependencyProperty.Register(
+        nameof(Drops), typeof(IReadOnlyList<DropCause>), typeof(FpsChart),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public IReadOnlyList<DropCause>? Drops
+    {
+        get => (IReadOnlyList<DropCause>?)GetValue(DropsProperty);
+        set => SetValue(DropsProperty, value);
+    }
+
     public IReadOnlyList<FpsPoint>? Points
     {
         get => (IReadOnlyList<FpsPoint>?)GetValue(PointsProperty);
@@ -126,6 +137,25 @@ public sealed class FpsChart : FrameworkElement
             Text(dc, $"monitor {hz} Hz", muted, 11, w - Right - 80, Y(hz) - 16);
         }
 
+        // Marca de cada queda forte, na base do gráfico.
+        var danger = Res("Danger");
+        var step = pts.Count > 1 ? Math.Max(1, pts[1].T - pts[0].T) : 1;
+        int IndexOf(int t) => Math.Clamp((int)Math.Round((t - pts[0].T) / (double)Math.Max(1, pts[^1].T - pts[0].T) * (pts.Count - 1)), 0, pts.Count - 1);
+        foreach (var d in Drops ?? [])
+        {
+            var dx = X(IndexOf(d.T));
+            var tri = new StreamGeometry();
+            using (var g = tri.Open())
+            {
+                g.BeginFigure(new Point(dx, Top + plotH - 7), true, true);
+                g.LineTo(new Point(dx - 4, Top + plotH), false, false);
+                g.LineTo(new Point(dx + 4, Top + plotH), false, false);
+            }
+
+            tri.Freeze();
+            dc.DrawGeometry(danger, null, tri);
+        }
+
         // Eixo de tempo: início, meio e fim.
         foreach (var i in new[] { 0, pts.Count / 2, pts.Count - 1 })
         {
@@ -141,7 +171,12 @@ public sealed class FpsChart : FrameworkElement
             dc.DrawLine(new Pen(muted, 1), new Point(x, Top), new Point(x, Top + plotH));
             dc.DrawEllipse(accent, null, new Point(x, Y(p.Fps)), 3.5, 3.5);
             var tip = $"{Clock(p.T - pts[0].T)}   {p.Fps:0} FPS   pior quadro {p.Low:0}";
+            // Perto de uma queda, o texto diz o que estava acontecendo no PC.
+            if ((Drops ?? []).Where(d => Math.Abs(d.T - p.T) <= step).OrderBy(d => Math.Abs(d.T - p.T)).FirstOrDefault() is { } cause)
+                tip += "
+" + cause.Text;
             var ft = Format(tip, Res("Text"), 12);
+            ft.MaxTextWidth = Math.Max(120, Math.Min(360, w - Left - Right - 12));
             var bx = Math.Clamp(x + 10, Left, w - Right - ft.Width - 12);
             dc.DrawRoundedRectangle(Res("Surface2"), new Pen(Res("Border"), 1), new Rect(bx, Top + 2, ft.Width + 12, ft.Height + 6), 6, 6);
             dc.DrawText(ft, new Point(bx + 6, Top + 5));

@@ -81,6 +81,9 @@ public sealed class ApiClient(HttpClient http)
         return body.GetProperty("accepted").GetInt32();
     }
 
+    public Task SendGameplayAsync(string deviceToken, GameplayUpload match, CancellationToken ct = default) =>
+        SendAsync(HttpMethod.Post, "api/agent/gameplay", match, null, deviceToken, ct);
+
     public Task SendBenchmarkAsync(string deviceToken, object benchmark, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Post, "api/agent/benchmarks", benchmark, null, deviceToken, ct);
 
@@ -169,6 +172,14 @@ public sealed record TelemetryEvent
     public string Event { get; init; } = "";
     public string? OptimizationId { get; init; }
     public bool? Success { get; init; }
+
+    /// <summary>
+    /// Quando aconteceu e em que versão. A fila pode ficar dias no PC sem
+    /// internet; sem isto, o servidor via a hora e a versão do envio.
+    /// </summary>
+    public DateTimeOffset? OccurredAt { get; init; }
+
+    public string? AgentVersion { get; init; }
 
     [JsonPropertyName("detail")]
     public Dictionary<string, object> Detail { get; init; } = new();

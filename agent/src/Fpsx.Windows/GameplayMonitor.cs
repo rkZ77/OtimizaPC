@@ -163,6 +163,8 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
         var self = Process.GetCurrentProcess();
         var previousPriority = self.PriorityClass;
         var foreground = new List<bool>();
+        var load = new List<LoadSample>();
+        var topApp = new TopAppSampler(game.Id);
         DateTimeOffset endedAt;
         double? cpu, gpu;
         using (var pm = StartPresentMon(game.Id, sink, pmLog))
@@ -179,6 +181,15 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
                 while (!ct.IsCancellationRequested && !HasExited(game) && watch.Elapsed < MaxCapture)
                 {
                     foreground.Add(IsForeground(game.Id));
+                    // Anota o uso do PC a cada 5 s, junto com o ritmo do amostrador
+                    // de CPU e GPU: é o que explica depois cada queda do gráfico.
+                    if (foreground.Count % 5 == 0)
+                    {
+                        var (c, g) = sampler.Latest;
+                        var (app, appCpu) = topApp.Sample();
+                        load.Add(new LoadSample(foreground.Count, c, g, app, Math.Round(appCpu, 1)));
+                    }
+
                     var (fps, low) = sink.Current;
                     LiveFps?.Invoke(profile.Name, fps, low);
                     ct.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
@@ -219,7 +230,7 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
             using (var reader = new StreamReader(csv))
                 (frametimes, timeline) = GameplayAnalyzer.Analyze(PresentMonCsv.ReadTimedFrames(reader, game.Id), foreground);
 
-            var (session, reason) = GameplayAnalyzer.Build(frametimes, profile.Id, profile.Name, startedAt, endedAt, cpu, gpu, PrimaryHz(), appVersion, timeline);
+            var (session, reason) = GameplayAnalyzer.Build(frametimes, profile.Id, profile.Name, startedAt, endedAt, cpu, gpu, PrimaryHz(), appVersion, timeline, load);
             if (session is null)
             {
                 Status = $"{profile.Name}: {reason}";
@@ -235,6 +246,55 @@ public sealed class GameplayMonitor(IReadOnlyList<GameProfile> profiles, string 
             // FPSX_KEEP_GAMEPLAY_CSV=1 guarda o arquivo para diagnóstico.
             if (Environment.GetEnvironmentVariable("FPSX_KEEP_GAMEPLAY_CSV") != "1")
                 TryDelete(csv);
+        }
+    }
+
+    /// <summary>
+    /// Qual programa, fora o jogo e o FPSX, mais usou processador desde a última
+    /// amostra. Só programas do usuário: serviço do Windows e antivírus não são
+    /// "culpados" que a pessoa possa fechar. O nome fica só no PC.
+    /// </summary>
+    private sealed class TopAppSampler(int gamePid)
+    {
+        private Dictionary<int, (string Name, TimeSpan Cpu)> _last = [];
+        private DateTime _lastAt = DateTime.UtcNow;
+
+        public (string? App, double CpuPercent) Sample()
+        {
+            var now = DateTime.UtcNow;
+            var current = new Dictionary<int, (string, TimeSpan)>();
+            foreach (var p in Process.GetProcesses())
+            {
+                using (p)
+                {
+                    if (p.Id == gamePid || p.Id == Environment.ProcessId)
+                        continue;
+                    try
+                    {
+                        current[p.Id] = (p.ProcessName, p.TotalProcessorTime);
+                    }
+                    catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or UnauthorizedAccessException)
+                    {
+                    }
+                }
+            }
+
+            var seconds = (now - _lastAt).TotalSeconds * Environment.ProcessorCount;
+            var top = current
+                .Where(kv => _last.ContainsKey(kv.Key) && string.Equals(_last[kv.Key].Name, kv.Value.Item1, StringComparison.Ordinal))
+                .Where(kv => !kv.Value.Item1.StartsWith("PresentMon", StringComparison.OrdinalIgnoreCase))
+                .Where(kv => Fpsx.Core.Diagnostics.ProcessClassifier.Classify(kv.Value.Item1) == Fpsx.Core.Diagnostics.ProcessCategory.User)
+                // Programa, não processo: as abas do navegador somam.
+                .GroupBy(kv => kv.Value.Item1, StringComparer.OrdinalIgnoreCase)
+                .Select(g => (Name: g.Key, Cpu: g.Sum(kv => (kv.Value.Item2 - _last[kv.Key].Cpu).TotalSeconds)))
+                .OrderByDescending(x => x.Cpu)
+                .FirstOrDefault();
+            _last = current;
+            _lastAt = now;
+            if (top.Name is null || seconds <= 0)
+                return (null, 0);
+            var name = top.Name.Length > 0 ? char.ToUpperInvariant(top.Name[0]) + top.Name[1..] : top.Name;
+            return (name, Math.Max(0, 100 * top.Cpu / seconds));
         }
     }
 

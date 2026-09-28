@@ -126,6 +126,7 @@ public sealed class AgentContext
             }
 
             await FlushTelemetryAsync(api, token, ct);
+            await FlushGameplayAsync(api, token, ct);
             return new SyncResult(true, null);
         }
         catch (ApiException ex) when (ex.Status == System.Net.HttpStatusCode.Unauthorized)
@@ -153,6 +154,26 @@ public sealed class AgentContext
             return;
         await api.SendTelemetryAsync(token, batch, ct);
         Storage.DropFromQueue(batch.Count);
+    }
+
+    /// <summary>Partidas por sincronização: o resto vai nas próximas, sem pesar na abertura do app.</summary>
+    public const int GameplayBatch = 20;
+
+    /// <summary>
+    /// Sobe as partidas ainda não enviadas, só com consentimento. É com elas que
+    /// dá para ver, no conjunto de PCs, o que de fato mudou o FPS e calibrar as
+    /// regras por nível de hardware.
+    /// </summary>
+    private async Task FlushGameplayAsync(ApiClient api, string token, CancellationToken ct)
+    {
+        if (Settings.TelemetryConsent != true)
+            return;
+        var sent = Storage.UploadedGameplay();
+        foreach (var match in Gameplay.All().Where(s => !sent.Contains(s.Id)).OrderBy(s => s.StartedAt).Take(GameplayBatch))
+        {
+            await api.SendGameplayAsync(token, GameplayUpload.From(match), ct);
+            Storage.MarkGameplayUploaded(match.Id);
+        }
     }
 
     /// <summary>Registra o resultado de uma sessão na fila, se o usuário consentiu.</summary>

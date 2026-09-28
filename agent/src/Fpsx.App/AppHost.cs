@@ -289,8 +289,17 @@ public sealed class AppHost : ObservableObject
         _monitor.LiveFps += (game, fps, low) => OnUi(() => OnLive(game, fps, low));
         _monitor.Recorded += s =>
         {
+            // O hardware vai junto: sem ele a partida não se compara com
+            // PCs parecidos nem ajuda a calibrar as regras por nível de PC.
+            if (Scan is { } scan)
+                s = s with { Hardware = Fpsx.Core.Benchmark.HardwareSummary.From(scan.Snapshot) };
             Ctx.Gameplay.Save(s);
-            OnUi(() => GameplayRecorded?.Invoke(s));
+            OnUi(() =>
+            {
+                GameplayRecorded?.Invoke(s);
+                // Sobe a partida já (com consentimento). Sem internet, vai na próxima sincronização.
+                _ = BackgroundSyncAsync();
+            });
         };
         _monitor.Start();
         MonitorStatus = _monitor.Status;
@@ -315,6 +324,18 @@ public sealed class AppHost : ObservableObject
     {
         await Ctx.SyncAsync(WindowsBuild);
         RefreshLicense();
+    }
+
+    private async Task BackgroundSyncAsync()
+    {
+        try
+        {
+            await SyncAsync();
+        }
+        catch (Exception ex) when (ex is Fpsx.Client.ApiException or IOException or System.Text.Json.JsonException)
+        {
+            // Sem rede ou servidor fora: a partida fica na fila e sobe na próxima.
+        }
     }
 
     /// <summary>Reabre o FPSX elevado (UAC). O Windows pergunta; o usuário pode recusar.</summary>

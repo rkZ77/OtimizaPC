@@ -45,7 +45,7 @@ public sealed class GamesViewModel : PageViewModel
     {
         OptimizeGameCommand = new AsyncCommand(p => Busy(() => Optimize((string)p!)), p => !IsBusy && p is string);
         RevertGameCommand = new AsyncCommand(p => Busy(() => Revert((string)p!)), p => !IsBusy && p is string);
-        ShaderCommand = new AsyncCommand(() => Busy(() => ApplyFlow.RunAsync(["shader-cache-clear-cs2"], Reporter)), () => !IsBusy);
+        ShaderCommand = new AsyncCommand(() => Busy(ClearShaders), () => !IsBusy);
         ScanCommand = new AsyncCommand(() => Busy(() => _host.RunScanAsync(Reporter, network: false)), () => !IsBusy);
         _host.PropertyChanged += (_, e) =>
         {
@@ -83,6 +83,15 @@ public sealed class GamesViewModel : PageViewModel
         if (ids.Count > 0)
             await ApplyFlow.RunAsync(ids, Reporter);
         Load();
+    }
+
+    private async Task ClearShaders()
+    {
+        if (!Dialogs.Confirm("Limpar cache de shaders",
+                "Use só se o jogo começou a travar de um jeito estranho ou mostrar erro gráfico depois de uma atualização. Não aumenta FPS. A primeira partida depois fica com mais travadas enquanto o jogo recria os shaders, e o FPSX deixa essa partida fora do antes e depois.",
+                "Limpar mesmo assim"))
+            return;
+        await ApplyFlow.RunAsync(["shader-cache-clear-cs2"], Reporter);
     }
 
     private async Task Revert(string gameId)
