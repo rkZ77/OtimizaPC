@@ -173,8 +173,7 @@ public sealed class FpsChart : FrameworkElement
             var tip = $"{Clock(p.T - pts[0].T)}   {p.Fps:0} FPS   pior quadro {p.Low:0}";
             // Perto de uma queda, o texto diz o que estava acontecendo no PC.
             if ((Drops ?? []).Where(d => Math.Abs(d.T - p.T) <= step).OrderBy(d => Math.Abs(d.T - p.T)).FirstOrDefault() is { } cause)
-                tip += "
-" + cause.Text;
+                tip += Environment.NewLine + cause.Text;
             var ft = Format(tip, Res("Text"), 12);
             ft.MaxTextWidth = Math.Max(120, Math.Min(360, w - Left - Right - 12));
             var bx = Math.Clamp(x + 10, Left, w - Right - ft.Width - 12);
