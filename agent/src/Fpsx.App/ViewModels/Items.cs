@@ -160,6 +160,21 @@ public sealed record OpenAppItem(string Name, string Kind, string Detail, string
         _ => "Se não estiver usando, feche antes de jogar.",
     };
 
+    /// <summary>Ícone do próprio programa aberto (o mesmo da barra de tarefas), guardado como os dos jogos.</summary>
+    private static System.Windows.Media.ImageSource? IconOf(string processName, int pid)
+    {
+        try
+        {
+            using var p = System.Diagnostics.Process.GetProcessById(pid);
+            return p.MainModule?.FileName is { } exe ? GameIcons.Get("app-" + processName.ToLowerInvariant(), exe) : null;
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            // Programa protegido ou que já fechou: fica com as iniciais.
+            return GameIcons.Get("app-" + processName.ToLowerInvariant());
+        }
+    }
+
     /// <summary>Acima disto o programa entra na lista: abaixo, o peso não aparece no jogo.</summary>
     public const double MinCpuPercent = 3;
 
@@ -196,7 +211,10 @@ public sealed record OpenAppItem(string Name, string Kind, string Detail, string
                     x.Window!.Minimized ? ", minimizado: aberto sem uso" : "");
                 var proposal = $"background-process-close:{x.Window.Pid}";
                 return new OpenAppItem(name, isGame ? "Jogo" : x.Category == ProcessCategory.Launcher ? "Launcher" : "Programa", detail,
-                    closable.Contains(proposal) ? proposal : null);
+                    closable.Contains(proposal) ? proposal : null)
+                {
+                    Icon = IconOf(x.Key, x.Window.Pid),
+                };
             })
             .ToList();
     }
