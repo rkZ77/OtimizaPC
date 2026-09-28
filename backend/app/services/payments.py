@@ -109,6 +109,9 @@ class MercadoPagoProvider:
             "items": [{"title": title, "quantity": 1, "currency_id": "BRL", "unit_price": amount_cents / 100}],
             "payer": {"email": payer_email},
             "external_reference": reference,
+            # Nome na fatura do cartao (ate 13 caracteres): sem ele aparece o
+            # nome da conta do Mercado Pago, e a pessoa nao reconhece a compra.
+            "statement_descriptor": "RKZFPS",
             "back_urls": {
                 "success": f"{settings.PUBLIC_URL}/conta?pagamento=aprovado",
                 "pending": f"{settings.PUBLIC_URL}/conta?pagamento=pendente",
