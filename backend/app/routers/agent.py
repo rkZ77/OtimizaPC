@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from app import auth, signing
 from datetime import datetime
 
-from app.services import catalog, gameplay, licenses, telemetry, users
+from app.services import assistant, catalog, gameplay, licenses, telemetry, users
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
@@ -154,6 +154,22 @@ def gameplay_peers(game_id: str = Query(pattern=_GAME_ID), ctx=Depends(device_co
     """Como PCs parecidos rodam o jogo (mediana, minimo de PCs no grupo)."""
     _, device = ctx
     return gameplay.peers(device, game_id)
+
+
+class ExplainIn(BaseModel):
+    hardware: dict = Field(default_factory=dict)
+    findings: list[dict] = Field(default_factory=list, max_length=20)
+
+
+@router.post("/explain")
+def explain(body: ExplainIn, ctx=Depends(device_context)):
+    """Diagnostico em palavras simples, com IA, a pedido da pessoa (botao no app)."""
+    _, device = ctx
+    auth.rate_limit("explain", str(device["id"]), limit=10, window_seconds=86400)
+    try:
+        return {"text": assistant.explain(body.hardware, body.findings)}
+    except assistant.AssistantUnavailable as e:
+        raise HTTPException(503, str(e)) from e
 
 
 @router.get("/catalog")

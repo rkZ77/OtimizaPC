@@ -177,6 +177,28 @@ public sealed class AgentContext
     }
 
     /// <summary>
+    /// Pede à IA o diagnóstico em palavras simples. Vai só o resumo do
+    /// hardware e, de cada item, estado, título, recomendação e efeito
+    /// esperado: o detalhe (que pode ter nome de programa) não sai do PC.
+    /// </summary>
+    public async Task<string> ExplainAsync(IReadOnlyDictionary<string, string> hardware, IEnumerable<Fpsx.Core.Diagnostics.Finding> findings, CancellationToken ct = default)
+    {
+        if (Storage.LoadToken() is not { } token)
+            throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Entre na sua conta (tela Conta) para usar a explicação com IA.");
+        var items = findings
+            .Where(f => f.Status is HealthStatus.Problem or HealthStatus.Attention)
+            .Select(f => new
+            {
+                status = f.Status == HealthStatus.Problem ? "PROBLEMA" : "ATENCAO",
+                title = f.Title,
+                recommendation = f.Recommendation,
+                impact = f.Impact?.ToString(),
+            })
+            .ToList();
+        return await Api().ExplainAsync(token, new { hardware, findings = items }, ct);
+    }
+
+    /// <summary>
     /// Como PCs parecidos rodam o jogo. Só para quem compartilha as partidas:
     /// a comparação existe porque todos contribuem. null = sem conta, sem
     /// consentimento ou sem internet.

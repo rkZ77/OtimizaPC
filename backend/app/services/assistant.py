@@ -126,3 +126,40 @@ def ask(messages: list[dict]) -> str:
     if r.status_code != 200:
         raise AssistantUnavailable("O assistente nao conseguiu responder agora. Tente de novo.")
     return r.json()["choices"][0]["message"]["content"].strip()
+
+
+EXPLICAR = """
+Voce explica o diagnostico do RKZFPS para quem joga e nao entende de PC. Responda em portugues do Brasil,
+em texto simples, sem markdown pesado, em ate 150 palavras:
+1. Uma frase dizendo como o PC esta' para jogos, pelo hardware.
+2. O que fazer primeiro, em ordem de maior efeito no jogo (no maximo 3 itens), usando SO' os itens do
+   diagnostico abaixo. Para cada um, diga em palavras simples por que ajuda.
+Regras: nunca prometa numero de FPS (o app mede o real nas partidas). Nunca sugira desligar antivirus,
+firewall, Windows Update, servicos em massa, limpador de RAM ou overclock. Nao invente item que nao esta' na
+lista. Se a lista estiver vazia, diga que o PC esta' bem configurado e que o proximo passo e' jogar com o app
+aberto para medir o FPS. Nao use emoji, travessao nem ponto do meio.
+"""
+
+
+def explain(hardware: dict, findings: list[dict]) -> str:
+    """Diagnostico do app em palavras simples. Recebe so' titulo, estado e recomendacao de cada item
+    (nada de nome de programa, arquivo ou pasta) e o resumo do hardware."""
+    if not settings.OPENAI_API_KEY:
+        raise AssistantUnavailable("Explicacao com IA indisponivel agora.")
+    hw = ", ".join(f"{k}: {str(v)[:80]}" for k, v in list(hardware.items())[:10])
+    items = "\n".join(
+        f"- [{str(f.get('status', ''))[:12]}] {str(f.get('title', ''))[:160]}. {str(f.get('recommendation') or '')[:300]}"
+        f"{' (efeito: ' + str(f['impact'])[:40] + ')' if f.get('impact') else ''}"
+        for f in findings[:12])
+    _take_global_slot()
+    r = httpx.post(
+        OPENAI_URL,
+        headers={"Authorization": f"Bearer {settings.OPENAI_API_KEY}"},
+        json={"model": settings.OPENAI_MODEL, "max_completion_tokens": 500,
+              "messages": [{"role": "system", "content": EXPLICAR},
+                           {"role": "user", "content": f"HARDWARE: {hw}\n\nDIAGNOSTICO:\n{items or '(nada a corrigir)'}"}]},
+        timeout=40,
+    )
+    if r.status_code != 200:
+        raise AssistantUnavailable("A IA nao conseguiu responder agora. Tente de novo.")
+    return r.json()["choices"][0]["message"]["content"].strip()

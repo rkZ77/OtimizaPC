@@ -73,6 +73,7 @@ public sealed class DashboardViewModel : PageViewModel
         CloseAppCommand = new AsyncCommand(p => Busy(() => ApplyFlow.RunAsync([((OpenAppItem)p!).ProposalId!], Reporter)),
             p => !IsBusy && p is OpenAppItem { CanClose: true });
         OpenUrlCommand = new RelayCommand(p => AppHost.OpenUrl((string)p!), p => p is string);
+        ExplainCommand = new AsyncCommand(Explain, () => !IsBusy && !_explaining && HasScan);
         HeroCommand = new AsyncCommand(Hero, () => !IsBusy);
         GoGamesCommand = new RelayCommand(() => _host.Navigate<GamesViewModel>());
         GoGameplayCommand = new RelayCommand(() => _host.Navigate<GameplayViewModel>());
@@ -190,6 +191,37 @@ public sealed class DashboardViewModel : PageViewModel
     public ICommand OptimizeCommand { get; }
     public ICommand FixCommand { get; }
     public ICommand CloseAppCommand { get; }
+    public ICommand ExplainCommand { get; }
+
+    private bool _explaining;
+    private string _explainText = "";
+
+    /// <summary>O diagnóstico em palavras simples, escrito pela IA a pedido da pessoa.</summary>
+    public string ExplainText
+    {
+        get => _explainText;
+        private set => Set(ref _explainText, value);
+    }
+
+    private async Task Explain()
+    {
+        if (_host.Scan is not { } scan || _host.Report is not { } report)
+            return;
+        _explaining = true;
+        ExplainText = "Lendo o seu diagnóstico...";
+        try
+        {
+            ExplainText = await _host.Ctx.ExplainAsync(report.Hardware, scan.Findings);
+        }
+        catch (Fpsx.Client.ApiException ex)
+        {
+            ExplainText = ex.Message;
+        }
+        finally
+        {
+            _explaining = false;
+        }
+    }
     public ICommand OpenUrlCommand { get; }
 
     public bool HasScan => _host.Scan is not null;

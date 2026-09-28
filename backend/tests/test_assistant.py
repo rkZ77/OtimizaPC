@@ -68,3 +68,28 @@ def test_responde_com_o_system_prompt_e_limita_por_visitante(client, monkeypatch
     # Outro visitante continua conseguindo.
     other = client.post("/api/public/assistant", json={"messages": [{"role": "user", "content": "oi"}]}, headers={"X-Forwarded-For": "200.2.2.2"})
     assert other.status_code == 200
+
+
+def test_explicar_do_app_exige_pc_autenticado_e_limita_por_dia(monkeypatch):
+    from app import signing
+    from app.routers import agent as agent_router
+    from app.services import licenses
+
+    monkeypatch.setattr(agent_router.users, "get_by_id", lambda uid: {"id": 7, "email": "a@b.c", "name": "A", "role": "user", "active": True})
+    monkeypatch.setattr(licenses, "device_by_hash", lambda uid, h: {"id": 3, "agent_version": "0.4.5", "windows_build": "26200"})
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "sk-teste")
+    assistant._global.clear()
+    sent = []
+    monkeypatch.setattr(assistant.httpx, "post", lambda url, **kw: sent.append(kw) or FakeResponse())
+    c = TestClient(app)
+    body = {"hardware": {"GPU": "Radeon RX 580"}, "findings": [{"status": "ATENCAO", "title": "Memória abaixo da velocidade", "recommendation": "Ligue o XMP"}]}
+
+    assert c.post("/api/agent/explain", json=body).status_code == 401
+    c.headers["X-Device-Token"] = signing.sign({"uid": 7, "device": "a" * 64})
+    r = c.post("/api/agent/explain", json=body)
+    assert r.status_code == 200 and r.json()["text"]
+    user_msg = sent[0]["json"]["messages"][1]["content"]
+    assert "Radeon RX 580" in user_msg and "Ligue o XMP" in user_msg
+    for _ in range(9):
+        c.post("/api/agent/explain", json=body)
+    assert c.post("/api/agent/explain", json=body).status_code == 429

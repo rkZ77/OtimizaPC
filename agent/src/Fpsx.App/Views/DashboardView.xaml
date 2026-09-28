@@ -50,6 +50,24 @@
                 </Button>
             </UniformGrid>
 
+            <!-- Explicação com IA: o diagnóstico em palavras simples, a pedido -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Explicar em palavras simples" Command="{Binding ExplainCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <StackPanel>
+                            <TextBlock Text="Entenda o seu PC com IA" Style="{StaticResource H2}" Margin="0" />
+                            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Text="A IA lê o resumo do diagnóstico (sem nomes de programas nem arquivos) e diz o que fazer primeiro. Quem muda algo no PC continua sendo você, pelos botões do app." />
+                        </StackPanel>
+                    </DockPanel>
+                    <Border Background="{StaticResource Surface2}" CornerRadius="8" Padding="14,12" Margin="0,12,0,0"
+                            Visibility="{Binding ExplainText, Converter={StaticResource Visible}}">
+                        <TextBlock Text="{Binding ExplainText}" TextWrapping="Wrap" LineHeight="21" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
             <!-- Abertos agora e pesando (todo usuário): o que fechar antes de jogar -->
             <Border Style="{StaticResource Card}" Visibility="{Binding OpenApps.Count, Converter={StaticResource Visible}}">
                 <StackPanel>

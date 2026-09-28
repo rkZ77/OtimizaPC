@@ -81,6 +81,13 @@ public sealed class ApiClient(HttpClient http)
         return body.GetProperty("accepted").GetInt32();
     }
 
+    /// <summary>Diagnóstico em palavras simples, com IA (só títulos e recomendações, nada pessoal).</summary>
+    public async Task<string> ExplainAsync(string deviceToken, object summary, CancellationToken ct = default)
+    {
+        var body = await SendAsync(HttpMethod.Post, "api/agent/explain", summary, null, deviceToken, ct);
+        return body.GetProperty("text").GetString() ?? "";
+    }
+
     public Task SendGameplayAsync(string deviceToken, GameplayUpload match, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Post, "api/agent/gameplay", match, null, deviceToken, ct);
 
