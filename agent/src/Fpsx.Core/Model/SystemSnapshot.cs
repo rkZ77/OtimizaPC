@@ -85,6 +85,26 @@ public sealed record MemoryInfo
     public bool? PagefileAutomatic { get; init; }
 
     public double UsedPercent => TotalBytes <= 0 ? 0 : 100.0 * (TotalBytes - AvailableBytes) / TotalBytes;
+
+    /// <summary>Pentes instalados. Vazio = não lido (a regra não conclui nada).</summary>
+    public IReadOnlyList<MemoryModule> Modules { get; init; } = [];
+}
+
+public sealed record MemoryModule
+{
+    /// <summary>Encaixe na placa-mãe (DIMM 1, ChannelA-DIMM0...).</summary>
+    public string Slot { get; init; } = "";
+
+    /// <summary>Rótulo do banco, que costuma trazer o canal (P0 CHANNEL A).</summary>
+    public string Bank { get; init; } = "";
+
+    public long CapacityBytes { get; init; }
+
+    /// <summary>Velocidade em que está rodando agora (MT/s).</summary>
+    public int ConfiguredMts { get; init; }
+
+    /// <summary>Código do fabricante, de onde sai a velocidade de fábrica.</summary>
+    public string PartNumber { get; init; } = "";
 }
 
 public sealed record DiskInfo
@@ -178,6 +198,9 @@ public sealed record ProcessSample
 
     /// <summary>Tem janela principal: só esse processo recebe o pedido de fechar (o X).</summary>
     public bool HasWindow { get; init; }
+
+    /// <summary>Janela minimizada: aberto, mas a pessoa não está usando agora.</summary>
+    public bool Minimized { get; init; }
 }
 
 public sealed record DisplayInfo
@@ -188,6 +211,9 @@ public sealed record DisplayInfo
     public int Width { get; init; }
     public int Height { get; init; }
     public int CurrentHz { get; init; }
+
+    /// <summary>Placa de vídeo em que o monitor está ligado (o cabo).</summary>
+    public string AdapterName { get; init; } = "";
     public int MaxHzAtCurrentResolution { get; init; }
 }
 

@@ -56,4 +56,16 @@ public static class StatusStyle
         Fpsx.Core.Model.Potential.Low => "Potencial baixo",
         _ => "Troubleshooting (não aumenta FPS)",
     };
+
+    /// <summary>
+    /// O que a pessoa pode esperar, em palavras de quem joga. Nunca número:
+    /// número só sai da medição das partidas.
+    /// </summary>
+    public static string Impact(Potential p) => p switch
+    {
+        Fpsx.Core.Model.Potential.High => "Pode fazer diferença grande no FPS",
+        Fpsx.Core.Model.Potential.Moderate => "Deve deixar o jogo mais fluido",
+        Fpsx.Core.Model.Potential.Low => "Efeito pequeno: mais estabilidade",
+        _ => "Não muda o FPS: resolve um problema",
+    };
 }

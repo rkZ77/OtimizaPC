@@ -50,6 +50,37 @@
                 </Button>
             </UniformGrid>
 
+            <!-- Abertos agora e pesando (todo usuário): o que fechar antes de jogar -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding OpenApps.Count, Converter={StaticResource Visible}}">
+                <StackPanel>
+                    <TextBlock Text="Abertos agora e pesando" Style="{StaticResource H2}" Margin="0" />
+                    <TextBlock Text="Programas e jogos abertos que disputam o PC com o jogo. Fechar o que você não está usando libera processador e memória." Style="{StaticResource MutedText}" Margin="0,4,0,8" />
+                    <ItemsControl ItemsSource="{Binding OpenApps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="0,10">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="Fechar" VerticalAlignment="Center" Margin="12,0,0,0" CommandParameter="{Binding}"
+                                                Command="{Binding DataContext.CloseAppCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                Visibility="{Binding CanClose, Converter={StaticResource Visible}}" />
+                                        <ContentControl DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource GameBadge}" VerticalAlignment="Center" Margin="0,0,12,0" Focusable="False" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock>
+                                                <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" />
+                                                <Run Text="{Binding Kind, Mode=OneWay}" Foreground="{StaticResource Muted}" FontSize="12" />
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" />
+                                            <TextBlock Text="{Binding Hint}" Style="{StaticResource MutedText}" FontSize="12"
+                                                       Visibility="{Binding Hint, Converter={StaticResource Visible}}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <!-- Modo avançado: ferramentas e números -->
             <DockPanel Margin="0,0,0,12" Visibility="{Binding IsAdvanced, Converter={StaticResource Visible}}">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -112,6 +143,8 @@
                                                 </Border>
                                                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
                                             </StackPanel>
+                                            <TextBlock Text="{Binding ImpactText}" Foreground="{StaticResource Accent}" FontWeight="SemiBold" FontSize="13" Margin="0,4,0,0"
+                                                       Visibility="{Binding ImpactText, Converter={StaticResource Visible}}" />
                                             <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                                             <TextBlock Text="{Binding Recommendation}" Foreground="{StaticResource Info}" FontSize="13" Margin="0,4,0,0"
                                                        Visibility="{Binding Recommendation, Converter={StaticResource Visible}}" />

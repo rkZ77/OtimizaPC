@@ -48,6 +48,13 @@ public sealed record Finding
     /// de uma lista fechada (FindingAction.IsAllowed).
     /// </summary>
     public IReadOnlyList<FindingAction> Actions { get; init; } = [];
+
+    /// <summary>
+    /// Efeito esperado de resolver, para a tela dizer em palavras simples
+    /// ("pode fazer diferença grande no FPS"). Nunca vira número: número só
+    /// sai de medição.
+    /// </summary>
+    public Potential? Impact { get; init; }
 }
 
 public sealed record FindingAction(string Label, string Target)

@@ -70,6 +70,8 @@ public sealed class DashboardViewModel : PageViewModel
         CpuTestCommand = new AsyncCommand(() => Busy(() => _host.RunScanAsync(Reporter, cpuTest: true)), () => !IsBusy);
         OptimizeCommand = new AsyncCommand(() => Busy(Optimize), () => !IsBusy && AutoCount > 0);
         FixCommand = new AsyncCommand(p => Busy(() => Fix((FindingItem)p!)), p => !IsBusy && p is FindingItem);
+        CloseAppCommand = new AsyncCommand(p => Busy(() => ApplyFlow.RunAsync([((OpenAppItem)p!).ProposalId!], Reporter)),
+            p => !IsBusy && p is OpenAppItem { CanClose: true });
         OpenUrlCommand = new RelayCommand(p => AppHost.OpenUrl((string)p!), p => p is string);
         HeroCommand = new AsyncCommand(Hero, () => !IsBusy);
         GoGamesCommand = new RelayCommand(() => _host.Navigate<GamesViewModel>());
@@ -187,12 +189,16 @@ public sealed class DashboardViewModel : PageViewModel
     public ICommand CpuTestCommand { get; }
     public ICommand OptimizeCommand { get; }
     public ICommand FixCommand { get; }
+    public ICommand CloseAppCommand { get; }
     public ICommand OpenUrlCommand { get; }
 
     public bool HasScan => _host.Scan is not null;
     public ObservableCollection<KeyValueItem> Hardware { get; } = [];
     public ObservableCollection<ReadinessItem> Readiness { get; } = [];
     public ObservableCollection<FindingItem> Problems { get; } = [];
+
+    /// <summary>Abertos agora e pesando: o que a pessoa pode fechar antes de jogar.</summary>
+    public ObservableCollection<OpenAppItem> OpenApps { get; } = [];
     public int ProblemCount { get; private set; }
     public int RecommendedCount { get; private set; }
     public int OptimalCount { get; private set; }
@@ -210,6 +216,7 @@ public sealed class DashboardViewModel : PageViewModel
         Hardware.Clear();
         Readiness.Clear();
         Problems.Clear();
+        OpenApps.Clear();
         var scan = _host.Scan;
         var report = _host.Report;
         if (scan is not null && report is not null)
@@ -221,6 +228,8 @@ public sealed class DashboardViewModel : PageViewModel
             foreach (var f in scan.Findings.Where(f => f.Status is HealthStatus.Problem or HealthStatus.Attention)
                          .OrderBy(f => f.Status == HealthStatus.Problem ? 0 : 1))
                 Problems.Add(new FindingItem(f, scan));
+            foreach (var app in OpenAppItem.From(scan, _host.Ctx.GameProfiles))
+                OpenApps.Add(app);
 
             ProblemCount = report.ProblemsFound;
             RecommendedCount = report.Recommended;

@@ -628,6 +628,7 @@
     { "id": "memory-integrity-status", "name": "Integridade de memória", "category": "security" },
     { "id": "game-settings", "name": "Configurações dos jogos", "category": "game" },
     { "id": "hardware-tier", "name": "Nível do hardware", "category": "gpu" },
-    { "id": "discord", "name": "Discord", "category": "gaming" }
+    { "id": "discord", "name": "Discord", "category": "gaming" },
+    { "id": "hardware-setup", "name": "Montagem do PC (memória, monitor, disco dos jogos)", "category": "system" }
   ]
 }

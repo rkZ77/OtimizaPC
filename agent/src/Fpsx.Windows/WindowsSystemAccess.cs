@@ -343,7 +343,7 @@ internal static class PowerApi
 
 internal static class DisplayApi
 {
-    public static IEnumerable<(string Device, string Friendly, bool Primary)> Devices()
+    public static IEnumerable<(string Device, string Friendly, bool Primary, string Adapter)> Devices()
     {
         for (uint i = 0; ; i++)
         {
@@ -355,7 +355,8 @@ internal static class DisplayApi
 
             var monitor = new Native.DisplayDevice { Cb = Marshal.SizeOf<Native.DisplayDevice>() };
             var friendly = Native.EnumDisplayDevices(dd.DeviceName, 0, ref monitor, 0) ? monitor.DeviceString : dd.DeviceString;
-            yield return (dd.DeviceName, friendly, (dd.StateFlags & Native.DisplayPrimary) != 0);
+            // DeviceString do adaptador é a placa em que o cabo do monitor está ligado.
+            yield return (dd.DeviceName, friendly, (dd.StateFlags & Native.DisplayPrimary) != 0, dd.DeviceString);
         }
     }
 

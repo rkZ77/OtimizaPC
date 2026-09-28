@@ -131,5 +131,6 @@ public static class DiagnosticRegistry
         new GameSettingsDiagnostic(),
         new HardwareTierDiagnostic(),
         new DiscordDiagnostic(),
+        new HardwareSetupDiagnostic(),
     ];
 }

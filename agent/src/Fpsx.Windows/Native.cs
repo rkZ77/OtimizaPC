@@ -136,4 +136,9 @@ internal static class Native
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern int ChangeDisplaySettingsEx(string deviceName, ref DevMode devMode, IntPtr hwnd, uint flags, IntPtr lParam);
+
+    /// <summary>Janela minimizada (programa aberto que a pessoa não está usando).</summary>
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsIconic(IntPtr hWnd);
 }

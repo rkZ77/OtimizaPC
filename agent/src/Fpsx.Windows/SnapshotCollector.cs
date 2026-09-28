@@ -147,9 +147,9 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
             .Where(a => before.ContainsKey(a.Key))
             .Select(a =>
             {
-                var (name, cpuTime, ws, window) = a.Value;
+                var (name, cpuTime, ws, window, minimized) = a.Value;
                 var delta = (cpuTime - before[a.Key].Cpu).TotalSeconds;
-                return new ProcessSample { Pid = a.Key, Name = name, CpuPercent = Math.Max(0, 100.0 * delta / (elapsed * cores)), WorkingSetBytes = ws, HasWindow = window };
+                return new ProcessSample { Pid = a.Key, Name = name, CpuPercent = Math.Max(0, 100.0 * delta / (elapsed * cores)), WorkingSetBytes = ws, HasWindow = window, Minimized = minimized };
             })
             .Where(p => p.Pid != Environment.ProcessId)
             .OrderByDescending(p => p.CpuPercent).ThenByDescending(p => p.WorkingSetBytes)
@@ -191,16 +191,17 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         GC.KeepAlive(x);
     }
 
-    private static Dictionary<int, (string Name, TimeSpan Cpu, long Ws, bool Window)> ProcessTimes()
+    private static Dictionary<int, (string Name, TimeSpan Cpu, long Ws, bool Window, bool Minimized)> ProcessTimes()
     {
-        var result = new Dictionary<int, (string, TimeSpan, long, bool)>();
+        var result = new Dictionary<int, (string, TimeSpan, long, bool, bool)>();
         foreach (var p in Process.GetProcesses())
         {
             using (p)
             {
                 try
                 {
-                    result[p.Id] = (p.ProcessName, p.TotalProcessorTime, p.WorkingSet64, p.MainWindowHandle != IntPtr.Zero);
+                    var window = p.MainWindowHandle;
+                    result[p.Id] = (p.ProcessName, p.TotalProcessorTime, p.WorkingSet64, window != IntPtr.Zero, window != IntPtr.Zero && Native.IsIconic(window));
                 }
                 catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or UnauthorizedAccessException)
                 {
@@ -324,6 +325,17 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
             // quando a outra classe respondeu e diz que não é automático.
             PagefilePresent = pagefiles.Count > 0 ? true : cs is null ? null : false,
             PagefileAutomatic = cs?.Str("AutomaticManagedPagefile") is { Length: > 0 } a ? a.Equals("True", StringComparison.OrdinalIgnoreCase) : null,
+            Modules = Wmi.Query("SELECT DeviceLocator, BankLabel, Capacity, ConfiguredClockSpeed, Speed, PartNumber FROM Win32_PhysicalMemory")
+                .Select(r => new MemoryModule
+                {
+                    Slot = r.Str("DeviceLocator").Trim(),
+                    Bank = r.Str("BankLabel").Trim(),
+                    CapacityBytes = r.Long("Capacity") ?? 0,
+                    // ConfiguredClockSpeed é a velocidade atual; placas antigas só preenchem Speed.
+                    ConfiguredMts = (int)(r.Long("ConfiguredClockSpeed") is > 0 and var c ? c : r.Long("Speed") ?? 0),
+                    PartNumber = r.Str("PartNumber").Trim(),
+                })
+                .ToList(),
         };
     }
 
@@ -451,6 +463,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
                 DeviceName = x.d.Device,
                 FriendlyName = x.d.Friendly,
                 IsPrimary = x.d.Primary,
+                AdapterName = x.d.Adapter,
                 Width = x.mode!.Width,
                 Height = x.mode.Height,
                 CurrentHz = x.mode.RefreshHz,

@@ -32,7 +32,13 @@ public sealed class FindingItem
             FixId = fix.Definition.Id;
             FixBlockedReason = fix.Decision == Decision.Blocked ? fix.Reason : null;
         }
+
+        var impact = f.Impact ?? (fix is not null && fix.Evaluation.Potential != Potential.None ? fix.Evaluation.Potential : null);
+        ImpactText = impact is { } p ? StatusStyle.Impact(p) : null;
     }
+
+    /// <summary>"Pode fazer diferença grande no FPS": o efeito esperado, sem número.</summary>
+    public string? ImpactText { get; }
 
     public Finding Finding { get; }
     public string Title => Finding.Title;
@@ -131,4 +137,67 @@ public sealed class SessionItem(SessionRecord s)
         $"{s.AlreadyOptimal.Count} já estavam corretas, {s.Skipped.Count} ignorada(s)";
     public IReadOnlyList<ChangeItem> Changes { get; } = s.Changes.Select(c => new ChangeItem(s.Id, c)).ToList();
     public bool CanUndo => Changes.Any(c => c.CanUndo);
+}
+
+/// <summary>
+/// Programa ou jogo aberto que pesa agora. Mostra quanto pesa em palavras e
+/// se a pessoa nem está usando (minimizado). Só tem botão de fechar quando o
+/// RKZFPS pode pedir com segurança (programa do usuário com janela); jogo e
+/// launcher a pessoa fecha, porque pode estar no meio de algo.
+/// </summary>
+public sealed record OpenAppItem(string Name, string Kind, string Detail, string? ProposalId)
+{
+    public bool CanClose => ProposalId is not null;
+
+    public string Initials => GameIcons.Initials(Name);
+
+    public System.Windows.Media.ImageSource? Icon { get; init; }
+
+    public string Hint => CanClose ? "" : Kind switch
+    {
+        "Jogo" => "Feche pelo próprio jogo se não estiver jogando.",
+        "Launcher" => "Feche pelo ícone perto do relógio se não for jogar agora.",
+        _ => "Se não estiver usando, feche antes de jogar.",
+    };
+
+    /// <summary>Acima disto o programa entra na lista: abaixo, o peso não aparece no jogo.</summary>
+    public const double MinCpuPercent = 3;
+
+    public const long MinRamBytes = 600L * 1024 * 1024;
+
+    public static IReadOnlyList<OpenAppItem> From(ScanResult scan, IReadOnlyList<Fpsx.Core.Games.GameProfile> games)
+    {
+        var closable = scan.Optimizations.FirstOrDefault(o => o.Definition.Id == "background-process-close")?.Evaluation.Proposals
+            .Select(p => p.Id).ToHashSet() ?? [];
+        var gameByProcess = games
+            .SelectMany(g => g.Detect.Processes.Select(p => (Process: p.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? p[..^4] : p, g.Name)))
+            .GroupBy(x => x.Process, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase);
+        var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-BR");
+
+        return scan.Snapshot.Processes
+            .Where(p => !p.Name.StartsWith("fpsx", StringComparison.OrdinalIgnoreCase))
+            .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var window = g.FirstOrDefault(p => p.HasWindow);
+                var category = ProcessClassifier.Classify(g.Key);
+                return (g.Key, Window: window, Category: category, Cpu: g.Sum(p => p.CpuPercent), Ram: g.Sum(p => p.WorkingSetBytes));
+            })
+            .Where(x => x.Window is not null && x.Category is ProcessCategory.User or ProcessCategory.Game or ProcessCategory.Launcher)
+            .Where(x => x.Cpu >= MinCpuPercent || x.Ram >= MinRamBytes)
+            .OrderByDescending(x => x.Cpu + x.Ram / (256.0 * 1024 * 1024))
+            .Take(6)
+            .Select(x =>
+            {
+                var isGame = x.Category == ProcessCategory.Game || gameByProcess.ContainsKey(x.Key);
+                var name = gameByProcess.TryGetValue(x.Key, out var gameName) ? gameName : char.ToUpperInvariant(x.Key[0]) + x.Key[1..];
+                var detail = string.Format(pt, "{0:0}% do processador e {1:0.0} GB de memória{2}", x.Cpu, x.Ram / (1024.0 * 1024 * 1024),
+                    x.Window!.Minimized ? ", minimizado: aberto sem uso" : "");
+                var proposal = $"background-process-close:{x.Window.Pid}";
+                return new OpenAppItem(name, isGame ? "Jogo" : x.Category == ProcessCategory.Launcher ? "Launcher" : "Programa", detail,
+                    closable.Contains(proposal) ? proposal : null);
+            })
+            .ToList();
+    }
 }
