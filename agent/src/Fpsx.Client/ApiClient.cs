@@ -84,6 +84,12 @@ public sealed class ApiClient(HttpClient http)
     public Task SendGameplayAsync(string deviceToken, GameplayUpload match, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Post, "api/agent/gameplay", match, null, deviceToken, ct);
 
+    public async Task<PeerStats> GameplayPeersAsync(string deviceToken, string gameId, CancellationToken ct = default)
+    {
+        var body = await SendAsync(HttpMethod.Get, $"api/agent/gameplay/peers?game_id={Uri.EscapeDataString(gameId)}", null, null, deviceToken, ct);
+        return body.Deserialize<PeerStats>(FpsxJson.Options) ?? new PeerStats();
+    }
+
     public Task SendBenchmarkAsync(string deviceToken, object benchmark, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Post, "api/agent/benchmarks", benchmark, null, deviceToken, ct);
 
@@ -165,6 +171,16 @@ public sealed class ApiClient(HttpClient http)
             throw new ApiException(response.StatusCode, message, detail);
         }
     }
+}
+
+/// <summary>Mediana de PCs parecidos (mesma placa ou mesmo nível). Scope null = grupo pequeno demais.</summary>
+public sealed record PeerStats
+{
+    public string? Scope { get; init; }
+    public string? Label { get; init; }
+    public int Devices { get; init; }
+    public double AvgFps { get; init; }
+    public double Low1Fps { get; init; }
 }
 
 public sealed record TelemetryEvent

@@ -112,7 +112,32 @@ public sealed class GameplayViewModel : PageViewModel
             Raise(nameof(ChartNote));
             Raise(nameof(ChartDrops));
             Raise(nameof(ChartCauses));
+            _ = LoadPeersAsync(value);
         }
+    }
+
+    private string _peerNote = "";
+
+    /// <summary>Como PCs parecidos rodam o mesmo jogo (só com envio de dados ligado e grupo grande o bastante).</summary>
+    public string PeerNote
+    {
+        get => _peerNote;
+        private set => Set(ref _peerNote, value);
+    }
+
+    private async Task LoadPeersAsync(GameplayItem? item)
+    {
+        PeerNote = "";
+        if (item is null)
+            return;
+        var peers = await _host.Ctx.PeersAsync(item.Session.GameId);
+        // A pessoa pode ter trocado de partida enquanto a resposta chegava.
+        if (peers is null || !ReferenceEquals(item, _selected))
+            return;
+        var who = peers.Scope == "gpu" ? $"PCs com a mesma placa ({peers.Label})" : "PCs do mesmo nível que o seu";
+        var s = item.Session.Stats;
+        PeerNote = string.Format(Pt, "{0}, {1} no total: FPS médio {2:0} e 1% low {3:0}. Nesta partida você fez {4:0} e {5:0}. Partida real varia com mapa e modo: compare várias.",
+            who, peers.Devices, peers.AvgFps, peers.Low1Fps, s.AvgFps, s.Low1Fps);
     }
 
     /// <summary>Quedas da partida escolhida com o que estava pesando no PC naquele momento.</summary>

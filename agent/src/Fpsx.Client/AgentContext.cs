@@ -176,6 +176,26 @@ public sealed class AgentContext
         }
     }
 
+    /// <summary>
+    /// Como PCs parecidos rodam o jogo. Só para quem compartilha as partidas:
+    /// a comparação existe porque todos contribuem. null = sem conta, sem
+    /// consentimento ou sem internet.
+    /// </summary>
+    public async Task<PeerStats?> PeersAsync(string gameId, CancellationToken ct = default)
+    {
+        if (Settings.TelemetryConsent != true || Storage.LoadToken() is not { } token)
+            return null;
+        try
+        {
+            var peers = await Api().GameplayPeersAsync(token, gameId, ct);
+            return peers.Scope is null ? null : peers;
+        }
+        catch (ApiException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>Registra o resultado de uma sessão na fila, se o usuário consentiu.</summary>
     public void RecordSession(SessionRecord session)
     {
