@@ -254,13 +254,46 @@ def _send_receipt(user_id: int, plan: dict, lic: dict, payment: NormalizedPaymen
         logger.warning("[PAYMENTS] recibo nao enviado para user %s: %s", user_id, e)
 
 
+#: Estados do Mercado Pago em que o dinheiro voltou para o cliente.
+REVERSED = ("refunded", "charged_back")
+
+
+def revoke_payment(payment: NormalizedPayment, source: str) -> dict:
+    """Reembolso ou chargeback de um pagamento ja' aplicado: tira da licenca
+    os dias que aquele pagamento deu. Sem isso, quem pede o dinheiro de volta
+    (7 dias do CDC) ou contesta no cartao seguiria com o plano pago.
+    Idempotente: so' age sobre pagamento ainda 'approved'."""
+    with database.transaction() as cur:
+        cur.execute(
+            """UPDATE payments SET status = %s
+               WHERE provider = %s AND provider_payment_id = %s AND status = 'approved'
+               RETURNING license_id, plan_key, user_id""",
+            (payment.status, payment.provider, payment.provider_payment_id))
+        row = cur.fetchone()
+        if row is None:
+            record_event(source, f"ignored:{payment.status}", payment.provider_payment_id)
+            return {"applied": False, "reason": "not_applied"}
+        plan = plans.get(row["plan_key"])
+        if row["license_id"] is not None and plan is not None:
+            # Subtrai os dias em vez de bloquear: a mesma licenca pode somar
+            # outras compras que continuam valendo.
+            cur.execute(
+                "UPDATE licenses SET expires_at = expires_at - make_interval(days => %s) WHERE id = %s",
+                (plan["days"], row["license_id"]))
+    record_event(source, payment.status, payment.provider_payment_id, f"user {row['user_id']} plano {row['plan_key']}")
+    return {"applied": False, "revoked": True}
+
+
 def handle_webhook(data_id: str, x_signature: str, x_request_id: str) -> dict:
     if not verify_mp_signature(x_signature, x_request_id, data_id, settings.MERCADOPAGO_WEBHOOK_SECRET):
         record_event("webhook", "bad_signature", data_id)
         return {"ok": False, "reason": "bad_signature"}
     # Nunca confiar no corpo da notificacao: o estado vem de uma consulta
     # direta ao provedor.
-    return apply_approved_payment(provider().fetch_payment(data_id), "webhook")
+    payment = provider().fetch_payment(data_id)
+    if payment.status in REVERSED:
+        return revoke_payment(payment, "webhook")
+    return apply_approved_payment(payment, "webhook")
 
 
 def list_for_user(user_id: int) -> list[dict]:

@@ -117,3 +117,47 @@ def test_pagamento_novo_cria_licenca_na_mesma_transacao(fake_env, monkeypatch):
     r = payments.apply_approved_payment(_payment(), "retorno")
     assert r["applied"] is True and r["license_id"] == 5
     assert any("UPDATE payments SET license_id" in s for s in cur.sql)
+
+
+class _RevokeCursor:
+    def __init__(self, row):
+        self.row = row
+        self.calls = []
+
+    def execute(self, sql, params=()):
+        self.calls.append((sql, params))
+
+    def fetchone(self):
+        return self.row
+
+
+def test_reembolso_tira_os_dias_do_pagamento_da_licenca(fake_env, monkeypatch):
+    cur = _RevokeCursor({"license_id": 5, "plan_key": "pro", "user_id": 7})
+    monkeypatch.setattr(payments.database, "transaction", _fake_transaction(cur))
+    r = payments.revoke_payment(_payment(status="refunded"), "webhook")
+    assert r["revoked"] is True
+    sql, params = cur.calls[-1]
+    assert "UPDATE licenses SET expires_at = expires_at - make_interval" in sql and params == (30, 5)
+    assert fake_env[-1][1] == "refunded"
+
+
+def test_reembolso_repetido_ou_de_pagamento_nao_aplicado_nao_mexe_na_licenca(fake_env, monkeypatch):
+    cur = _RevokeCursor(None)
+    monkeypatch.setattr(payments.database, "transaction", _fake_transaction(cur))
+    assert payments.revoke_payment(_payment(status="charged_back"), "webhook")["reason"] == "not_applied"
+    assert not any("UPDATE licenses" in s for s, _ in cur.calls)
+
+
+def test_webhook_de_estorno_vai_para_revogacao(fake_env, monkeypatch):
+    monkeypatch.setattr(payments, "verify_mp_signature", lambda *a: True)
+
+    class _Prov:
+        def fetch_payment(self, pid):
+            return _payment(status="charged_back")
+
+    monkeypatch.setattr(payments, "provider", lambda: _Prov())
+    seen = []
+    monkeypatch.setattr(payments, "revoke_payment", lambda p, s: seen.append(p.status) or {"revoked": True})
+    monkeypatch.setattr(payments, "apply_approved_payment", lambda *a: {"applied": True})
+    assert payments.handle_webhook("p1", "ts=1,v1=x", "r")["revoked"] is True
+    assert seen == ["charged_back"]

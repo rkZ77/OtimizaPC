@@ -4,6 +4,7 @@ Licao do Pickia: o preco escrito a mao no front divergiu do cobrado sem
 ninguem perceber. Aqui o site e o checkout leem SEMPRE desta tabela.
 """
 import json
+import time
 
 from app import database
 
@@ -64,9 +65,26 @@ def with_savings(payloads: list[dict]) -> list[dict]:
     return out
 
 
+# A home pede os planos em toda visita. Cache curto poupa o banco no pico;
+# o checkout le o plano direto (get), entao o valor cobrado nunca vem daqui.
+_CACHE_SECONDS = 30
+_cache: tuple[float, list[dict]] | None = None
+
+
 def list_active() -> list[dict]:
+    global _cache
+    now = time.monotonic()
+    if _cache is not None and now - _cache[0] < _CACHE_SECONDS:
+        return _cache[1]
     rows = database.fetch_all("SELECT * FROM plans WHERE active ORDER BY sort, price_cents")
-    return with_savings([public_payload(r) for r in rows])
+    result = with_savings([public_payload(r) for r in rows])
+    _cache = (now, result)
+    return result
+
+
+def clear_cache() -> None:
+    global _cache
+    _cache = None
 
 
 def list_all() -> list[dict]:
@@ -78,7 +96,7 @@ def get(key: str) -> dict | None:
 
 
 def upsert(plan: dict) -> dict:
-    return database.fetch_one(
+    row = database.fetch_one(
         """INSERT INTO plans (key, name, tier, description, price_cents, days, max_devices, features, active, sort, period)
            VALUES (%(key)s, %(name)s, %(tier)s, %(description)s, %(price_cents)s, %(days)s, %(max_devices)s,
                    %(features)s, %(active)s, %(sort)s, %(period)s)
@@ -89,3 +107,6 @@ def upsert(plan: dict) -> dict:
            RETURNING *""",
         {"period": "monthly", **plan, "features": json.dumps(plan.get("features", []))},
     )
+    # Depois do commit: preco alterado no painel aparece no site na hora.
+    clear_cache()
+    return row

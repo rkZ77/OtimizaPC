@@ -16,6 +16,8 @@ def _sem_banco_no_teste(monkeypatch):
         raise RuntimeError("Teste tentou abrir conexão de banco. Use monkeypatch.")
 
     from app import auth, database
+    from app.services import plans
 
     monkeypatch.setattr(database, "get_connection", _recusa)
     auth.reset_rate_limits()
+    plans.clear_cache()

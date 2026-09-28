@@ -29,7 +29,9 @@ def db(monkeypatch):
     from app import database, migrate
 
     # Desfaz a trava do conftest SO' aqui, e recria o pool para a URL de teste.
-    monkeypatch.setattr(database, "get_connection", lambda: database._ConexaoDoPool(database._obter_pool().getconn()))
+    # Pega a vaga do semaforo como o get_connection real: o close() devolve a vaga.
+    monkeypatch.setattr(database, "get_connection",
+                        lambda: database._vagas.acquire() and database._ConexaoDoPool(database._obter_pool().getconn()))
     database._pool = None
     conn = database.get_connection()
     cur = conn.cursor()

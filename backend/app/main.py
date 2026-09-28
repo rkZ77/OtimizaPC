@@ -4,10 +4,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import settings
+from app import database, settings
 from app.routers import account, admin, agent, auth, payments, public
 from app.security_headers import SecurityHeaders
 from app.services import emails
@@ -54,6 +54,13 @@ app.add_middleware(
 
 for r in (auth.router, account.router, public.router, payments.router, agent.router, admin.router):
     app.include_router(r)
+
+
+@app.exception_handler(database.PoolOcupado)
+def _banco_ocupado(_request, _exc):
+    # Pico maior que a fila do banco: 503 diz "tente de novo", 500 diria "quebrou".
+    return JSONResponse({"detail": "Muitos acessos agora. Tente de novo em instantes."}, status_code=503,
+                        headers={"Retry-After": "5"})
 
 
 @app.get("/api/health")

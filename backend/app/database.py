@@ -36,6 +36,15 @@ _POOL_MIN = int(os.getenv("DB_POOL_MIN", "1"))
 _POOL_MAX = int(os.getenv("DB_POOL_MAX", "10"))
 _pool = None
 _pool_lock = threading.Lock()
+# O ThreadedConnectionPool nao espera: com as conexoes todas em uso ele lanca
+# PoolError na hora, e o visitante leva erro 500 (medido no staging com 10
+# acessos simultaneos). O semaforo faz a requisicao esperar a vez na fila.
+_vagas = threading.BoundedSemaphore(_POOL_MAX)
+_ESPERA_SEGUNDOS = float(os.getenv("DB_POOL_WAIT", "15"))
+
+
+class PoolOcupado(psycopg2.pool.PoolError):
+    """Nenhuma conexao livre dentro do tempo de espera."""
 
 
 def _obter_pool():
@@ -71,10 +80,18 @@ class _ConexaoDoPool:
             _obter_pool().putconn(self._conn, close=bool(self._conn.closed))
         except psycopg2.Error:
             _obter_pool().putconn(self._conn, close=True)
+        finally:
+            _vagas.release()
 
 
 def get_connection():
-    return _ConexaoDoPool(_obter_pool().getconn())
+    if not _vagas.acquire(timeout=_ESPERA_SEGUNDOS):
+        raise PoolOcupado("Nenhuma conexão livre com o banco.")
+    try:
+        return _ConexaoDoPool(_obter_pool().getconn())
+    except BaseException:
+        _vagas.release()
+        raise
 
 
 @contextmanager

@@ -106,12 +106,19 @@ def require_admin(user: dict = Depends(current_user)) -> dict:
 # um worker. Com mais workers o teto efetivo multiplica, e isso e' aceito.
 _hits: dict[str, list[float]] = {}
 _hits_lock = threading.Lock()
+# Chave antiga sai quando o mapa cresce: sem isso, uma varredura com muitos
+# IPs ou e-mails diferentes enche a memoria do processo ate' o Railway matar.
+_MAX_KEYS = 20000
+_LONGEST_WINDOW = 86400
 
 
 def rate_limit(bucket: str, key: str, limit: int, window_seconds: int = 300) -> None:
     now = time.monotonic()
     k = f"{bucket}:{key}"
     with _hits_lock:
+        if len(_hits) > _MAX_KEYS:
+            for old in [key_ for key_, ts in _hits.items() if not ts or now - ts[-1] > _LONGEST_WINDOW]:
+                del _hits[old]
         recent = [t for t in _hits.get(k, []) if now - t < window_seconds]
         if len(recent) >= limit:
             raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Muitas tentativas. Aguarde alguns minutos.")

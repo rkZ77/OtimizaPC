@@ -54,6 +54,9 @@ def register(body: RegisterIn, request: Request, response: Response):
 @router.post("/login")
 def login(body: LoginIn, request: Request, response: Response):
     auth.rate_limit("login", f"{_client_ip(request)}:{body.email.lower()}", limit=8)
+    # Teto por conta, de qualquer IP: freia forca bruta distribuida em muitos
+    # enderecos contra um e-mail so', folgado o bastante para o dono nao travar.
+    auth.rate_limit("login-email", body.email.lower(), limit=30, window_seconds=900)
     user = users.get_with_password(body.email)
     # Mesma mensagem para e-mail inexistente e senha errada: nao revela quem tem conta.
     if not user or not auth.verify_password(body.password, user["password_hash"]):
