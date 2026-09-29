@@ -93,3 +93,50 @@ def test_explicar_do_app_exige_pc_autenticado_e_limita_por_dia(monkeypatch):
     for _ in range(9):
         c.post("/api/agent/explain", json=body)
     assert c.post("/api/agent/explain", json=body).status_code == 429
+
+
+def _pc_autenticado(monkeypatch):
+    from app import signing
+    from app.routers import agent as agent_router
+    from app.services import licenses
+
+    monkeypatch.setattr(agent_router.users, "get_by_id", lambda uid: {"id": 7, "email": "a@b.c", "name": "A", "role": "user", "active": True})
+    monkeypatch.setattr(licenses, "device_by_hash", lambda uid, h: {"id": 3, "agent_version": "0.4.9", "windows_build": "26200"})
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "sk-teste")
+    assistant._global.clear()
+    sent = []
+    monkeypatch.setattr(assistant.httpx, "post", lambda url, **kw: sent.append(kw) or FakeResponse())
+    c = TestClient(app)
+    c.headers["X-Device-Token"] = signing.sign({"uid": 7, "device": "a" * 64})
+    return c, sent
+
+
+def test_troca_de_peca_manda_o_veredito_medido_e_as_regras(monkeypatch):
+    c, sent = _pc_autenticado(monkeypatch)
+    body = {
+        "hardware": {"GPU": "Radeon RX 580", "CPU": "Ryzen 3 3300X"},
+        "setup": ["Memória abaixo da velocidade de fábrica"],
+        "games": [{"game": "Counter-Strike 2", "matches": 4, "avg_fps": 148, "gpu_drops": 17, "drops": 21}],
+        "verdict": "gpu", "verdict_text": "17 de 21 quedas com a placa de vídeo no limite.",
+    }
+    r = c.post("/api/agent/upgrade", json=body)
+    assert r.status_code == 200 and r.json()["text"]
+    system, user = (m["content"] for m in sent[0]["json"]["messages"])
+    # A IA escreve em cima do veredito medido, sem prometer numero nem citar preco.
+    assert "VEREDITO: gpu" in user and "gpu_drops=17" in user and "Memória abaixo" in user
+    assert "nunca o contradiga" in system and "Nunca cite preco" in system and "numero de FPS" in system
+    for _ in range(4):
+        c.post("/api/agent/upgrade", json=body)
+    assert c.post("/api/agent/upgrade", json=body).status_code == 429
+
+
+def test_dicas_por_jogo_usam_o_jogo_e_a_medicao(monkeypatch):
+    c, sent = _pc_autenticado(monkeypatch)
+    r = c.post("/api/agent/game-tips", json={"game": "Valorant", "hardware": {"GPU": "GTX 1650"}, "tier": "PC de entrada",
+                                            "measured": {"game": "Valorant", "avg_fps": 90, "cpu_drops": 6, "drops": 8}})
+    assert r.status_code == 200
+    user = sent[0]["json"]["messages"][1]["content"]
+    assert "JOGO: Valorant" in user and "cpu_drops=6" in user and "GTX 1650" in user
+    # Sem medicao, a IA sabe que nao tem partida medida.
+    c.post("/api/agent/game-tips", json={"game": "Roblox", "hardware": {}, "tier": ""})
+    assert "sem partida medida" in sent[1]["json"]["messages"][1]["content"]

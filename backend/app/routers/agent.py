@@ -172,6 +172,43 @@ def explain(body: ExplainIn, ctx=Depends(device_context)):
         raise HTTPException(503, str(e)) from e
 
 
+class UpgradeIn(BaseModel):
+    hardware: dict = Field(default_factory=dict)
+    setup: list[str] = Field(default_factory=list, max_length=20)
+    games: list[dict] = Field(default_factory=list, max_length=10)
+    verdict: str = Field(default="unknown", max_length=12)
+    verdict_text: str = Field(default="", max_length=400)
+
+
+@router.post("/upgrade")
+def upgrade(body: UpgradeIn, ctx=Depends(device_context)):
+    """Qual peca trocar para ganhar FPS, com IA, a partir do que o app mediu (botao na tela inicial)."""
+    _, device = ctx
+    auth.rate_limit("upgrade", str(device["id"]), limit=5, window_seconds=86400)
+    try:
+        return {"text": assistant.upgrade(body.hardware, body.setup, body.games, body.verdict, body.verdict_text)}
+    except assistant.AssistantUnavailable as e:
+        raise HTTPException(503, str(e)) from e
+
+
+class GameTipsIn(BaseModel):
+    game: str = Field(min_length=1, max_length=60)
+    hardware: dict = Field(default_factory=dict)
+    tier: str = Field(default="", max_length=40)
+    measured: dict | None = None
+
+
+@router.post("/game-tips")
+def game_tips(body: GameTipsIn, ctx=Depends(device_context)):
+    """O que ajustar no menu de video de um jogo, para este PC (botao na tela Jogos)."""
+    _, device = ctx
+    auth.rate_limit("game-tips", str(device["id"]), limit=20, window_seconds=86400)
+    try:
+        return {"text": assistant.game_tips(body.game, body.hardware, body.tier, body.measured)}
+    except assistant.AssistantUnavailable as e:
+        raise HTTPException(503, str(e)) from e
+
+
 @router.get("/catalog")
 def catalog_overrides(ctx=Depends(device_context)):
     return {"token": catalog.signed_overrides()}

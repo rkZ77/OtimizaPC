@@ -163,3 +163,75 @@ def explain(hardware: dict, findings: list[dict]) -> str:
     if r.status_code != 200:
         raise AssistantUnavailable("A IA nao conseguiu responder agora. Tente de novo.")
     return r.json()["choices"][0]["message"]["content"].strip()
+
+
+UPGRADE = """
+Voce e' o consultor de hardware do RKZFPS, para quem joga no PC. Recebe o resumo do hardware, problemas de montagem
+encontrados, os numeros medidos nas partidas e um VEREDITO calculado pelo app a partir dessas medicoes. Responda em
+portugues do Brasil, texto simples, em ate 170 palavras, nesta ordem:
+1. O que resolver SEM gastar, so' se estiver na lista de montagem (memoria abaixo da velocidade de fabrica, um pente so',
+   cabo do monitor na placa-mae, jogo no HD). Uma frase cada.
+2. A peca que mais segura o FPS, seguindo o VEREDITO (nunca o contradiga). Diga a faixa de peca que faz sentido com o
+   resto deste PC (exemplo: "uma placa de video da faixa da RTX 4060 ou RX 7600") e o que conferir antes de comprar
+   (fonte, soquete e chipset da placa-mae, espaco no gabinete).
+3. O que NAO vale trocar agora, e por que, em uma frase.
+Regras: nunca prometa numero de FPS nem porcentagem de ganho. Nunca cite preco. Se o veredito for "unknown", diga que
+falta jogar com o RKZFPS aberto para medir e de' so' orientacao geral pelo hardware. Nao recomende overclock. Nao use
+emoji, nem o travessao (—), nem o caractere ponto do meio (·). Use pontuacao normal, com ponto final nas frases.
+"""
+
+GAME_TIPS = """
+Voce ajusta o menu de video de um jogo para o PC de quem joga, no RKZFPS. Responda em portugues do Brasil, em ate 150
+palavras, em lista curta: as 3 a 5 opcoes do menu de video do jogo que mais dao FPS NESTE hardware, da que mais ajuda
+para a que menos, cada uma com o valor sugerido e, em poucas palavras, o que muda na imagem. Use os nomes das opcoes
+como aparecem no menu do jogo. Se vier medicao: quedas com a placa de video no limite pedem opcoes graficas (sombras,
+resolucao, efeitos); quedas com o processador no limite pedem opcoes que pesam na CPU (distancia de visao, jogadores,
+fisica); FPS medio bem acima da taxa do monitor permite limitar o FPS perto da taxa para ficar mais estavel.
+Regras: nunca prometa numero de FPS. Nao sugira programa externo, mod, editar arquivo a mao nem overclock. Nao use
+emoji, nem o travessao (—), nem o caractere ponto do meio (·). Use pontuacao normal.
+"""
+
+
+def _texto(v, n: int) -> str:
+    return str(v if v is not None else "")[:n]
+
+
+def _hardware_txt(hardware: dict) -> str:
+    return ", ".join(f"{_texto(k, 40)}: {_texto(v, 80)}" for k, v in list(hardware.items())[:12])
+
+
+def _jogo_txt(g: dict) -> str:
+    campos = ("game", "matches", "avg_fps", "low1_fps", "display_hz", "avg_cpu", "avg_gpu", "drops", "gpu_drops", "cpu_drops", "app_drops")
+    return ", ".join(f"{c}={_texto(g.get(c), 60)}" for c in campos if c in g)
+
+
+def _chat(system: str, user: str, max_tokens: int) -> str:
+    if not settings.OPENAI_API_KEY:
+        raise AssistantUnavailable("A IA esta' indisponivel agora.")
+    _take_global_slot()
+    r = httpx.post(
+        OPENAI_URL,
+        headers={"Authorization": f"Bearer {settings.OPENAI_API_KEY}"},
+        json={"model": settings.OPENAI_MODEL, "max_completion_tokens": max_tokens,
+              "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
+        timeout=40,
+    )
+    if r.status_code != 200:
+        raise AssistantUnavailable("A IA nao conseguiu responder agora. Tente de novo.")
+    return r.json()["choices"][0]["message"]["content"].strip()
+
+
+def upgrade(hardware: dict, setup: list, games: list, verdict: str, verdict_text: str) -> str:
+    """Qual peca trocar primeiro. O veredito vem calculado do app (medicao), a IA so' escreve."""
+    montagem = "\n".join(f"- {_texto(t, 160)}" for t in setup[:8]) or "(nada encontrado)"
+    jogos = "\n".join(f"- {_jogo_txt(g)}" for g in games[:6] if isinstance(g, dict)) or "(nenhuma partida medida)"
+    user = (f"HARDWARE: {_hardware_txt(hardware)}\n\nMONTAGEM:\n{montagem}\n\nPARTIDAS MEDIDAS:\n{jogos}\n\n"
+            f"VEREDITO: {_texto(verdict, 12)}. {_texto(verdict_text, 240)}")
+    return _chat(UPGRADE, user, 550)
+
+
+def game_tips(game: str, hardware: dict, tier: str, measured: dict | None) -> str:
+    """O que ajustar primeiro no menu de video do jogo, para este PC."""
+    medido = _jogo_txt(measured) if isinstance(measured, dict) else "(sem partida medida deste jogo)"
+    user = f"JOGO: {_texto(game, 60)}\nNIVEL DO PC: {_texto(tier, 40)}\nHARDWARE: {_hardware_txt(hardware)}\nMEDICAO: {medido}"
+    return _chat(GAME_TIPS, user, 450)

@@ -73,7 +73,7 @@ public sealed class DashboardViewModel : PageViewModel
         CloseAppCommand = new AsyncCommand(p => Busy(() => ApplyFlow.RunAsync([((OpenAppItem)p!).ProposalId!], Reporter)),
             p => !IsBusy && p is OpenAppItem { CanClose: true });
         OpenUrlCommand = new RelayCommand(p => AppHost.OpenUrl((string)p!), p => p is string);
-        ExplainCommand = new AsyncCommand(Explain, () => !IsBusy && !_explaining && HasScan);
+        UpgradeCommand = new AsyncCommand(Upgrade, () => !IsBusy && !_upgrading && HasScan);
         HeroCommand = new AsyncCommand(Hero, () => !IsBusy);
         GoGamesCommand = new RelayCommand(() => _host.Navigate<GamesViewModel>());
         GoGameplayCommand = new RelayCommand(() => _host.Navigate<GameplayViewModel>());
@@ -194,35 +194,58 @@ public sealed class DashboardViewModel : PageViewModel
     public ICommand OptimizeCommand { get; }
     public ICommand FixCommand { get; }
     public ICommand CloseAppCommand { get; }
-    public ICommand ExplainCommand { get; }
+    public ICommand UpgradeCommand { get; }
 
-    private bool _explaining;
-    private string _explainText = "";
+    // ---- qual peça trocar para ganhar FPS ----
+    // O veredito (qual peça segura o FPS) sai da MEDIÇÃO das partidas, sem IA,
+    // e aparece sempre. A IA, a pedido, escreve a recomendação em cima dele:
+    // o que resolver sem gastar, a faixa de peça e o que conferir antes de comprar.
 
-    /// <summary>O diagnóstico em palavras simples, escrito pela IA a pedido da pessoa.</summary>
-    public string ExplainText
+    private bool _upgrading;
+    private string _upgradeText = "";
+
+    private IReadOnlyList<Fpsx.Core.Benchmark.GameEvidence> Evidence => Fpsx.Core.Benchmark.UpgradeEvidence.Games(_host.Ctx.Gameplay.All());
+
+    public string UpgradeVerdict
     {
-        get => _explainText;
-        private set => Set(ref _explainText, value);
+        get
+        {
+            var games = Evidence;
+            return Fpsx.Core.Benchmark.UpgradeEvidence.VerdictText(Fpsx.Core.Benchmark.UpgradeEvidence.Verdict(games), games);
+        }
     }
 
-    private async Task Explain()
+    /// <summary>A recomendação escrita pela IA, a pedido da pessoa.</summary>
+    public string UpgradeText
+    {
+        get => _upgradeText;
+        private set => Set(ref _upgradeText, value);
+    }
+
+    private async Task Upgrade()
     {
         if (_host.Scan is not { } scan || _host.Report is not { } report)
             return;
-        _explaining = true;
-        ExplainText = "Lendo o seu diagnóstico...";
+        _upgrading = true;
+        UpgradeText = "Cruzando o seu hardware com o que foi medido nas partidas...";
         try
         {
-            ExplainText = await _host.Ctx.ExplainAsync(report.Hardware, scan.Findings);
+            var games = Evidence;
+            var verdict = Fpsx.Core.Benchmark.UpgradeEvidence.Verdict(games);
+            // Achados de montagem vão junto: resolver sem gastar vem antes de comprar peça.
+            var setup = scan.Findings
+                .Where(f => f.DiagnosticId == "hardware-setup" && f.Status is HealthStatus.Problem or HealthStatus.Attention)
+                .Select(f => f.Title);
+            UpgradeText = await _host.Ctx.UpgradeAsync(report.Hardware, setup, games, verdict,
+                Fpsx.Core.Benchmark.UpgradeEvidence.VerdictText(verdict, games));
         }
         catch (Fpsx.Client.ApiException ex)
         {
-            ExplainText = ex.Message;
+            UpgradeText = ex.Message;
         }
         finally
         {
-            _explaining = false;
+            _upgrading = false;
         }
     }
     public ICommand OpenUrlCommand { get; }
@@ -312,7 +335,7 @@ public sealed class DashboardViewModel : PageViewModel
             ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }
 
-        foreach (var name in new[] { nameof(HasScan), nameof(BoardSupportUrl), nameof(DriverLinks), nameof(ShowPlanCard), nameof(PlanCardTitle), nameof(PlanCardText), nameof(PlanCardButton), nameof(RecapLines), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
+        foreach (var name in new[] { nameof(HasScan), nameof(BoardSupportUrl), nameof(DriverLinks), nameof(ShowPlanCard), nameof(UpgradeVerdict), nameof(PlanCardTitle), nameof(PlanCardText), nameof(PlanCardButton), nameof(RecapLines), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
             Raise(name);
         RaiseHero();
     }

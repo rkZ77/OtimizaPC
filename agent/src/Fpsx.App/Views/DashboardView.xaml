@@ -96,20 +96,21 @@
                 </StackPanel>
             </Border>
 
-            <!-- Explicação com IA: o diagnóstico em palavras simples, a pedido -->
+            <!-- Qual peça trocar: o veredito medido sempre à vista, e a recomendação da IA a pedido -->
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <DockPanel>
-                        <Button DockPanel.Dock="Right" Content="Explicar em palavras simples" Command="{Binding ExplainCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <Button DockPanel.Dock="Right" Content="Sugestão com IA" Style="{StaticResource Primary}" Command="{Binding UpgradeCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
                         <StackPanel>
-                            <TextBlock Text="Entenda o seu PC com IA" Style="{StaticResource H2}" Margin="0" />
-                            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0"
-                                       Text="A IA lê o resumo do diagnóstico (sem nomes de programas nem arquivos) e diz o que fazer primeiro. Quem muda algo no PC continua sendo você, pelos botões do app." />
+                            <TextBlock Text="Qual peça trocar para ganhar mais FPS" Style="{StaticResource H2}" Margin="0" />
+                            <TextBlock Text="{Binding UpgradeVerdict}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
+                                       Text="A IA usa o seu hardware e o que foi medido nas suas partidas: primeiro o que resolve sem gastar, depois a peça e o que conferir antes de comprar. Sem promessa de número." />
                         </StackPanel>
                     </DockPanel>
                     <Border Background="{StaticResource Surface2}" CornerRadius="8" Padding="14,12" Margin="0,12,0,0"
-                            Visibility="{Binding ExplainText, Converter={StaticResource Visible}}">
-                        <TextBlock Text="{Binding ExplainText}" TextWrapping="Wrap" LineHeight="21" />
+                            Visibility="{Binding UpgradeText, Converter={StaticResource Visible}}">
+                        <TextBlock Text="{Binding UpgradeText}" TextWrapping="Wrap" LineHeight="21" />
                     </Border>
                 </StackPanel>
             </Border>

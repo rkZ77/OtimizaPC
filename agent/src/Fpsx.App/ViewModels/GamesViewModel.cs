@@ -7,8 +7,17 @@ using Fpsx.Core.Model;
 
 namespace Fpsx.App.ViewModels;
 
-public sealed class GameCard
+public sealed class GameCard : ObservableObject
 {
+    private string _tips = "";
+
+    /// <summary>Dicas de vídeo escritas pela IA para este jogo neste PC (a pedido).</summary>
+    public string TipsText
+    {
+        get => _tips;
+        set => Set(ref _tips, value);
+    }
+
     public string GameId { get; init; } = "";
     public string Name { get; init; } = "";
 
@@ -55,6 +64,7 @@ public sealed class GamesViewModel : PageViewModel
         OptimizeGameCommand = new AsyncCommand(p => Busy(() => Optimize((string)p!)), p => !IsBusy && p is string);
         RevertGameCommand = new AsyncCommand(p => Busy(() => Revert((string)p!)), p => !IsBusy && p is string);
         ShaderCommand = new AsyncCommand(() => Busy(ClearShaders), () => !IsBusy);
+        TipsCommand = new AsyncCommand(p => Tips((GameCard)p!), p => p is GameCard c && c.TipsText != Thinking);
         // Perfil escolhido pela pessoa: mesmo fluxo de aplicar (confirmação, backup, desfazer).
         ProfileCommand = new AsyncCommand(p => Busy(async () => { await ApplyFlow.RunAsync([(string)p!], Reporter); Load(); }),
             p => !IsBusy && p is string && CanFix);
@@ -74,6 +84,9 @@ public sealed class GamesViewModel : PageViewModel
     public ICommand OptimizeGameCommand { get; }
     public ICommand RevertGameCommand { get; }
     public ICommand ShaderCommand { get; }
+    public ICommand TipsCommand { get; }
+
+    private const string Thinking = "Pensando no seu PC e nas suas partidas...";
     public ICommand ProfileCommand { get; }
     public ICommand ScanCommand { get; }
 
@@ -96,6 +109,26 @@ public sealed class GamesViewModel : PageViewModel
         if (ids.Count > 0)
             await ApplyFlow.RunAsync(ids, Reporter);
         Load();
+    }
+
+    /// <summary>
+    /// O que baixar primeiro no menu de vídeo deste jogo, pela IA, com o
+    /// hardware, o nível do PC e o que foi medido nas partidas dele. Vale para
+    /// qualquer jogo reconhecido, não só os que o RKZFPS ajusta sozinho.
+    /// </summary>
+    private async Task Tips(GameCard card)
+    {
+        card.TipsText = Thinking;
+        try
+        {
+            var measured = Fpsx.Core.Benchmark.UpgradeEvidence.Games(_host.Ctx.Gameplay.All()).FirstOrDefault(g => g.GameId == card.GameId);
+            var tier = _host.Scan is { } scan ? HardwareTierClassifier.Assess(scan.Snapshot).Label : "";
+            card.TipsText = await _host.Ctx.GameTipsAsync(card.Name, _host.Report?.Hardware ?? new Dictionary<string, string>(), tier, measured);
+        }
+        catch (Fpsx.Client.ApiException ex)
+        {
+            card.TipsText = ex.Message;
+        }
     }
 
     private async Task ClearShaders()

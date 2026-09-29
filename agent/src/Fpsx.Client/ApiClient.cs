@@ -88,6 +88,20 @@ public sealed class ApiClient(HttpClient http)
         return body.GetProperty("text").GetString() ?? "";
     }
 
+    /// <summary>Qual peça trocar primeiro, escrito pela IA a partir do hardware e do que foi medido.</summary>
+    public async Task<string> UpgradeAsync(string deviceToken, object evidence, CancellationToken ct = default)
+    {
+        var body = await SendAsync(HttpMethod.Post, "api/agent/upgrade", evidence, null, deviceToken, ct);
+        return body.GetProperty("text").GetString() ?? "";
+    }
+
+    /// <summary>O que ajustar primeiro no menu de vídeo de um jogo, para este PC.</summary>
+    public async Task<string> GameTipsAsync(string deviceToken, object evidence, CancellationToken ct = default)
+    {
+        var body = await SendAsync(HttpMethod.Post, "api/agent/game-tips", evidence, null, deviceToken, ct);
+        return body.GetProperty("text").GetString() ?? "";
+    }
+
     public Task SendGameplayAsync(string deviceToken, GameplayUpload match, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Post, "api/agent/gameplay", match, null, deviceToken, ct);
 

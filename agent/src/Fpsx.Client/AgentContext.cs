@@ -199,6 +199,42 @@ public sealed class AgentContext
     }
 
     /// <summary>
+    /// Sugestão de troca de peça com IA. Vai o resumo do hardware, os títulos
+    /// dos achados de montagem (memória abaixo da velocidade, um pente, jogo no
+    /// HD), os números das partidas e o veredito calculado aqui. Nada de nome
+    /// de programa, arquivo ou pasta.
+    /// </summary>
+    public async Task<string> UpgradeAsync(IReadOnlyDictionary<string, string> hardware, IEnumerable<string> setup,
+        IReadOnlyList<Fpsx.Core.Benchmark.GameEvidence> games, Fpsx.Core.Benchmark.Bottleneck verdict, string verdictText, CancellationToken ct = default)
+    {
+        if (Storage.LoadToken() is not { } token)
+            throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Entre na sua conta (tela Conta) para usar a sugestão com IA.");
+        return await Api().UpgradeAsync(token, new
+        {
+            hardware,
+            setup = setup.Take(8).ToList(),
+            games = games.Take(6).Select(Evidence).ToList(),
+            verdict = verdict.ToString().ToLowerInvariant(),
+            verdict_text = verdictText,
+        }, ct);
+    }
+
+    /// <summary>Dicas de vídeo para um jogo, com o que foi medido nele (quando há).</summary>
+    public async Task<string> GameTipsAsync(string game, IReadOnlyDictionary<string, string> hardware, string tier,
+        Fpsx.Core.Benchmark.GameEvidence? measured, CancellationToken ct = default)
+    {
+        if (Storage.LoadToken() is not { } token)
+            throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Entre na sua conta (tela Conta) para usar as dicas com IA.");
+        return await Api().GameTipsAsync(token, new { game, hardware, tier, measured = measured is null ? null : Evidence(measured) }, ct);
+    }
+
+    private static object Evidence(Fpsx.Core.Benchmark.GameEvidence g) => new
+    {
+        game = g.Game, matches = g.Matches, avg_fps = g.AvgFps, low1_fps = g.Low1Fps, display_hz = g.DisplayHz,
+        avg_cpu = g.AvgCpu, avg_gpu = g.AvgGpu, drops = g.Drops, gpu_drops = g.GpuDrops, cpu_drops = g.CpuDrops, app_drops = g.AppDrops,
+    };
+
+    /// <summary>
     /// Como PCs parecidos rodam o jogo. Só para quem compartilha as partidas:
     /// a comparação existe porque todos contribuem. null = sem conta, sem
     /// consentimento ou sem internet.
