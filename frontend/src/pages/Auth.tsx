@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { KeyRound, Lock, Mail, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api, { errorMessage } from '../services/api'
 import PageShell from '../components/PageShell'
 import PublicNav from '../components/PublicNav'
+import { LogoMark, Wordmark } from '../components/Logo'
 import { Alert, Button, Card, Input } from '../components/ui'
 
 // So' aceita caminho interno: um ?voltar=https://site-falso nao vira redirect aberto.
@@ -18,7 +19,34 @@ export function safeReturn(value: string | null, fallback: string): string {
 
 /* Na tela de login, os botoes "Entrar/Criar conta" apontariam para onde a
    pessoa ja' esta' (licao da PublicNav do Pickia): a saida certa e' voltar. */
-const navDoLogin = <PublicNav width="narrow" acoes={<Button to="/" variant="link" size="sm">Voltar ao site</Button>} />
+const navDoLogin = <PublicNav width="wide" acoes={<Button to="/" variant="link" size="sm">Voltar ao site</Button>} />
+
+/*
+ * Casca das telas de conta: a arte da marca (logo grande no fundo de grade)
+ * ao lado do formulario, como nas artes do Instagram. No celular o logo sobe
+ * e encolhe e a frase some: o formulario tem que caber sem rolar.
+ */
+function TelaDeConta({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <PageShell title={title} noindex width="wide" nav={navDoLogin} fundo>
+      <div className="grid items-center gap-8 lg:min-h-[68vh] lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <div className="flex items-center gap-4 lg:gap-6">
+            <LogoMark className="h-14 w-14 lg:h-24 lg:w-24" />
+            <Wordmark className="text-[2.6rem] lg:text-7xl" />
+          </div>
+          <p className="mt-8 hidden max-w-lg font-display text-4xl font-black leading-tight text-ink-1 lg:block">
+            Descubra o que está travando seus jogos. <span className="text-accent-ink">E corrija sem medo.</span>
+          </p>
+          <p className="mt-4 hidden max-w-lg text-lg text-ink-2 lg:block">
+            Diagnóstico grátis, correção com um clique e FPS medido antes e depois. Tudo pode ser desfeito.
+          </p>
+        </div>
+        <div className="mx-auto w-full max-w-md lg:mr-0">{children}</div>
+      </div>
+    </PageShell>
+  )
+}
 
 export function Entrar() {
   const { login } = useAuth()
@@ -44,7 +72,7 @@ export function Entrar() {
   }
 
   return (
-    <PageShell title="Entrar" noindex width="narrow" nav={navDoLogin} mainClassName="max-w-md">
+    <TelaDeConta title="Entrar">
       <h1 className="font-display text-2xl font-bold text-ink-1">Entrar</h1>
       <p className="mt-1 text-ink-3">Use a mesma conta no site e no app.</p>
       <Card className="mt-6 p-6">
@@ -62,7 +90,7 @@ export function Entrar() {
       <p className="mt-4 text-center text-sm text-ink-3">
         Ainda não tem conta? <Link to="/cadastro" className="font-semibold text-accent-ink">Criar conta grátis</Link>
       </p>
-    </PageShell>
+    </TelaDeConta>
   )
 }
 
@@ -118,7 +146,7 @@ export function RecuperarSenha({ etapa }: { etapa: 'pedir' | 'codigo' }) {
   }
 
   return (
-    <PageShell title="Recuperar senha" noindex width="narrow" nav={navDoLogin} mainClassName="max-w-md">
+    <TelaDeConta title="Recuperar senha">
       <h1 className="font-display text-2xl font-bold text-ink-1">{passo === 'pedir' ? 'Recuperar senha' : 'Criar senha nova'}</h1>
       <p className="mt-1 text-ink-3">
         {passo === 'pedir' ? 'Informe o e-mail da conta. Enviamos um código para criar uma senha nova.' : `Digite o código que chegou em ${email}.`}
@@ -148,7 +176,7 @@ export function RecuperarSenha({ etapa }: { etapa: 'pedir' | 'codigo' }) {
       <p className="mt-4 text-center text-sm text-ink-3">
         Lembrou a senha? <Link to="/entrar" className="font-semibold text-accent-ink">Entrar</Link>
       </p>
-    </PageShell>
+    </TelaDeConta>
   )
 }
 
@@ -183,7 +211,7 @@ export function Cadastro() {
   }
 
   return (
-    <PageShell title="Criar conta" noindex width="narrow" nav={navDoLogin} mainClassName="max-w-md">
+    <TelaDeConta title="Criar conta">
       <h1 className="font-display text-2xl font-bold text-ink-1">Criar conta</h1>
       <p className="mt-1 text-ink-3">Conta nova ganha um período de teste do plano Pro em 1 PC, sem cartão.</p>
       <Card className="mt-6 p-6">
@@ -202,6 +230,6 @@ export function Cadastro() {
       <p className="mt-4 text-center text-sm text-ink-3">
         Já tem conta? <Link to={plan ? `/entrar?voltar=${encodeURIComponent(`/pagamento?plano=${plan}`)}` : '/entrar'} className="font-semibold text-accent-ink">Entrar</Link>
       </p>
-    </PageShell>
+    </TelaDeConta>
   )
 }

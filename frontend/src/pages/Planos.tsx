@@ -11,6 +11,7 @@ export default function Planos() {
       title="Planos"
       description="Planos do RKZFPS: do diagnóstico gratuito ao pacote completo. Cada plano contém o anterior, e desfazer é liberado em todos."
       width="wide"
+      fundo
       bar={{ title: 'Planos', sub: 'Cada plano contém tudo do anterior. Desfazer alterações é liberado em todos, sempre.' }}
     >
       <PlansGrid />

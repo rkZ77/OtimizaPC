@@ -72,6 +72,7 @@ export default function ComoFunciona() {
       title="Como funciona"
       description="Como o RKZFPS analisa o PC, corrige só o que faz sentido, guarda backup de cada alteração e mede o FPS das suas partidas antes e depois."
       width="wide"
+      fundo
       bar={{ title: 'Como funciona', sub: 'Analisar, corrigir o que estiver errado e provar o resultado. Nessa ordem.' }}
     >
       <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

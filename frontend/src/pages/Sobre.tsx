@@ -35,7 +35,7 @@ const PRINCIPIOS = [
 
 export default function Sobre() {
   return (
-    <PageShell title="Quem somos" bar={{ title: 'Quem somos', sub: 'Por que o RKZFPS existe e como ele decide o que mudar no seu PC.' }}>
+    <PageShell title="Quem somos" fundo bar={{ title: 'Quem somos', sub: 'Por que o RKZFPS existe e como ele decide o que mudar no seu PC.' }}>
       <div className="mx-auto max-w-3xl space-y-12">
         <section className="space-y-4 leading-relaxed text-ink-2">
           <h2 className="font-display text-2xl font-bold text-ink-1">Por que o RKZFPS existe</h2>

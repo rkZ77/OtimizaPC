@@ -4,6 +4,7 @@ import { cn } from '../lib/cn'
 import PublicNav from './PublicNav'
 import Footer from './Footer'
 import { NavVoltar } from './BackButton'
+import FundoMarca from './FundoMarca'
 import { PAGE_WIDTH, type PageWidth } from '../lib/pageWidth'
 import { useRevelacao, classesRevelacao, FADE_REVELACAO_MS } from '../hooks/useRevelacao'
 
@@ -72,6 +73,9 @@ export default function PageShell({
    * portão é o padrão de propósito: ver hooks/useRevelacao.
    */
   revelacao = true,
+  /** Grade ciano com brilho no canto, a das artes da marca. Para pagina de
+   *  apresentacao e de conta (login, planos, download), nao para tela de uso. */
+  fundo = false,
 }: {
   children: React.ReactNode
   /** Vira "<title> | RKZFPS". Passar já com o sufixo desliga o automático. */
@@ -93,6 +97,7 @@ export default function PageShell({
   className?: string
   mainClassName?: string
   revelacao?: boolean
+  fundo?: boolean
 }) {
   const revelado = useRevelacao(!revelacao)
   const { pathname } = useLocation()
@@ -123,7 +128,8 @@ export default function PageShell({
   const canonicalFinal = noindex ? null : (canonical ?? `${ORIGEM}${pathname}`)
 
   return (
-    <div className={cn('min-h-screen bg-surface-0 text-ink-1 flex flex-col', className)}>
+    <div className={cn('min-h-screen bg-surface-0 text-ink-1 flex flex-col', fundo && 'relative isolate overflow-x-clip', className)}>
+      {fundo && <FundoMarca />}
       <Helmet>
         {fullTitle && <title>{fullTitle}</title>}
         <meta name="description" content={description ?? DESCRICAO_PADRAO} />

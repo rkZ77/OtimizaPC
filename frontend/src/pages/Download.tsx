@@ -48,6 +48,7 @@ export default function Download() {
       title="Baixar o RKZFPS"
       description="Baixe o RKZFPS para Windows 10 e 11. O diagnóstico é gratuito e não altera nada no seu PC."
       width="wide"
+      fundo
       bar={{ title: 'Baixar o RKZFPS', sub: 'Instale, abra e o diagnóstico começa sozinho. O scan é gratuito e não altera nada.' }}
     >
       <div className="grid gap-4 lg:grid-cols-3 [&>*]:min-w-0">

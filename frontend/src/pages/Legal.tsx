@@ -55,7 +55,7 @@ export function Termos() {
 
 export function NotFound() {
   return (
-    <PageShell title="Página não encontrada" noindex width="narrow" revelacao={false} mainClassName="text-center py-20">
+    <PageShell title="Página não encontrada" noindex width="narrow" fundo revelacao={false} mainClassName="text-center py-20">
       <p className="font-display text-6xl font-extrabold text-ink-1">404</p>
       <p className="mt-3 text-ink-3">Esta página não existe.</p>
       <div className="mt-6 flex justify-center"><Button to="/">Voltar ao início</Button></div>

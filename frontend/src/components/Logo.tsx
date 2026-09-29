@@ -9,6 +9,15 @@ export function LogoMark({ className }: { className?: string }) {
   return <img src="/favicon.svg" alt="" aria-hidden width={32} height={32} className={cn('w-8 h-8', className)} />
 }
 
+/** O nome RKZFPS da marca, sem o icone. O tamanho vem de quem usa. */
+export function Wordmark({ className }: { className?: string }) {
+  return (
+    <span className={cn('font-display font-black italic leading-none tracking-tight text-ink-1', className)}>
+      RKZ<span className="text-accent-ink">FPS</span>
+    </span>
+  )
+}
+
 export default function Logo({ className }: { className?: string }) {
   return (
     <Link to="/" className={cn('flex items-center gap-2.5 shrink-0', className)} aria-label="RKZFPS, início">
@@ -18,9 +27,7 @@ export default function Logo({ className }: { className?: string }) {
           Instagram que o dono aprovou; em 18px o nome sumia ao lado do icone.
           Continua sendo texto, e nao PNG: fica nitido em qualquer tela e o
           text-ink-1 troca sozinho de cor no tema claro. */}
-      <span className="font-display font-black italic text-[1.65rem] leading-none tracking-tight text-ink-1">
-        RKZ<span className="text-accent-ink">FPS</span>
-      </span>
+      <Wordmark className="text-[1.65rem]" />
     </Link>
   )
 }
