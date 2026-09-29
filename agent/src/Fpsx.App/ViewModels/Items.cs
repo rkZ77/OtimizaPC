@@ -73,11 +73,12 @@ public sealed class ProposalItem(Proposal p, bool actionable) : ObservableObject
     }
 }
 
-public sealed class OptimizationItem
+public sealed class OptimizationItem : ObservableObject
 {
-    public OptimizationItem(OptimizationResult r)
+    public OptimizationItem(OptimizationResult r, IReadOnlyList<SessionRecord>? history = null)
     {
         Result = r;
+        Boost = BoostState.For(r, history ?? []);
         var (label, brush) = StatusStyle.Of(r.Decision);
         DecisionLabel = label;
         DecisionBrush = StatusStyle.Brush(brush);
@@ -106,6 +107,36 @@ public sealed class OptimizationItem
     public IReadOnlyList<ProposalItem> Proposals { get; }
     public bool HasProposals => Proposals.Count > 0 && Result.Decision is Decision.Recommended or Decision.Optional;
     public bool IsBlocked => Result.Decision == Decision.Blocked;
+
+    // ---- FPS Boost: a chave ON/OFF de cada otimização ----
+
+    public BoostToggle Boost { get; }
+    public bool IsOn => Boost.Kind == BoostKind.On;
+
+    /// <summary>Chave de ligar e desligar (ligada, desligada ou presa no plano).</summary>
+    public bool ShowSwitch => Boost.Kind is BoostKind.On or BoostKind.Off or BoostKind.Locked;
+    public bool IsLocked => Boost.Kind == BoostKind.Locked;
+    public bool ShowPick => Boost.Kind == BoostKind.Pick;
+    public bool ShowRepair => Boost.Kind is BoostKind.Repair;
+    public bool ShowAction => Boost.Kind is BoostKind.Action;
+
+    /// <summary>Selo do plano que libera, no lugar do "trava" genérico (como a estrela da GC).</summary>
+    public string PlanBadge => Result.Definition.MinPlan switch
+    {
+        "starter" => "Starter",
+        "pro" => "Pro",
+        "ultimate" => "Ultimate",
+        _ => "Plano",
+    };
+
+    private bool _picking;
+
+    /// <summary>Lista de itens aberta (para as otimizações com mais de uma alteração).</summary>
+    public bool Picking
+    {
+        get => _picking;
+        set => Set(ref _picking, value);
+    }
 
     private static string Risk(RiskLevel r) => r switch { RiskLevel.Low => "baixo", RiskLevel.Medium => "médio", _ => "alto" };
 }
