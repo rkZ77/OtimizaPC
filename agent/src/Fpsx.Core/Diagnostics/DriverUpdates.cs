@@ -1,7 +1,11 @@
 namespace Fpsx.Core.Diagnostics;
 
 /// <summary>Um driver que o Windows Update oferece para este PC e ainda não está instalado.</summary>
-public sealed record DriverUpdate(string Title, string Category, string Manufacturer, DateTime? Date);
+public sealed record DriverUpdate(string Title, string Category, string Manufacturer, DateTime? Date)
+{
+    /// <summary>Id da atualização no Windows Update: é por ele que o driver é instalado.</summary>
+    public string UpdateId { get; init; } = "";
+}
 
 public static class DriverUpdates
 {

@@ -125,7 +125,12 @@ public static partial class SafetyPolicy
                 throw new SafetyViolationException($"Modo de vídeo fora dos limites: {d.Describe()}");
             case CacheClearChange c when !Enum.IsDefined(c.Target):
             case NetworkRepairChange n when !Enum.IsDefined(n.Repair):
+            case SystemRepairChange s when !Enum.IsDefined(s.Repair):
                 throw new SafetyViolationException("Operação desconhecida.");
+            // Driver só pelo id de atualização do Windows Update (um GUID): não
+            // existe caminho de arquivo, URL ou .inf solto que chegue aqui.
+            case DriverInstallChange d when !GuidPattern().IsMatch(d.UpdateId) || d.Title.Length is 0 or > 300:
+                throw new SafetyViolationException($"Atualização de driver inválida: {d.UpdateId}");
             case ProcessCloseChange p:
                 ValidateProcessClose(p);
                 break;

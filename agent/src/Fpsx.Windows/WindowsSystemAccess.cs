@@ -286,6 +286,22 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
         }
     }
 
+    public CommandResult RunSystemRepair(SystemRepairKind kind) => WindowsRepair.Repair(kind);
+
+    public CommandResult CreateRestorePoint(string description) => WindowsRepair.CreateRestorePoint();
+
+    public CommandResult InstallDriverUpdate(string updateId)
+    {
+        try
+        {
+            return WindowsUpdateDrivers.Install(updateId);
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+        {
+            return new CommandResult(6, "O Windows Update recusou: " + ex.Message);
+        }
+    }
+
     public CommandResult RunNetworkRepair(NetworkRepairKind kind)
     {
         var (exe, args) = kind switch

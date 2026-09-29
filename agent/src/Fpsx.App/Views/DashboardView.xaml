@@ -79,15 +79,10 @@
                 <StackPanel>
                     <TextBlock Text="Drivers do PC" Style="{StaticResource H2}" Margin="0" />
                     <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0"
-                               Text="Cada botão abre o atualizador ou a página oficial do fabricante, que acha o driver certo para o seu modelo. O de vídeo é o que mais pesa nos jogos. O RKZFPS não baixa driver de outro lugar." />
-                    <!-- Procura de verdade no Windows Update (só leitura); instalar é na tela dele. -->
+                               Text="O de vídeo é o que mais pesa nos jogos. Na página Drivers e reparo o RKZFPS procura driver novo no Windows Update e instala com ponto de restauração antes; os botões abaixo abrem o site oficial do fabricante." />
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <Button Content="Procurar drivers novos" Style="{StaticResource Secondary}" Command="{Binding DriverSearchCommand}" />
-                        <Button Content="Instalar pelo Windows Update" Margin="8,0,0,0" Command="{Binding InstallDriversCommand}"
-                                Visibility="{Binding HasDriverUpdates, Converter={StaticResource Visible}}" />
                     </StackPanel>
-                    <TextBlock Text="{Binding DriverSearchText}" TextWrapping="Wrap" Margin="0,8,0,0"
-                               Visibility="{Binding DriverSearchText, Converter={StaticResource Visible}}" />
                     <ItemsControl ItemsSource="{Binding DriverLinks}" Margin="0,8,0,0">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>

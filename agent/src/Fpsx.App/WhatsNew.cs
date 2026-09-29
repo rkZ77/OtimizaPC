@@ -10,6 +10,8 @@ public static class WhatsNew
 {
     // Atualizar junto com a versão do Directory.Build.props e com a nota do admin.
     private const string Notes =
+        "Página Drivers e reparo: o RKZFPS procura driver novo no Windows Update e instala pelo próprio app, com ponto de restauração antes. " +
+        "Também verifica se os arquivos do Windows estão corrompidos e repara com as ferramentas da Microsoft.\n\n" +
         "Vigia do PC: com o RKZFPS na bandeja, ele confere o PC depois que o Windows liga e a cada 6 horas. " +
         "Se uma atualização do Windows, um driver novo ou um jogo desfez uma correção, você recebe um aviso para corrigir de novo.\n\n" +
         "Resumo da semana: uma vez por semana, o FPS medido nas suas partidas, com a semana anterior ao lado.\n\n" +

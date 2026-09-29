@@ -84,11 +84,22 @@ public static class ElevatedHelper
             var manager = new RollbackManager(system, ctx.Store);
             session = request.ChangeId is null ? manager.RollbackSession(sid, request.Force) : manager.RollbackChange(sid, request.ChangeId, request.Force);
         }
+        else if (request.Action == "system-check")
+        {
+            // Só leitura: o resultado volta em JSON no lugar do id de sessão.
+            var report = WindowsRepair.Check();
+            File.WriteAllText(full + ".result", JsonSerializer.Serialize(report, FpsxJson.Options));
+            return 0;
+        }
         else if (request.Action == "apply")
         {
             // Scan novo, já elevado: aplicar em cima do estado da tela do outro
             // processo seria confiar em informação velha.
             var snapshot = new SnapshotCollector(ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false });
+            // Driver: pergunta de novo ao Windows Update aqui dentro, em vez de
+            // confiar na lista que o app comum mostrou. Só entra o que ele oferece agora.
+            if (request.Ids.Any(id => id.StartsWith("driver-update", StringComparison.OrdinalIgnoreCase)))
+                snapshot = snapshot with { PendingDrivers = WindowsUpdateDrivers.SearchAsync().GetAwaiter().GetResult() };
             var scan = new DecisionEngine(ctx.Catalog, ctx.GameProfiles).Evaluate(snapshot, ctx.Settings.Profile, ctx.License().Plan);
             session = new OptimizationEngine(system, ctx.Store).Apply(scan, request.Ids, new ApplyOptions
             {

@@ -67,6 +67,27 @@ public sealed class FakeSystem : ISystemAccess
         return new CommandResult(0, "ok");
     }
 
+    public CommandResult RunSystemRepair(SystemRepairKind kind)
+    {
+        Log.Add($"repair {kind}");
+        return new CommandResult(0, "ok");
+    }
+
+    /// <summary>false simula a Proteção do Sistema desligada.</summary>
+    public bool RestorePointsEnabled { get; set; } = true;
+
+    public CommandResult CreateRestorePoint(string description)
+    {
+        Log.Add("restore-point");
+        return RestorePointsEnabled ? new CommandResult(0, "ok") : new CommandResult(1, "Proteção do sistema desligada");
+    }
+
+    public CommandResult InstallDriverUpdate(string updateId)
+    {
+        Log.Add($"driver {updateId}");
+        return new CommandResult(0, "Driver instalado.");
+    }
+
     /// <summary>PID -> nome dos processos "abertos".</summary>
     public Dictionary<int, string> Processes { get; } = new();
 

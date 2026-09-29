@@ -74,8 +74,8 @@ public sealed class DashboardViewModel : PageViewModel
             p => !IsBusy && p is OpenAppItem { CanClose: true });
         OpenUrlCommand = new RelayCommand(p => AppHost.OpenUrl((string)p!), p => p is string);
         UpgradeCommand = new AsyncCommand(Upgrade, () => !IsBusy && !_upgrading && HasScan);
-        DriverSearchCommand = new AsyncCommand(SearchDrivers, () => !_searchingDrivers);
-        InstallDriversCommand = new RelayCommand(() => AppHost.OpenUrl(Fpsx.Core.Diagnostics.FindingAction.WindowsUpdateDrivers.Target));
+        // Driver tem página própria (procurar, instalar e o site do fabricante): o botão do Início leva até ela.
+        DriverSearchCommand = new RelayCommand(() => _host.Navigate<DriversViewModel>());
         HeroCommand = new AsyncCommand(Hero, () => !IsBusy);
         GoGamesCommand = new RelayCommand(() => _host.Navigate<GamesViewModel>());
         GoGameplayCommand = new RelayCommand(() => _host.Navigate<GameplayViewModel>());
@@ -213,51 +213,10 @@ public sealed class DashboardViewModel : PageViewModel
     public ICommand CloseAppCommand { get; }
     public ICommand UpgradeCommand { get; }
 
-    // ---- drivers novos no Windows Update ----
-    // O app só procura (leitura, sem administrador). Instalar fica com a tela do
-    // Windows Update, que tem o controle e a reversão de driver: o RKZFPS só
-    // aplica o que sabe desfazer.
+    // ---- drivers ----
+    // Procurar e instalar ficam na página Drivers e reparo; o Início só leva até lá.
 
     public ICommand DriverSearchCommand { get; }
-    public ICommand InstallDriversCommand { get; }
-
-    private bool _searchingDrivers;
-    private string _driverSearchText = "";
-    private bool _hasDriverUpdates;
-
-    public string DriverSearchText
-    {
-        get => _driverSearchText;
-        private set => Set(ref _driverSearchText, value);
-    }
-
-    public bool HasDriverUpdates
-    {
-        get => _hasDriverUpdates;
-        private set => Set(ref _hasDriverUpdates, value);
-    }
-
-    private async Task SearchDrivers()
-    {
-        _searchingDrivers = true;
-        HasDriverUpdates = false;
-        DriverSearchText = "Procurando no Windows Update. Pode levar até um minuto...";
-        try
-        {
-            var drivers = await Fpsx.Windows.WindowsUpdateDrivers.SearchAsync();
-            DriverSearchText = Fpsx.Core.Diagnostics.DriverUpdates.Summary(drivers);
-            HasDriverUpdates = drivers.Count > 0;
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
-        {
-            DriverSearchText = "Não deu para falar com o Windows Update agora. Confira a internet ou use o botão Drivers pelo Windows Update.";
-        }
-        finally
-        {
-            _searchingDrivers = false;
-            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
-        }
-    }
 
     // ---- qual peça trocar para ganhar FPS ----
     // O veredito (qual peça segura o FPS) sai da MEDIÇÃO das partidas, sem IA,

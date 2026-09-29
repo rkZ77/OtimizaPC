@@ -93,6 +93,16 @@ public enum NetworkRepairKind
     WinsockReset,
 }
 
+/// <summary>Reparos do Windows com as ferramentas oficiais da Microsoft. Lista fechada.</summary>
+public enum SystemRepairKind
+{
+    /// <summary>DISM RestoreHealth: repara a imagem do Windows (a fonte que o SFC usa).</summary>
+    ImageRestoreHealth,
+
+    /// <summary>SFC /scannow: troca arquivos de sistema corrompidos pelos originais.</summary>
+    SystemFileScan,
+}
+
 public enum GpuVendor
 {
     Unknown,

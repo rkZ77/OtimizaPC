@@ -16,6 +16,8 @@ namespace Fpsx.Core.Model;
 [JsonDerivedType(typeof(ProcessCloseChange), "process_close")]
 [JsonDerivedType(typeof(GameConfigChange), "game_config")]
 [JsonDerivedType(typeof(AppSettingChange), "app_setting")]
+[JsonDerivedType(typeof(SystemRepairChange), "system_repair")]
+[JsonDerivedType(typeof(DriverInstallChange), "driver_install")]
 public abstract record Change
 {
     /// <summary>Texto curto em pt-BR para o usuário ver antes de confirmar.</summary>
@@ -109,6 +111,39 @@ public sealed record AppSettingChange(string AppId, string Key, string Value) : 
         ("discord", "enableHardwareAcceleration", "true") => "Ligar a aceleração de hardware do Discord",
         _ => $"Definir {Key} = {Value} na configuração de {AppId}",
     };
+}
+
+/// <summary>
+/// Reparo de arquivos do Windows pelas ferramentas da Microsoft. Sem estado
+/// anterior para restaurar: o reparo devolve os arquivos originais do Windows.
+/// </summary>
+public sealed record SystemRepairChange(SystemRepairKind Repair) : Change
+{
+    public override bool Reversible => false;
+
+    public override bool RequiresAdmin => true;
+
+    public override string Describe() => Repair switch
+    {
+        SystemRepairKind.ImageRestoreHealth => "Reparar a imagem do Windows (DISM, pode levar de 5 a 20 minutos)",
+        SystemRepairKind.SystemFileScan => "Verificar e trocar arquivos de sistema corrompidos (SFC)",
+        _ => "Reparo do Windows",
+    };
+}
+
+/// <summary>
+/// Instala um driver que o Windows Update oferece para este PC, pelo próprio
+/// Windows Update: driver assinado pela Microsoft, nunca baixado de outro
+/// lugar. O desfazer é do Windows: ponto de restauração criado antes e
+/// "Reverter driver" no Gerenciador de Dispositivos.
+/// </summary>
+public sealed record DriverInstallChange(string UpdateId, string Title) : Change
+{
+    public override bool Reversible => false;
+
+    public override bool RequiresAdmin => true;
+
+    public override string Describe() => $"Instalar pelo Windows Update: {Title} (cria um ponto de restauração do Windows antes)";
 }
 
 public sealed record NetworkRepairChange(NetworkRepairKind Repair) : Change

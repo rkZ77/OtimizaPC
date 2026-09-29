@@ -19,6 +19,8 @@ public static class OptimizationRegistry
         new Cs2ShaderCacheClear(),
         new DnsFlush(),
         new WinsockReset(),
+        new SystemFilesRepairOptimization(),
+        new DriverUpdateOptimization(),
         new PagefileRestoreOptimization(),
         new BackgroundProcessCloseOptimization(),
         new TempCleanupOptimization(),

@@ -11,6 +11,10 @@ public sealed record Verification(bool Passed, string Detail);
 /// </summary>
 public sealed class ChangeExecutor(ISystemAccess system)
 {
+    // Um ponto de restauração por sessão, antes do primeiro driver: o Windows
+    // recusa pontos seguidos e um só já cobre todos os drivers da sessão.
+    private string? _restorePoint;
+
     public Change? CaptureInverse(Change change) => change switch
     {
         RegistryValueChange r => r with { Value = system.ReadRegistry(r.Root, r.Path, r.Name) },
@@ -48,6 +52,17 @@ public sealed class ChangeExecutor(ISystemAccess system)
                 if (result.ExitCode != 0)
                     throw new InvalidOperationException($"Comando terminou com código {result.ExitCode}: {result.Output.Trim()}");
                 return result.Output.Trim();
+            case SystemRepairChange s:
+                var repair = system.RunSystemRepair(s.Repair);
+                if (repair.ExitCode != 0)
+                    throw new InvalidOperationException($"O reparo terminou com código {repair.ExitCode}: {repair.Output.Trim()}");
+                return repair.Output.Trim();
+            case DriverInstallChange d:
+                _restorePoint ??= RestorePoint();
+                var install = system.InstallDriverUpdate(d.UpdateId);
+                if (install.ExitCode != 0)
+                    throw new InvalidOperationException($"O Windows Update não instalou o driver: {install.Output.Trim()}");
+                return $"{install.Output.Trim()} {_restorePoint}".Trim();
             case ProcessCloseChange p:
                 var current = system.ProcessName(p.Pid);
                 if (current is null)
@@ -76,6 +91,16 @@ public sealed class ChangeExecutor(ISystemAccess system)
             default:
                 throw new SafetyViolationException($"Tipo de alteração sem executor: {change.GetType().Name}");
         }
+    }
+
+    // Sem ponto (Proteção do Sistema desligada) o driver ainda pode ser
+    // revertido no Gerenciador de Dispositivos: instala e diz isso no resultado.
+    private string RestorePoint()
+    {
+        var r = system.CreateRestorePoint("RKZFPS: antes de instalar driver");
+        return r.ExitCode == 0
+            ? "Ponto de restauração do Windows criado antes."
+            : "Sem ponto de restauração (Proteção do Sistema desligada): para voltar, use Reverter driver no Gerenciador de Dispositivos.";
     }
 
     public Verification Verify(Change change) => change switch

@@ -105,9 +105,12 @@ public sealed class AppHost : ObservableObject
     {
         var settings = Ctx.Settings;
         var options = new CollectOptions { SampleSeconds = cpuTest ? 15 : 3, CpuStressTest = cpuTest, Network = network };
+        // Drivers achados na última busca continuam valendo até a próxima busca:
+        // uma análise comum (vigia, botão Analisar) não pergunta ao Windows Update.
+        var drivers = Scan?.Snapshot.PendingDrivers ?? [];
         var result = await Task.Run(() =>
         {
-            var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(options, progress.Report);
+            var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(options, progress.Report) with { PendingDrivers = drivers };
             return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, settings.Profile, License.Plan);
         });
         Scan = result;
@@ -127,7 +130,8 @@ public sealed class AppHost : ObservableObject
     {
         var fresh = await Task.Run(() =>
         {
-            var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false }, progress.Report);
+            var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false }, progress.Report)
+                with { PendingDrivers = Scan?.Snapshot.PendingDrivers ?? [] };
             return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, Ctx.Settings.Profile, License.Plan);
         });
 
@@ -143,6 +147,30 @@ public sealed class AppHost : ObservableObject
 
         await RunScanAsync(progress, network: false);
         return session;
+    }
+
+    /// <summary>
+    /// Resultado da busca de drivers no Windows Update: entra no scan atual
+    /// para as propostas de instalação existirem (e passarem pelo ApplyFlow).
+    /// </summary>
+    public void SetPendingDrivers(IReadOnlyList<Fpsx.Core.Diagnostics.DriverUpdate> drivers)
+    {
+        if (Scan is not { } scan)
+            return;
+        Scan = new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(scan.Snapshot with { PendingDrivers = drivers }, Ctx.Settings.Profile, License.Plan);
+    }
+
+    /// <summary>
+    /// Verificação dos arquivos do Windows (só leitura). Precisa de
+    /// administrador: vai pelo processo elevado. null = permissão recusada.
+    /// </summary>
+    public async Task<Fpsx.Core.Diagnostics.SystemHealthReport?> CheckSystemAsync(IProgress<string> progress)
+    {
+        progress.Report("Verificando os arquivos do Windows. Pode levar de 5 a 15 minutos");
+        if (IsElevated)
+            return await Task.Run(WindowsRepair.Check);
+        var json = await ElevatedHelper.RunAsync(Ctx, new ElevatedRequest { Action = "system-check" });
+        return json is null ? null : JsonSerializer.Deserialize<Fpsx.Core.Diagnostics.SystemHealthReport>(json, FpsxJson.Options);
     }
 
     /// <summary>Aplica pelo processo elevado. null = o usuário recusou a permissão.</summary>

@@ -63,6 +63,7 @@
         <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><v:HistoryView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:AccountViewModel}"><v:AccountView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:UpdatesViewModel}"><v:UpdatesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DriversViewModel}"><v:DriversView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><v:SettingsView /></DataTemplate>
     </Window.Resources>
 

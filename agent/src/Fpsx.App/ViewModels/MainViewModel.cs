@@ -10,7 +10,7 @@ public sealed class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        AllPages = [new DashboardViewModel(), new OptimizationsViewModel(), new GamesViewModel(), new GameplayViewModel(), new BenchmarkViewModel(), new HistoryViewModel(), new AccountViewModel(), new UpdatesViewModel(), new SettingsViewModel()];
+        AllPages = [new DashboardViewModel(), new OptimizationsViewModel(), new GamesViewModel(), new GameplayViewModel(), new BenchmarkViewModel(), new DriversViewModel(), new HistoryViewModel(), new AccountViewModel(), new UpdatesViewModel(), new SettingsViewModel()];
         _current = AllPages[0];
 #if DEBUG
         // Só em desenvolvimento: abrir direto numa tela, para os prints de QA.

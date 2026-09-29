@@ -3,7 +3,7 @@
   // A lógica de cada id vive em agent/src/Fpsx.Core/Optimizations e o Agent
   // recusa o arquivo inteiro se houver id sem handler, handler sem id ou
   // justificativa incompleta (CatalogValidator).
-  "version": "2026.09.3",
+  "version": "2026.09.4",
   "optimizations": [
     {
       "id": "game-mode-enable",
@@ -262,6 +262,54 @@
         "evidence": "Documentação do netsh winsock (Microsoft Learn).",
         "safer_alternative": "Configurações > Rede > Configurações avançadas > Redefinição de rede.",
         "user_need": "Só por pedido do usuário com o sintoma descrito."
+      }
+    },
+    {
+      "id": "system-files-repair",
+      "name": "Reparar arquivos do Windows",
+      "category": "troubleshooting",
+      "classification": "TROUBLESHOOTING",
+      "risk": "LOW",
+      "impact_area": "SYSTEM",
+      "description": "Roda o DISM RestoreHealth e depois o SFC /scannow, as ferramentas da Microsoft para arquivos de sistema corrompidos.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Arquivo de sistema corrompido (desligamento no meio de atualização, disco com defeito, tweak que apagou arquivo) causa tela azul, programa fechando e Windows Update falhando.",
+        "works_on": "PCs em que a verificação da página Drivers e reparo achou a imagem do Windows reparável, ou com os sintomas acima.",
+        "does_not_work_on": "PC saudável: o SFC não acha nada e nada muda. Não aumenta FPS. Não conserta disco com defeito físico.",
+        "expected_benefit": "Resolve o problema específico quando a causa é arquivo corrompido.",
+        "how_to_measure": "A verificação seguinte mostra a imagem saudável; os sintomas param.",
+        "risk": "Baixo. As ferramentas só trocam arquivos do Windows pelas versões originais assinadas pela Microsoft.",
+        "rollback": "Não há estado anterior a restaurar: o reparo devolve os arquivos originais do Windows.",
+        "evidence": "Documentação do DISM e do SFC (Microsoft Learn, 'Use a ferramenta Verificador de Arquivos do Sistema').",
+        "safer_alternative": "Rodar só a verificação (só leitura) e decidir depois.",
+        "user_need": "Só por pedido do usuário, depois da verificação ou com o sintoma descrito."
+      }
+    },
+    {
+      "id": "driver-update",
+      "name": "Instalar driver pelo Windows Update",
+      "category": "gpu",
+      "classification": "CONDITIONAL",
+      "risk": "MEDIUM",
+      "impact_area": "SYSTEM",
+      "description": "Instala, pelo próprio Windows Update, um driver novo que ele oferece para este PC. Cria um ponto de restauração antes.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Driver desatualizado causa travadas, tela preta, jogo que não abre e recurso que falta; a pessoa não acha o driver certo ou baixa de site duvidoso.",
+        "works_on": "PCs em que o Windows Update oferece driver novo que ainda não está instalado.",
+        "does_not_work_on": "Driver de vídeo mais novo que o do Windows Update (o do fabricante costuma sair antes): para esse, o botão do fabricante continua. Não promete FPS.",
+        "expected_benefit": "Variável: corrige falhas conhecidas do driver antigo. Ganho de FPS, quando existe, é medido nas partidas.",
+        "how_to_measure": "O driver sai da lista do Windows Update; partidas antes e depois na tela Partidas.",
+        "risk": "Médio. Driver novo pode ter defeito próprio; por isso o ponto de restauração e o Reverter driver.",
+        "rollback": "Ponto de restauração do Windows criado antes; Reverter driver no Gerenciador de Dispositivos.",
+        "evidence": "Windows Update Agent API (Microsoft Learn): drivers entregues pelo Windows Update são assinados e testados pela Microsoft (WHQL).",
+        "safer_alternative": "Abrir o Windows Update e instalar por lá.",
+        "user_need": "Só quando a pessoa escolhe o driver na lista."
       }
     },
 

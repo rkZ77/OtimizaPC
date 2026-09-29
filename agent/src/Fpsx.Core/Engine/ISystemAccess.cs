@@ -32,6 +32,14 @@ public interface ISystemAccess
 
     CommandResult RunNetworkRepair(NetworkRepairKind kind);
 
+    CommandResult RunSystemRepair(SystemRepairKind kind);
+
+    /// <summary>Ponto de restauração do Windows. Falha quando a Proteção do Sistema está desligada.</summary>
+    CommandResult CreateRestorePoint(string description);
+
+    /// <summary>Baixa e instala pelo Windows Update a atualização de driver com esse id.</summary>
+    CommandResult InstallDriverUpdate(string updateId);
+
     /// <summary>Nome do processo com esse PID agora, ou null se ele já terminou.</summary>
     string? ProcessName(int pid);
 

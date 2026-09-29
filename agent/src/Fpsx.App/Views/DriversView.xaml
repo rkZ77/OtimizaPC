@@ -1,0 +1,90 @@
+<UserControl x:Class="Fpsx.App.Views.DriversView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer>
+        <StackPanel Margin="32,28" MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Text="Drivers e reparo" Style="{StaticResource H1}" Margin="0,0,0,6" />
+            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,0,0,18"
+                       Text="Driver novo pelo Windows Update, com ponto de restauração antes, e verificação dos arquivos do Windows." />
+
+            <!-- Drivers do Windows Update -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                            <Button Content="Instalar todos" Style="{StaticResource Primary}" Command="{Binding InstallAllCommand}" Margin="0,0,8,0"
+                                    Visibility="{Binding HasManyDrivers, Converter={StaticResource Visible}}" />
+                            <Button Content="Procurar de novo" Command="{Binding SearchCommand}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Drivers novos do Windows Update" Style="{StaticResource H2}" />
+                            <TextBlock Text="{Binding SearchText}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <ItemsControl ItemsSource="{Binding Drivers}" Margin="0,12,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="0,12">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="Instalar" Style="{StaticResource Secondary}" VerticalAlignment="Center" Margin="16,0,0,0"
+                                                CommandParameter="{Binding}"
+                                                Command="{Binding DataContext.InstallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
+                               Text="O driver vem do próprio Windows Update, assinado pela Microsoft. Antes de instalar, o RKZFPS cria um ponto de restauração do Windows. Para voltar ao driver anterior: Gerenciador de Dispositivos, Propriedades do aparelho, Reverter driver." />
+                    <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Site do fabricante -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Direto do fabricante" Style="{StaticResource H2}" />
+                    <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,0,0,12"
+                               Text="O driver de vídeo mais novo costuma sair primeiro no atualizador do fabricante. Cada botão abre o atualizador ou a página oficial, que acha o driver certo para o seu modelo." />
+                    <ItemsControl ItemsSource="{Binding DriverLinks}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Label}" Margin="0,0,8,8" CommandParameter="{Binding Target}"
+                                        Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Arquivos do Windows -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                            <Button Content="Reparar arquivos" Style="{StaticResource Secondary}" Command="{Binding RepairCommand}" Margin="0,0,8,0"
+                                    Visibility="{Binding CanRepair, Converter={StaticResource Visible}}" />
+                            <Button Content="Verificar" Style="{StaticResource Secondary}" Command="{Binding CheckCommand}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="{Binding HealthTitle}" Style="{StaticResource H2}" />
+                            <TextBlock Text="{Binding HealthText}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0"
+                               Text="Verificar só lê. Reparar usa as ferramentas da Microsoft (DISM e SFC), troca arquivos estragados pelos originais e pode levar até 30 minutos. Útil para tela azul, programa fechando sozinho e erro de DLL; não aumenta FPS." />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

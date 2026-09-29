@@ -22,6 +22,13 @@ public sealed record SystemSnapshot
     public SecurityInfo? Security { get; init; }
     public IReadOnlyList<GameInstall> Games { get; init; } = [];
 
+    /// <summary>
+    /// Drivers que o Windows Update oferece agora. Só vem preenchido quando a
+    /// pessoa procurou (a busca leva até um minuto e usa a rede); no scan
+    /// comum fica vazio.
+    /// </summary>
+    public IReadOnlyList<Diagnostics.DriverUpdate> PendingDrivers { get; init; } = [];
+
     /// <summary>Fabricante e modelo da placa-mãe: define o caminho na BIOS de cada ajuste.</summary>
     public string BoardManufacturer { get; init; } = "";
 
