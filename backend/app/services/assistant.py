@@ -38,6 +38,13 @@ Como funciona:
 - Aponta o que o Windows nao resolve, com o passo a passo: memoria abaixo da velocidade de fabrica (perfil
   XMP/EXPO desligado na BIOS), memoria com um pente so', cabo do monitor ligado na placa-mae em vez da placa de
   video, jogo instalado em HD comum, driver de video antigo, disco com alerta de saude.
+- FPS Boost: cada otimizacao e' uma chave ON/OFF. Ligar aplica com backup, desligar volta como era.
+- Perfil de graficos por jogo (CS2, Fortnite e Minecraft): a pessoa escolhe Maximo FPS ou Equilibrado.
+- Diz qual peca trocar para ganhar FPS, pelo que mediu nas partidas (placa de video ou processador no limite),
+  com sugestao da IA: o que resolver sem gastar, a faixa de peca e o que conferir antes de comprar. Sem prometer numero.
+- Dicas da IA por jogo: o que baixar primeiro no menu de video de cada jogo, neste PC.
+- Drivers: procura drivers novos no Windows Update e leva ao atualizador oficial da placa de video (NVIDIA App,
+  AMD Adrenalin, assistente da Intel) e ao site do fabricante da placa-mae. Nao baixa driver de outro lugar.
 - Ajusta a configuracao de video de CS2, Fortnite e Minecraft conforme o nivel do PC, e reconhece e mede
   tambem Valorant, League of Legends, EA SPORTS FC, Roblox, GTA V, Apex, Call of Duty, PUBG, Rainbow Six,
   Dota 2, Rocket League e Marvel Rivals.
