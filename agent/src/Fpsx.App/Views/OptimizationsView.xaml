@@ -14,8 +14,9 @@
                     <Button DockPanel.Dock="Right" Content="Analisar de novo" Command="{Binding ScanCommand}" VerticalAlignment="Top" />
                     <StackPanel>
                         <TextBlock Text="Otimizações" Style="{StaticResource H1}" />
+                        <TextBlock Text="{Binding Summary}" FontSize="15" Margin="0,6,0,0" Visibility="{Binding HasScan, Converter={StaticResource Visible}}" />
                         <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
-                                   Text="Cada item mostra por que foi recomendado, o risco e o que muda. Nada é aplicado sem sua confirmação, e tudo que tem backup pode ser desfeito." />
+                                   Text="Marque o que quiser e toque em Aplicar. Tudo pode ser desfeito. Passe o mouse num item para ver os detalhes." />
                     </StackPanel>
                 </DockPanel>
                 <TextBlock Text="Rode a análise na tela Início para ver as otimizações deste PC." Style="{StaticResource MutedText}"
@@ -24,13 +25,23 @@
                 <ItemsControl ItemsSource="{Binding Groups}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="0,0,0,10">
-                                <TextBlock Text="{Binding Title}" Style="{StaticResource H2}" Margin="0,8,0,2" />
-                                <TextBlock Text="{Binding Hint}" Style="{StaticResource MutedText}" Margin="0,0,0,10" />
-                                <ItemsControl ItemsSource="{Binding Items}">
+                            <StackPanel Margin="0,0,0,12">
+                                <!-- Grupo aberto: título. Grupo de consulta: título clicável com contador. -->
+                                <TextBlock Text="{Binding Header}" Style="{StaticResource H2}" Margin="0,8,0,8"
+                                           Visibility="{Binding Collapsible, Converter={StaticResource Hidden}}" />
+                                <Button Command="{Binding ToggleCommand}" Style="{StaticResource Ghost}" HorizontalAlignment="Left" Padding="0,6"
+                                        Visibility="{Binding Collapsible, Converter={StaticResource Visible}}" ToolTip="{Binding Hint}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Chevron}" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                        <TextBlock Text="{Binding Header}" FontSize="16" FontWeight="SemiBold" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Cartões enxutos: o que é, por que, e o aviso quando há. Detalhe técnico no mouse. -->
+                                <ItemsControl ItemsSource="{Binding Items}" Visibility="{Binding ShowCards, Converter={StaticResource Visible}}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,10">
+                                            <Border Style="{StaticResource Card}" Padding="16,14" Margin="0,0,0,8" ToolTip="{Binding Meta}">
                                                 <StackPanel>
                                                     <DockPanel>
                                                         <Border DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="{Binding DecisionBrush}">
@@ -38,22 +49,18 @@
                                                         </Border>
                                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="15" />
                                                     </DockPanel>
-                                                    <TextBlock Text="{Binding Meta}" Style="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,0" />
-                                                    <TextBlock Text="{Binding Reason}" Margin="0,8,0,0" />
-                                                    <TextBlock Text="{Binding Warning, StringFormat=Atenção: {0}}" Foreground="{StaticResource Warn}" FontSize="13" Margin="0,6,0,0"
+                                                    <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                                                    <TextBlock Text="{Binding Warning, StringFormat=Atenção: {0}}" Foreground="{StaticResource Warn}" FontSize="13" TextWrapping="Wrap" Margin="0,6,0,0"
                                                                Visibility="{Binding Warning, Converter={StaticResource Visible}}" />
                                                     <Button Content="Como liberar" Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="0,6,0,0"
                                                             CommandParameter="{Binding}"
                                                             Command="{Binding DataContext.UnlockCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Visibility="{Binding IsBlocked, Converter={StaticResource Visible}}" />
-                                                    <ItemsControl ItemsSource="{Binding Proposals}" Margin="0,10,0,0"
+                                                    <ItemsControl ItemsSource="{Binding Proposals}" Margin="0,8,0,0"
                                                                   Visibility="{Binding HasProposals, Converter={StaticResource Visible}}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding Actionable}" Margin="0,4">
-                                                                    <StackPanel Margin="6,0,0,0">
-                                                                        <TextBlock Text="{Binding Title}" />
-                                                                        <TextBlock Text="{Binding Changes}" Style="{StaticResource MutedText}" FontSize="12" />
-                                                                    </StackPanel>
+                                                                <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding Actionable}" Margin="0,2" ToolTip="{Binding Changes}">
+                                                                    <TextBlock Text="{Binding Title}" Margin="6,0,0,0" />
                                                                 </CheckBox>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
@@ -63,6 +70,39 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+
+                                <!-- Grupo de consulta aberto: lista simples, uma linha por item. -->
+                                <Border Style="{StaticResource Card}" Padding="16,8" Visibility="{Binding ShowRows, Converter={StaticResource Visible}}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Hint}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,6" />
+                                        <ItemsControl ItemsSource="{Binding Items}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="0,8" ToolTip="{Binding Reason}">
+                                                        <StackPanel>
+                                                            <DockPanel>
+                                                                <Border DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="{Binding DecisionBrush}">
+                                                                    <TextBlock Text="{Binding DecisionLabel}" FontSize="10" FontWeight="Bold" Foreground="#0E1116" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                                            </DockPanel>
+                                                            <!-- Reparo continua marcável: é o único grupo fechado com ação. -->
+                                                            <ItemsControl ItemsSource="{Binding Proposals}" Visibility="{Binding HasProposals, Converter={StaticResource Visible}}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <CheckBox IsChecked="{Binding IsSelected}" IsEnabled="{Binding Actionable}" Margin="0,4,0,0" ToolTip="{Binding Changes}">
+                                                                            <TextBlock Text="{Binding Title}" Margin="6,0,0,0" Style="{StaticResource MutedText}" />
+                                                                        </CheckBox>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

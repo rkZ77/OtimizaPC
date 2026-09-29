@@ -4,7 +4,53 @@ using Fpsx.Core.Model;
 
 namespace Fpsx.App.ViewModels;
 
-public sealed record OptimizationGroup(string Title, string Hint, IReadOnlyList<OptimizationItem> Items);
+/// <summary>
+/// Grupo da tela. Os de consulta (já otimizado, reparos, não se aplicam) nascem
+/// fechados e, abertos, viram lista simples: eram 20 cartões grandes do que
+/// já estava certo empurrando para baixo o que a pessoa veio fazer.
+/// </summary>
+public sealed class OptimizationGroup : ObservableObject
+{
+    private bool _isOpen;
+
+    public OptimizationGroup(string title, string hint, IReadOnlyList<OptimizationItem> items, bool collapsible)
+    {
+        Title = title;
+        Hint = hint;
+        Items = items;
+        Collapsible = collapsible;
+        _isOpen = !collapsible;
+        ToggleCommand = new RelayCommand(() => IsOpen = !IsOpen);
+    }
+
+    public string Title { get; }
+    public string Hint { get; }
+    public IReadOnlyList<OptimizationItem> Items { get; }
+
+    /// <summary>Grupo de consulta: fechado por padrão, com linhas simples em vez de cartões.</summary>
+    public bool Collapsible { get; }
+
+    public bool ShowCards => !Collapsible && IsOpen;
+    public bool ShowRows => Collapsible && IsOpen;
+
+    public string Header => Collapsible ? $"{Title} ({Items.Count})" : Title;
+
+    /// <summary>Seta do grupo fechável (Segoe MDL2: ChevronDown / ChevronRight).</summary>
+    public string Chevron => IsOpen ? "\uE70D" : "\uE76C";
+
+    public bool IsOpen
+    {
+        get => _isOpen;
+        set
+        {
+            if (Set(ref _isOpen, value))
+                foreach (var n in new[] { nameof(ShowCards), nameof(ShowRows), nameof(Chevron) })
+                    Raise(n);
+        }
+    }
+
+    public ICommand ToggleCommand { get; }
+}
 
 /// <summary>Todas as otimizações, separadas pelo que o motor decidiu, com escolha item a item.</summary>
 public sealed class OptimizationsViewModel : PageViewModel
@@ -37,6 +83,20 @@ public sealed class OptimizationsViewModel : PageViewModel
     public ObservableCollection<OptimizationGroup> Groups { get; } = [];
     public bool HasScan => _host.Scan is not null;
 
+    /// <summary>Uma linha no topo: o que dá para fazer agora e o que já está certo.</summary>
+    public string Summary
+    {
+        get
+        {
+            int Count(string title) => Groups.FirstOrDefault(g => g.Title == title)?.Items.Count ?? 0;
+            var fazer = Count("Recomendadas") + Count("Opcionais");
+            var certas = Count("Já otimizado");
+            return fazer == 0
+                ? $"Nada para fazer agora: {certas} {(certas == 1 ? "item já está certo" : "itens já estão certos")}."
+                : $"{fazer} {(fazer == 1 ? "item para escolher" : "itens para escolher")} e {certas} já {(certas == 1 ? "certo" : "certos")}.";
+        }
+    }
+
     private void Load()
     {
         Groups.Clear();
@@ -46,11 +106,11 @@ public sealed class OptimizationsViewModel : PageViewModel
                 .Where(o => o.Definition.Classification != Classification.NotRecommended)
                 .Select(o => new OptimizationItem(o)).ToList();
 
-            void Add(string title, string hint, Func<OptimizationItem, bool> filter)
+            void Add(string title, string hint, Func<OptimizationItem, bool> filter, bool collapsible = false)
             {
                 var list = items.Where(filter).ToList();
                 if (list.Count > 0)
-                    Groups.Add(new OptimizationGroup(title, hint, list));
+                    Groups.Add(new OptimizationGroup(title, hint, list, collapsible));
             }
 
             Add("Recomendadas", "Há benefício esperado neste PC. As marcadas vêm do seu perfil.", i => i.Result.Decision == Decision.Recommended);
@@ -60,12 +120,13 @@ public sealed class OptimizationsViewModel : PageViewModel
             static bool IsRepair(OptimizationItem i) => i.Result.Definition.Category is "troubleshooting" or "network";
             Add("Opcionais", "Disponíveis por escolha sua: itens de inicialização e experimentais.", i => i.Result.Decision == Decision.Optional && !IsRepair(i));
             Add("Disponíveis em outro plano", "Resolveriam algo encontrado no seu PC. Cada uma diz o quê: para aplicar, é só assinar o plano indicado.", i => i.Result.Decision == Decision.Blocked);
-            Add("Já otimizado", "Já estão na configuração certa. O RKZFPS não mexe no que já está bom.", i => i.Result.Decision == Decision.AlreadyOptimal);
-            Add("Reparos (não aumentam FPS)", "Só para quando o problema descrito em cada um acontecer: travadas estranhas depois de atualizar o jogo ou o driver, sites que não abrem, internet que caiu depois de remover VPN. Sem o problema, não fazem diferença.", i => i.Result.Decision == Decision.Optional && IsRepair(i));
-            Add("Não se aplicam a este PC", "Hardware, sistema ou jogo não atendem aos critérios.", i => i.Result.Decision is Decision.NotApplicable or Decision.Unknown);
+            Add("Já otimizado", "Já estão na configuração certa. O RKZFPS não mexe no que já está bom.", i => i.Result.Decision == Decision.AlreadyOptimal, collapsible: true);
+            Add("Reparos (não aumentam FPS)", "Só para quando o problema descrito em cada um acontecer: travadas estranhas depois de atualizar o jogo ou o driver, sites que não abrem, internet que caiu depois de remover VPN. Sem o problema, não fazem diferença.", i => i.Result.Decision == Decision.Optional && IsRepair(i), collapsible: true);
+            Add("Não se aplicam a este PC", "Hardware, sistema ou jogo não atendem aos critérios.", i => i.Result.Decision is Decision.NotApplicable or Decision.Unknown, collapsible: true);
         }
 
         Raise(nameof(HasScan));
+        Raise(nameof(Summary));
     }
 
     private List<string> Selected() =>

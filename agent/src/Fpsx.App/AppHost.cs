@@ -198,6 +198,23 @@ public sealed class AppHost : ObservableObject
     public void StartUpdateChecks() =>
         _updateTimer ??= new System.Threading.Timer(_ => _ = CheckUpdateAsync(), null, TimeSpan.FromSeconds(20), TimeSpan.FromHours(6));
 
+    private DateTimeOffset? _lastUpdateCheck;
+    private bool _lastUpdateCheckFailed;
+
+    /// <summary>Quando a última verificação terminou com resposta do servidor (a tela Atualizações mostra).</summary>
+    public DateTimeOffset? LastUpdateCheck
+    {
+        get => _lastUpdateCheck;
+        private set => Set(ref _lastUpdateCheck, value);
+    }
+
+    /// <summary>A última tentativa ficou sem resposta (sem internet ou servidor fora).</summary>
+    public bool LastUpdateCheckFailed
+    {
+        get => _lastUpdateCheckFailed;
+        private set => Set(ref _lastUpdateCheckFailed, value);
+    }
+
     public async Task CheckUpdateAsync()
     {
         try
@@ -206,6 +223,8 @@ public sealed class AppHost : ObservableObject
             OnUi(() =>
             {
                 Update = found;
+                LastUpdateCheck = DateTimeOffset.Now;
+                LastUpdateCheckFailed = false;
                 if (found is not null && _notifiedVersion != found.Version)
                 {
                     _notifiedVersion = found.Version;
@@ -213,9 +232,11 @@ public sealed class AppHost : ObservableObject
                 }
             });
         }
-        catch (ApiException)
+        catch (Exception ex) when (ex is ApiException or System.Net.Http.HttpRequestException or TaskCanceledException)
         {
-            // Offline: tenta de novo na próxima volta.
+            // Offline: tenta de novo na próxima volta. A tela Atualizações diz
+            // que não conseguiu, em vez de afirmar que está tudo em dia.
+            OnUi(() => LastUpdateCheckFailed = true);
         }
     }
 
