@@ -78,6 +78,7 @@ public sealed class DashboardViewModel : PageViewModel
         GoGamesCommand = new RelayCommand(() => _host.Navigate<GamesViewModel>());
         GoGameplayCommand = new RelayCommand(() => _host.Navigate<GameplayViewModel>());
         GoHistoryCommand = new RelayCommand(() => _host.Navigate<HistoryViewModel>());
+        RenewCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/meu-plano"));
         _host.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is nameof(AppHost.Scan) or nameof(AppHost.License))
@@ -143,7 +144,9 @@ public sealed class DashboardViewModel : PageViewModel
         HeroState.Scanning => Progress.Length > 0 ? Progress : "Só leitura: nada muda no PC nesta etapa.",
         HeroState.Good => "Nada para mudar agora. Jogue com o RKZFPS aberto para medir o FPS das suas partidas.",
         HeroState.CanFix => "O RKZFPS guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
-        HeroState.NeedsPlan => "Veja abaixo o que cada uma resolve. Para o RKZFPS corrigir, entre com um plano na tela Conta.",
+        HeroState.NeedsPlan => _host.License.Expired
+            ? "Seu plano venceu, mas o RKZFPS continua analisando. Veja abaixo o que cada uma resolve e renove para ele corrigir."
+            : "Veja abaixo o que cada uma resolve. Para o RKZFPS corrigir, entre com um plano na tela Conta.",
         _ => "Veja abaixo o que foi encontrado e o botão para resolver cada um.",
     };
 
@@ -151,7 +154,7 @@ public sealed class DashboardViewModel : PageViewModel
     {
         HeroState.Scanning => "Analisando...",
         HeroState.CanFix => "Corrigir agora",
-        HeroState.NeedsPlan => "Ver planos",
+        HeroState.NeedsPlan => _host.License.Expired ? "Renovar plano" : "Ver planos",
         _ => "Otimizar de novo",
     };
 
@@ -163,7 +166,7 @@ public sealed class DashboardViewModel : PageViewModel
                 await Busy(Optimize);
                 break;
             case HeroState.NeedsPlan:
-                AppHost.OpenUrl(_host.SiteUrl + "/planos");
+                AppHost.OpenUrl(_host.SiteUrl + (_host.License.Expired ? "/meu-plano" : "/planos"));
                 break;
             default:
                 // Windows, driver e jogo mudam com as atualizações: analisa de
@@ -224,6 +227,37 @@ public sealed class DashboardViewModel : PageViewModel
     }
     public ICommand OpenUrlCommand { get; }
 
+    // ---- plano perto de vencer ou vencido ----
+    // O RKZFPS nunca desfaz nada sozinho quando o plano acaba: as correções
+    // seguem no PC e o desfazer segue liberado. O que muda é o convite para
+    // renovar, com o que foi feito e medido neste PC como argumento.
+
+    public ICommand RenewCommand { get; }
+
+    public bool ShowPlanCard => _host.License.Expired || _host.License.EndingSoon(DateTimeOffset.Now);
+
+    public string PlanCardTitle
+    {
+        get
+        {
+            var l = _host.License;
+            if (l.Expired)
+                return "Seu plano venceu";
+            var days = l.DaysLeft(DateTimeOffset.Now) ?? 0;
+            var quando = days switch { 0 => "hoje", 1 => "amanhã", _ => $"em {days} dias" };
+            return l.Status == "trial" ? $"Seu teste grátis termina {quando}" : $"Seu plano vence {quando}";
+        }
+    }
+
+    public string PlanCardText => _host.License.Expired
+        ? "As correções continuam no seu PC e o desfazer segue liberado. Para o RKZFPS corrigir o que aparecer de novo, ajustar seus jogos e comparar suas partidas, renove."
+        : "Renove antes de vencer para não perder as correções novas e a comparação das partidas. Os dias novos somam aos que faltam.";
+
+    public string PlanCardButton => _host.License.Expired ? "Renovar plano" : "Renovar agora";
+
+    /// <summary>O que o RKZFPS fez neste PC, em frases curtas. Vazio quando ainda não fez nada.</summary>
+    public IReadOnlyList<string> RecapLines => ShowPlanCard ? _host.Recap().Lines() : [];
+
     public bool HasScan => _host.Scan is not null;
 
     /// <summary>Página oficial do fabricante da placa (processadores compatíveis e BIOS).</summary>
@@ -278,7 +312,7 @@ public sealed class DashboardViewModel : PageViewModel
             ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }
 
-        foreach (var name in new[] { nameof(HasScan), nameof(BoardSupportUrl), nameof(DriverLinks), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
+        foreach (var name in new[] { nameof(HasScan), nameof(BoardSupportUrl), nameof(DriverLinks), nameof(ShowPlanCard), nameof(PlanCardTitle), nameof(PlanCardText), nameof(PlanCardButton), nameof(RecapLines), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
             Raise(name);
         RaiseHero();
     }

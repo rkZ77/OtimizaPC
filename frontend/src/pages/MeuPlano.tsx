@@ -59,7 +59,9 @@ export default function MeuPlano() {
   const tier = lic.tier === 'custom' ? 'ultimate' : lic.tier
   const pago = lic.status === 'active' && tier !== 'free'
   const dias = diasRestantes(lic.expires_at)
-  const planoAtual = plans.find((p) => p.key === lic.plan_key)
+  const expirado = lic.status === 'expired'
+  // Vencido: o plano atual e' o Free, mas renovar oferece o plano que a pessoa tinha.
+  const planoAtual = plans.find((p) => p.key === (lic.ended_plan_key ?? lic.plan_key))
   // Renovar o mesmo plano: o que a pessoa ja' tem, ou o mensal do mesmo tier.
   const renovar = planoAtual && planoAtual.price_cents > 0 ? planoAtual : plans.find((p) => p.tier === tier && p.period === 'monthly')
   const proximoTier = PLAN_ORDER[PLAN_ORDER.indexOf(tier as (typeof PLAN_ORDER)[number]) + 1]
@@ -82,7 +84,11 @@ export default function MeuPlano() {
         {pago && dias !== null && dias <= 7 && (
           <Alert tone="warn">Seu plano vence em {dias} {dias === 1 ? 'dia' : 'dias'}. Não há renovação automática: renove para não perder as correções pagas.</Alert>
         )}
-        {lic.status === 'expired' && <Alert tone="warn">Seu plano venceu. O app voltou ao Free, e desfazer continua liberado.</Alert>}
+        {expirado && (
+          <Alert tone="warn">
+            Seu plano venceu. As correções continuam no seu PC e desfazer segue liberado; o que parou foram as correções novas, o ajuste dos jogos e a comparação das partidas. Renove para voltar a ter tudo.
+          </Alert>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr] lg:items-start [&>*]:min-w-0">
@@ -121,7 +127,7 @@ export default function MeuPlano() {
         </div>
       </div>
 
-      {proximo && acrescenta.length > 0 && (
+      {!expirado && proximo && acrescenta.length > 0 && (
         <div className="card mt-4 p-6">
           <p className="text-xs font-bold uppercase tracking-wide text-accent-ink">Próximo plano</p>
           <p className="mt-1 font-display text-xl font-bold text-ink-1">O {proximo.name} acrescenta</p>

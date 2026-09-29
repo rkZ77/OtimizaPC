@@ -101,6 +101,9 @@ public partial class App : Application
             $"FPS médio {s.Stats.AvgFps:0}, 1% low {s.Stats.Low1Fps:0}. Veja o antes e depois em Partidas.");
         AppHost.Current.UpdateFound += u => _tray?.Notify($"RKZFPS {u.Version} disponível",
             (string.IsNullOrWhiteSpace(u.Notes) ? "Uma versão nova do RKZFPS saiu." : u.Notes) + " Clique para abrir e atualizar com um clique.");
+        // Plano perto de vencer: aviso na bandeja com o que o RKZFPS fez neste PC.
+        AppHost.Current.RenewalDue += (titulo, texto) => _tray?.Notify(titulo, texto);
+        AppHost.Current.CheckRenewal();
         AppHost.Current.StartMonitor();
         // Quem abre direto na bandeja (com o Windows) também recebe o aviso.
         if (startInTray)

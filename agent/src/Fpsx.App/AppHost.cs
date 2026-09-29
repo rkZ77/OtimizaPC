@@ -62,7 +62,38 @@ public sealed class AppHost : ObservableObject
 
     public bool Allows(Feature f) => PlanFeatures.Allows(License.Plan, f);
 
-    public void RefreshLicense() => License = Ctx.License();
+    public void RefreshLicense()
+    {
+        License = Ctx.License();
+        CheckRenewal();
+    }
+
+    /// <summary>Plano ou teste perto de vencer: título e texto para o aviso da bandeja.</summary>
+    public event Action<string, string>? RenewalDue;
+
+    private bool _renewalNotified;
+
+    /// <summary>
+    /// Avisa UMA vez por abertura do app (que abre com o Windows, então na
+    /// prática uma vez por dia) quando faltam poucos dias. Plano já vencido
+    /// não entra aqui: ele aparece no cartão da tela inicial, sem aviso diário.
+    /// </summary>
+    public void CheckRenewal()
+    {
+        var now = DateTimeOffset.Now;
+        if (_renewalNotified || RenewalDue is null || !License.EndingSoon(now))
+            return;
+        _renewalNotified = true;
+        var days = License.DaysLeft(now) ?? 0;
+        var quando = days switch { 0 => "hoje", 1 => "amanhã", _ => $"em {days} dias" };
+        var titulo = License.Status == "trial" ? $"Seu teste grátis termina {quando}" : $"Seu plano vence {quando}";
+        var recap = Recap().Lines().FirstOrDefault();
+        RenewalDue.Invoke(titulo, (recap is null ? "" : recap + " ") + "Renove para o RKZFPS seguir corrigindo e medindo. Os dias novos somam aos que faltam.");
+    }
+
+    /// <summary>O que o RKZFPS fez neste PC: correções ativas e ganho medido nas partidas.</summary>
+    public Fpsx.Core.Benchmark.PlanRecap Recap() =>
+        Fpsx.Core.Benchmark.PlanRecap.Build(Ctx.Store.All(), Ctx.Gameplay.All(), id => Ctx.Catalog.Find(id)?.Name);
 
     public async Task<ScanResult> RunScanAsync(IProgress<string> progress, bool cpuTest = false, bool network = true)
     {

@@ -50,6 +50,30 @@
                 </Button>
             </UniformGrid>
 
+            <!-- Plano perto de vencer ou vencido: o que o RKZFPS fez aqui e o convite para renovar.
+                 Nada é desfeito sozinho quando o plano acaba. -->
+            <Border Style="{StaticResource Card}" BorderBrush="{StaticResource Accent}" BorderThickness="1"
+                    Visibility="{Binding ShowPlanCard, Converter={StaticResource Visible}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="{Binding PlanCardButton}" Style="{StaticResource Primary}"
+                            Command="{Binding RenewCommand}" VerticalAlignment="Top" Margin="16,0,0,0" />
+                    <StackPanel>
+                        <TextBlock Text="{Binding PlanCardTitle}" Style="{StaticResource H2}" Margin="0" />
+                        <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" Text="{Binding PlanCardText}" />
+                        <ItemsControl ItemsSource="{Binding RecapLines}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,4,0,0">
+                                        <TextBlock DockPanel.Dock="Left" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Accent}" Margin="0,3,8,0" />
+                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
             <!-- Drivers: onde atualizar cada um, sempre pela fonte oficial. O app não baixa driver. -->
             <Border Style="{StaticResource Card}" Visibility="{Binding HasScan, Converter={StaticResource Visible}}">
                 <StackPanel>

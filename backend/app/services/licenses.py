@@ -62,16 +62,27 @@ def extended_expiration(current: dict | None, days: int, at: datetime) -> dateti
     return base + timedelta(days=days)
 
 
-def build_token_payload(user: dict, lic: dict | None, free_plan: dict, device_hash: str, grace_days: int, at: datetime) -> dict:
+def build_token_payload(user: dict, lic: dict | None, free_plan: dict, device_hash: str, grace_days: int, at: datetime,
+                        ended: dict | None = None) -> dict:
     """O que vai assinado para o app. `valid_until` e' o limite offline: o app
-    precisa falar com o servidor antes disso, ou cai para Free."""
+    precisa falar com o servidor antes disso, ou cai para Free.
+
+    `ended` e' a ultima licenca que a pessoa teve, quando nenhuma vale mais:
+    o app recebe "expired" em vez de "free" e mostra o resumo do que o RKZFPS
+    fez e o convite para renovar, em vez de tratar como quem nunca assinou.
+    O plano efetivo continua Free: nada pago fica liberado."""
     if lic is None:
         tier, plan_key, status, expires = "free", free_plan["key"], "free", None
+        if ended is not None:
+            status = "blocked" if ended["status"] == "blocked" else "expired"
+            expires = ended["expires_at"]
     else:
         tier, plan_key, status, expires = plans.agent_tier(lic["tier"]), lic["plan_key"], effective_status(lic, at), lic["expires_at"]
 
     valid_until = at + timedelta(days=grace_days)
-    if expires is not None and expires < valid_until:
+    # So' a licenca vigente limita o uso offline: a data da que ja' acabou
+    # esta' no passado e faria o token nascer vencido.
+    if lic is not None and expires is not None and expires < valid_until:
         valid_until = expires
 
     return {
@@ -97,6 +108,13 @@ def for_user(user_id: int) -> list[dict]:
 
 def current(user_id: int) -> dict | None:
     return best_license(for_user(user_id), now())
+
+
+def last_license(user_id: int) -> dict | None:
+    """A licenca que vence por ultimo, valendo ou nao: quando nenhuma vale, e'
+    ela que diz que a pessoa ja' teve plano (e qual)."""
+    todas = for_user(user_id)
+    return todas[0] if todas else None
 
 
 def active_devices(user_id: int) -> list[dict]:
@@ -204,8 +222,9 @@ def touch_device(device_id: int, version: str, build: str) -> None:
 
 def issue_token(user: dict, device_hash: str) -> tuple[str, dict]:
     lic = current(user["id"])
+    ended = last_license(user["id"]) if lic is None else None
     payload = build_token_payload(user, lic, plans.get("free") or {"key": "free"}, device_hash,
-                                  int(app_settings.get("offline_grace_days") or 7), now())
+                                  int(app_settings.get("offline_grace_days") or 7), now(), ended=ended)
     return signing.sign(payload), payload
 
 

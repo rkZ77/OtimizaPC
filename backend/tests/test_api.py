@@ -42,6 +42,7 @@ def test_admin_bloqueia_usuario_comum(client):
 def lic_env(monkeypatch):
     state = {"lic": None, "devices": [], "trial_used": False, "upserted": []}
     monkeypatch.setattr(licenses, "current", lambda uid: state["lic"])
+    monkeypatch.setattr(licenses, "last_license", lambda uid: None)
     monkeypatch.setattr(licenses, "active_devices", lambda uid: state["devices"])
     monkeypatch.setattr(licenses, "max_devices_for", lambda lic: lic["max_devices"] if lic else 1)
     monkeypatch.setattr(licenses, "trial_already_used", lambda h, uid: state["trial_used"])

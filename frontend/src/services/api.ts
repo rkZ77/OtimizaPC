@@ -100,6 +100,8 @@ export interface LicenseView {
   status: string
   expires_at: string | null
   max_devices: number
+  /** Plano que a pessoa tinha, quando status e' expired (para renovar o mesmo). */
+  ended_plan_key?: string
 }
 
 export interface Overview {

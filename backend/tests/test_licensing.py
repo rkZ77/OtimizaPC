@@ -63,3 +63,29 @@ def test_assinatura_detecta_adulteracao():
     forged = signing.sign({"plan": "ultimate", "uid": 1}).split(".")[0]
     assert signing.verify(f"{forged}.{sig}") is None
     assert signing.verify("lixo") is None
+
+
+def test_quem_ja_teve_plano_recebe_expired_e_continua_no_free():
+    user = {"id": 1, "email": "x@y.z"}
+    antiga = {**lic(days=-3), "status": "active"}
+    p = licenses.build_token_payload(user, None, {"key": "free"}, "d" * 64, 7, NOW, ended=antiga)
+    # O app mostra "venceu" e o resumo, mas nada pago fica liberado.
+    assert p["status"] == "expired" and p["plan"] == "free" and p["license_id"] is None
+    assert p["expires_at"] == antiga["expires_at"].isoformat()
+    # A data antiga nao encurta o uso offline: o token nao nasce vencido.
+    assert p["valid_until"] == (NOW + timedelta(days=7)).isoformat()
+
+    bloqueada = licenses.build_token_payload(user, None, {"key": "free"}, "d" * 64, 7, NOW, ended={**antiga, "status": "blocked"})
+    assert bloqueada["status"] == "blocked"
+    nunca = licenses.build_token_payload(user, None, {"key": "free"}, "d" * 64, 7, NOW)
+    assert nunca["status"] == "free" and nunca["expires_at"] is None
+
+
+def test_conta_mostra_plano_vencido_com_o_plano_que_a_pessoa_tinha(monkeypatch):
+    from app.routers.account import license_view
+
+    monkeypatch.setattr(licenses, "max_devices_for", lambda lic: 1)
+    antiga = {**lic(days=-5, plan_key="pro-anual"), "status": "active"}
+    v = license_view(None, antiga)
+    assert v["status"] == "expired" and v["tier"] == "free"
+    assert v["ended_plan_key"] == "pro-anual" and v["expires_at"] == antiga["expires_at"]

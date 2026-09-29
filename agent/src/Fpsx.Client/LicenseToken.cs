@@ -101,6 +101,20 @@ public sealed record LicenseState
 
     public bool LoggedIn => Email is not null;
 
+    /// <summary>Dias de aviso antes do vencimento (plano pago ou teste).</summary>
+    public const int RenewalWarningDays = 3;
+
+    /// <summary>Plano que existiu e venceu: o app caiu para Free, e o resumo do que foi feito aparece.</summary>
+    public bool Expired => Status == "expired";
+
+    /// <summary>Dias que faltam (arredondado para cima), ou null sem vencimento.</summary>
+    public int? DaysLeft(DateTimeOffset now) =>
+        ExpiresAt is { } e ? Math.Max(0, (int)Math.Ceiling((e - now).TotalDays)) : null;
+
+    /// <summary>Plano pago ou teste vencendo nos próximos dias: hora de avisar, uma vez por abertura do app.</summary>
+    public bool EndingSoon(DateTimeOffset now) =>
+        Status is "active" or "trial" && DaysLeft(now) is { } d && d <= RenewalWarningDays;
+
     public static LicenseState Free(string? notice = null) => new() { Notice = notice };
 
     /// <summary>

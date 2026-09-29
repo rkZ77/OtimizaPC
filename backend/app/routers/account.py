@@ -7,9 +7,15 @@ from app.services import licenses, payments, plans, telemetry
 router = APIRouter(prefix="/api/account", tags=["account"])
 
 
-def license_view(lic: dict | None) -> dict:
+def license_view(lic: dict | None, ended: dict | None = None) -> dict:
     if lic is None:
-        return {"plan_key": "free", "tier": "free", "status": "free", "expires_at": None, "max_devices": licenses.max_devices_for(None)}
+        view = {"plan_key": "free", "tier": "free", "status": "free", "expires_at": None, "max_devices": licenses.max_devices_for(None)}
+        # Quem ja' teve plano ve "vencido" com a data e o plano que tinha, para
+        # a tela oferecer renovar o mesmo plano. O acesso segue o do Free.
+        if ended is not None:
+            view.update(status="blocked" if ended["status"] == "blocked" else "expired",
+                        expires_at=ended["expires_at"], ended_plan_key=ended["plan_key"])
+        return view
     return {
         "id": lic["id"],
         "plan_key": lic["plan_key"],
@@ -23,10 +29,11 @@ def license_view(lic: dict | None) -> dict:
 @router.get("/overview")
 def overview(user: dict = Depends(auth.current_user)):
     lic = licenses.current(user["id"])
+    ended = licenses.last_license(user["id"]) if lic is None else None
     plan = plans.get(lic["plan_key"]) if lic else plans.get("free")
     return {
         "user": user,
-        "license": license_view(lic),
+        "license": license_view(lic, ended),
         "plan_name": plan["name"] if plan else "Free",
         "devices": licenses.active_devices(user["id"]),
     }
