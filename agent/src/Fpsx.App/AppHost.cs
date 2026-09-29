@@ -387,12 +387,38 @@ public sealed class AppHost : ObservableObject
             // /fw só funciona em PC com UEFI e exige administrador (o Windows pergunta).
             using var p = Process.Start(new ProcessStartInfo("shutdown.exe", "/r /fw /t 5") { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden });
             if (p is not null && p.WaitForExit(10000) && p.ExitCode != 0)
-                Dialogs.Info("Não deu para abrir a BIOS direto",
-                    "Este PC não permite reiniciar direto na BIOS. Reinicie normalmente e aperte Del (ou F2) várias vezes assim que a tela acender.");
+                OfereceReinicioNormal(p.ExitCode);
         }
         catch (System.ComponentModel.Win32Exception)
         {
             // A pessoa recusou a permissão do Windows: nada acontece.
+        }
+    }
+
+    /// <summary>
+    /// Plano B quando o firmware não aceita o pedido de abrir a BIOS (placa sem
+    /// suporte ao "boot to firmware" do UEFI, ou o Windows iniciado em modo
+    /// Legacy/CSM). Antes o app só avisava e parava; agora reinicia normalmente
+    /// se a pessoa quiser, com a tecla a apertar. O código do erro vai junto
+    /// para o suporte saber o que o Windows respondeu.
+    /// </summary>
+    private static void OfereceReinicioNormal(int codigo)
+    {
+        if (!Dialogs.Confirm("Não deu para abrir a BIOS direto",
+                "A placa-mãe não aceitou o pedido do Windows para abrir a BIOS sozinha " +
+                $"(código {codigo}). Dá para entrar do jeito tradicional:\n\n" +
+                "1. Toque em Reiniciar normalmente.\n" +
+                "2. Assim que a tela acender, aperte Del várias vezes (em notebooks e algumas placas é F2).\n\n" +
+                "Salve e feche o que estiver aberto antes.",
+                "Reiniciar normalmente"))
+            return;
+        try
+        {
+            // Reinício comum não precisa de administrador.
+            using var _ = Process.Start(new ProcessStartInfo("shutdown.exe", "/r /t 5") { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Hidden });
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
         }
     }
 }

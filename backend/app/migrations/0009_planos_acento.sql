@@ -1,5 +1,6 @@
--- Textos dos planos gravados com UTF-8 codificado duas vezes: "Diagnóstico"
--- chegava na tela como "DiagnÃ³stico" (37 textos em producao, 28/09/2026).
+-- Alarme falso (28/09/2026): o "DiagnÃ³stico" era o terminal do Windows lendo
+-- a resposta da API como cp1252; o banco estava certo e esta migration nao
+-- mudou nenhuma linha. Fica por ser inofensiva e ja' constar como aplicada.
 -- Conserta texto por texto (nome, descricao e cada item da lista de
 -- recursos): so' mexe no que tem o padrao "Ã" e, se um texto nao converte
 -- limpo, devolve o original. Uma lista com item certo e item quebrado
