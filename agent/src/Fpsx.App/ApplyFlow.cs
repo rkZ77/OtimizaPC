@@ -33,6 +33,9 @@ public static class ApplyFlow
         if (!ResolveBlocked(items.Select(i => i.Result).Distinct().ToList()))
             return null;
 
+        if (host.Ctx.TrialLimit() is { } trial && !FitTrial(trial, ref items))
+            return null;
+
         var experimental = items.Any(i => i.Result.Definition.Classification == Classification.Experimental);
         if (experimental && !Dialogs.Confirm("Otimização experimental",
                 "Você escolheu uma otimização EXPERIMENTAL. O resultado varia por PC e jogo e pode piorar o desempenho.\n\n" +
@@ -62,6 +65,44 @@ public static class ApplyFlow
         if (sessions.Count > 0)
             Dialogs.Info("Resultado", string.Join("\n\n", sessions.Select(Summary)));
         return sessions.LastOrDefault();
+    }
+
+    /// <summary>
+    /// Teste grátis: avisa antes quando a escolha passa do limite e deixa na
+    /// lista só o que cabe, para a confirmação mostrar exatamente o que muda.
+    /// O motor aplica o mesmo limite de novo (o processo elevado também).
+    /// </summary>
+    private static bool FitTrial(TrialQuota trial, ref List<(OptimizationResult Result, Fpsx.Core.Optimizations.Proposal Proposal)> items)
+    {
+        var taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var fits = items.Where(i =>
+        {
+            var id = i.Result.Definition.Id;
+            if (!trial.Allows(id, taken))
+                return false;
+            taken.Add(id);
+            return true;
+        }).ToList();
+        if (fits.Count == items.Count)
+            return true;
+
+        var left = items.Select(i => i.Result.Definition.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count(id => !trial.Used.Contains(id));
+        var max = TrialQuota.MaxOptimizations;
+        if (fits.Count == 0)
+        {
+            Upsell.Offer("pro", left, $"Seu teste grátis já aplicou as {max} correções que ele libera. As que ele fez continuam no PC e podem ser desfeitas no Histórico.");
+            return false;
+        }
+
+        var choice = Dialogs.Show("Teste grátis",
+            $"No teste grátis o RKZFPS aplica até {max} correções diferentes, e ainda cabe {trial.Remaining}. Das escolhidas, ele aplica agora as que cabem, na ordem da lista.\n\nAssine para aplicar todas.",
+            $"Aplicar {trial.Remaining}", Upsell.ButtonLabel("pro"), "Cancelar");
+        if (choice == 1)
+            Upsell.Go("pro", left);
+        if (choice != 0)
+            return false;
+        items = fits;
+        return true;
     }
 
     /// <summary>Só plano bloqueia: permissão de administrador é pedida na hora de aplicar.</summary>

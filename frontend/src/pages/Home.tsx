@@ -45,6 +45,7 @@ const NOT_DOING = [
 const FAQ: [string, string][] = [
   ['O RKZFPS aumenta meu FPS?', 'Depende do seu PC, e é isso que ele descobre primeiro. Em PC com configuração errada (monitor rodando a 60 Hz, plano de economia de energia, jogo na placa integrada, programas pesando) o ganho costuma ser grande. Em PC já bem configurado, o RKZFPS diz que não há o que mudar. A medição das partidas mostra o número real, antes e depois.'],
   ['O que eu consigo fazer no plano grátis?', 'Ver tudo: o diagnóstico completo, os problemas encontrados, o que cada otimização resolveria no seu PC e o FPS das suas partidas. Para aplicar as correções, é preciso um plano pago.'],
+  ['Se as correções ficam no PC, por que assinar?', 'Porque o PC não fica parado. Atualização do Windows, driver novo e patch de jogo mudam configuração, religam coisas e criam problemas novos. Com um plano, o RKZFPS analisa de novo a cada abertura e corrige o que aparecer, ajusta seus jogos e compara suas partidas antes e depois. O que ele já fez continua no PC mesmo sem plano, e desfazer segue liberado.'],
   ['É seguro? E se der problema?', 'Cada alteração guarda o estado anterior e é conferida depois de aplicada. Qualquer uma pode ser desfeita com um clique, em qualquer plano. O RKZFPS só executa operações de uma lista fechada e revisada.'],
   ['Funciona com anti-cheat (Vanguard, Easy Anti-Cheat)?', 'Sim. A medição de FPS usa o registro de quadros do próprio Windows e não injeta nada no jogo. O RKZFPS também nunca fecha nem mexe em anti-cheat.'],
   ['Preciso ser administrador do PC?', 'Não para usar. Quando uma correção mexe em configuração do sistema, o Windows pede a sua permissão só para ela, e você vê antes o que vai mudar.'],
@@ -65,6 +66,7 @@ export default function Home() {
   // O teste gratis e' a oferta sem risco: vai no botao principal, nao escondido embaixo da grade.
   const trial = planos?.trial_days ?? 0
   const trialTexto = trial === 1 ? '1 dia' : `${trial} dias`
+  const trialFixes = planos?.trial_max_fixes ?? 0
   const provas = [
     stats?.found_percent != null && stats.scanned_pcs != null && { v: `${stats.found_percent}%`, t: `dos ${inteiro(stats.scanned_pcs)} PCs analisados tinham algo para corrigir` },
     stats?.matches != null && { v: inteiro(stats.matches), t: 'partidas medidas com o app aberto' },
@@ -91,7 +93,7 @@ export default function Home() {
             {trial > 0 && (
               <p className="mt-5 inline-flex items-start gap-2 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-ink-1">
                 <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" aria-hidden />
-                <span>Crie a conta no app e use o Pro completo por {trialTexto}, sem cartão.</span>
+                <span>Crie a conta no app e teste o Pro por {trialTexto}, sem cartão: medição das partidas, ajuste dos jogos e até {trialFixes} correções.</span>
               </p>
             )}
             <p className="mt-4 text-sm text-ink-3">
@@ -235,7 +237,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-4 py-14 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-2xl font-bold text-ink-1">Veja o que está pesando no seu PC.</h2>
-            <p className="mt-2 text-ink-3">{trial > 0 ? `Diagnóstico grátis e ${trialTexto} do Pro para corrigir, sem cartão.` : 'Grátis, em poucos minutos, sem mudar nada.'}</p>
+            <p className="mt-2 text-ink-3">{trial > 0 ? `Diagnóstico grátis e ${trialTexto} do Pro para testar, sem cartão.` : 'Grátis, em poucos minutos, sem mudar nada.'}</p>
           </div>
           <Button to="/download" size="lg" Icon={Download}>Baixar grátis</Button>
         </div>

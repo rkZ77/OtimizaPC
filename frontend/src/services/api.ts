@@ -81,6 +81,8 @@ export interface Plan {
 export interface PlansResponse {
   currency: string
   trial_days: number
+  /** Quantas correcoes o teste gratis aplica (o app garante o limite). */
+  trial_max_fixes: number
   plans: Plan[]
 }
 

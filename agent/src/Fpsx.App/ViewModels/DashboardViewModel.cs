@@ -105,6 +105,9 @@ public sealed class DashboardViewModel : PageViewModel
     /// <summary>Otimizações que resolveriam algo mas pedem plano (no Free).</summary>
     public int BlockedCount { get; private set; }
 
+    /// <summary>Correções que ainda cabem no teste grátis, ou null fora do teste.</summary>
+    public int? TrialRemaining { get; private set; }
+
     /// <summary>Plano que libera todas as recomendadas travadas (o convite oferece esse, não a tabela).</summary>
     public string NeededPlan { get; private set; } = "starter";
 
@@ -148,7 +151,11 @@ public sealed class DashboardViewModel : PageViewModel
     {
         HeroState.Scanning => Progress.Length > 0 ? Progress : "Só leitura: nada muda no PC nesta etapa.",
         HeroState.Good => "Nada para mudar agora. Jogue com o RKZFPS aberto para medir o FPS das suas partidas.",
-        HeroState.CanFix => "O RKZFPS guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
+        HeroState.CanFix => TrialRemaining is { } left
+            ? left == 0
+                ? $"Seu teste grátis já aplicou as {Fpsx.Core.Engine.TrialQuota.MaxOptimizations} correções que ele libera. Assine para o RKZFPS corrigir o resto, com backup."
+                : $"No teste grátis o RKZFPS aplica até {Fpsx.Core.Engine.TrialQuota.MaxOptimizations} correções, e ainda cabe {left}. Tudo pode ser desfeito."
+            : "O RKZFPS guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
         HeroState.NeedsPlan => _host.License.Expired
             ? "Seu plano venceu, mas o RKZFPS continua analisando. Veja abaixo o que cada uma resolve e renove para ele corrigir."
             : !_host.License.LoggedIn
@@ -160,7 +167,7 @@ public sealed class DashboardViewModel : PageViewModel
     public string HeroButton => State switch
     {
         HeroState.Scanning => "Analisando...",
-        HeroState.CanFix => "Corrigir agora",
+        HeroState.CanFix => TrialRemaining == 0 ? Upsell.ButtonLabel("pro") : "Corrigir agora",
         HeroState.NeedsPlan => Upsell.ButtonLabel(NeededPlan),
         _ => "Otimizar de novo",
     };
@@ -169,6 +176,9 @@ public sealed class DashboardViewModel : PageViewModel
     {
         switch (State)
         {
+            case HeroState.CanFix when TrialRemaining == 0:
+                Upsell.Go("pro", AutoCount);
+                break;
             case HeroState.CanFix:
                 await Busy(Optimize);
                 break;
@@ -327,7 +337,9 @@ public sealed class DashboardViewModel : PageViewModel
 
     public string PlanCardText => _host.License.Expired
         ? "As correções continuam no seu PC e o desfazer segue liberado. Para o RKZFPS corrigir o que aparecer de novo, ajustar seus jogos e comparar suas partidas, renove."
-        : "Renove antes de vencer para não perder as correções novas e a comparação das partidas. Os dias novos somam aos que faltam.";
+        : _host.License.Status == "trial"
+            ? "As correções feitas no teste continuam no PC. Atualização do Windows, driver novo e patch de jogo mudam configuração e criam problema novo: com um plano, o RKZFPS confere a cada abertura e corrige de novo, e ajusta os seus jogos."
+            : "Renove antes de vencer para não perder as correções novas e a comparação das partidas. Os dias novos somam aos que faltam.";
 
     public string PlanCardButton => _host.License.Expired ? "Renovar plano" : "Renovar agora";
 
@@ -386,6 +398,7 @@ public sealed class DashboardViewModel : PageViewModel
             AutoCount = scan.Optimizations.Count(o => o.AutoSelected);
             var locked = scan.Optimizations.Where(o => Upsell.IsPlanLocked(scan.Plan, o) && o.Evaluation.Decision == Decision.Recommended).ToList();
             BlockedCount = locked.Count;
+            TrialRemaining = _host.Ctx.TrialLimit()?.Remaining;
             NeededPlan = Upsell.RequiredPlan(scan, locked) ?? "starter";
             ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }

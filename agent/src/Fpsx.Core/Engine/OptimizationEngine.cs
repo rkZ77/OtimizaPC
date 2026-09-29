@@ -26,6 +26,9 @@ public sealed record ApplyOptions
     /// o RKZFPS não continua silenciosamente depois de um erro (seção 43).
     /// </summary>
     public Func<FailureContext, FailureChoice>? OnFailure { get; init; }
+
+    /// <summary>Teste grátis: quantas otimizações diferentes ainda cabem. null = sem limite (plano pago).</summary>
+    public TrialQuota? Trial { get; init; }
 }
 
 /// <summary>Criar backup, aplicar, validar e registrar: o resto do fluxo da seção 25.</summary>
@@ -51,6 +54,7 @@ public sealed class OptimizationEngine(ISystemAccess system, SessionStore store)
         // Valida a lista inteira antes de tocar em qualquer coisa: violação de
         // segurança aborta a sessão sem aplicar nem a primeira alteração.
         var work = new List<(OptimizationResult Result, Optimizations.Proposal Proposal)>();
+        var takenNow = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var id in Expand(scan, proposalIds).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             if (scan.FindProposal(id) is not { } found)
@@ -78,6 +82,18 @@ public sealed class OptimizationEngine(ISystemAccess system, SessionStore store)
             {
                 skipped.Add(new SkippedItem(id, "Experimental: exige autorização explícita."));
                 continue;
+            }
+
+            // Limite do teste no motor, e não só na tela: o processo elevado e o
+            // CLI passam por aqui também.
+            if (options.Trial is { } trial)
+            {
+                if (!trial.Allows(result.Definition.Id, takenNow))
+                {
+                    skipped.Add(new SkippedItem(id, TrialQuota.SkipReason));
+                    continue;
+                }
+                takenNow.Add(result.Definition.Id);
             }
 
             foreach (var change in proposal.Changes)

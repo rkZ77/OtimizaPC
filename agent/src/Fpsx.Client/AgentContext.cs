@@ -239,6 +239,10 @@ public sealed class AgentContext
     /// a comparação existe porque todos contribuem. null = sem conta, sem
     /// consentimento ou sem internet.
     /// </summary>
+    /// <summary>Limite do teste grátis neste PC, ou null fora do teste. Vale para o app, o processo elevado e o CLI.</summary>
+    public Fpsx.Core.Engine.TrialQuota? TrialLimit() =>
+        License().Status == "trial" ? Fpsx.Core.Engine.TrialQuota.From(Store.All()) : null;
+
     private string? _referralCode;
 
     /// <summary>

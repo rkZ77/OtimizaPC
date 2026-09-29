@@ -94,6 +94,7 @@ public static class ElevatedHelper
             {
                 AllowExperimental = request.Experimental,
                 OnFailure = Dialogs.Failure,
+                Trial = ctx.TrialLimit(),
             });
         }
         else

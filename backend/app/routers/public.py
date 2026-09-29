@@ -7,10 +7,16 @@ from app.services import app_settings, assistant, catalog, gameplay, plans
 router = APIRouter(prefix="/api/public", tags=["public"])
 
 
+#: Limite do teste gratis no app (Fpsx.Core TrialQuota.MaxOptimizations). O
+#: app garante o limite; aqui so' vai o numero para o site descrever o teste.
+TRIAL_MAX_FIXES = 2
+
+
 @router.get("/plans")
 def list_plans():
     """Catalogo de planos para visitante deslogado. Unica fonte de preco da tela."""
-    return {"currency": "BRL", "trial_days": app_settings.get("trial_days"), "plans": plans.list_active()}
+    return {"currency": "BRL", "trial_days": app_settings.get("trial_days"), "trial_max_fixes": TRIAL_MAX_FIXES,
+            "plans": plans.list_active()}
 
 
 @router.get("/stats")

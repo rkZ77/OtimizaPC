@@ -49,8 +49,9 @@ public static class Upsell
         var l = AppHost.Current.License;
         var extra = l.LoggedIn
             ? $"\n\nO plano {Plans.Label(plan)} libera esta e as outras correções do diagnóstico. Tudo continua com backup e pode ser desfeito."
-            : "\n\nCrie sua conta grátis no app e teste o plano Pro por alguns dias, sem cartão. Tudo continua com backup e pode ser desfeito.";
-        if (Dialogs.Show(l.LoggedIn ? "Disponível em outro plano" : "Teste o Pro grátis", message + extra, ButtonLabel(plan), "Agora não") == 0)
+            : $"\n\nCrie sua conta grátis no app e teste o plano Pro, sem cartão: medição, ajuste dos jogos e até {TrialQuota.MaxOptimizations} correções. Tudo continua com backup e pode ser desfeito.";
+        var title = !l.LoggedIn ? "Teste o Pro grátis" : l.Status == "trial" ? "Teste grátis" : "Disponível em outro plano";
+        if (Dialogs.Show(title, message + extra, ButtonLabel(plan), "Agora não") == 0)
             Go(plan, waiting);
     }
 }

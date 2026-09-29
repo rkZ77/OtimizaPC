@@ -235,6 +235,7 @@ public static class Commands
         var session = engine.Apply(scan, valid, new ApplyOptions
         {
             AllowExperimental = args.Flag("experimental"),
+            Trial = ctx.TrialLimit(),
             OnFailure = failure =>
             {
                 Ui.Error($"A alteração \"{failure.Description}\" falhou: {failure.Error}");

@@ -145,7 +145,7 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
       ))}
 
       <div className="flex flex-col items-center gap-1.5 text-center text-sm text-ink-3">
-        {data.trial_days > 0 && <p>Conta nova ganha {data.trial_days === 1 ? '1 dia' : `${data.trial_days} dias`} do plano Pro para testar, sem cartão.</p>}
+        {data.trial_days > 0 && <p>Conta nova testa o Pro por {data.trial_days === 1 ? '1 dia' : `${data.trial_days} dias`}, sem cartão, com até {data.trial_max_fixes} correções.</p>}
         <p className="inline-flex items-center gap-1.5"><RotateCcw className="h-3.5 w-3.5" aria-hidden />Desfazer qualquer alteração continua liberado em todos os planos, mesmo depois de cancelar.</p>
       </div>
     </div>

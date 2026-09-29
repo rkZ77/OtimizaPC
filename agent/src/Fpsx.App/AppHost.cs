@@ -88,7 +88,10 @@ public sealed class AppHost : ObservableObject
         var quando = days switch { 0 => "hoje", 1 => "amanhã", _ => $"em {days} dias" };
         var titulo = License.Status == "trial" ? $"Seu teste grátis termina {quando}" : $"Seu plano vence {quando}";
         var recap = Recap().Lines().FirstOrDefault();
-        RenewalDue.Invoke(titulo, (recap is null ? "" : recap + " ") + "Renove para o RKZFPS seguir corrigindo e medindo. Os dias novos somam aos que faltam.");
+        var chamada = License.Status == "trial"
+            ? "Windows, driver e jogo mudam com as atualizações: assine para o RKZFPS seguir conferindo e corrigindo de novo."
+            : "Renove para o RKZFPS seguir corrigindo e medindo. Os dias novos somam aos que faltam.";
+        RenewalDue.Invoke(titulo, (recap is null ? "" : recap + " ") + chamada);
     }
 
     /// <summary>O que o RKZFPS fez neste PC: correções ativas e ganho medido nas partidas.</summary>
@@ -129,6 +132,7 @@ public sealed class AppHost : ObservableObject
         {
             AllowExperimental = allowExperimental,
             OnFailure = f => System.Windows.Application.Current.Dispatcher.Invoke(() => Dialogs.Failure(f)),
+            Trial = Ctx.TrialLimit(),
         }));
         Ctx.RecordSession(session);
 
