@@ -3,7 +3,7 @@
   // A lógica de cada id vive em agent/src/Fpsx.Core/Optimizations e o Agent
   // recusa o arquivo inteiro se houver id sem handler, handler sem id ou
   // justificativa incompleta (CatalogValidator).
-  "version": "2026.09.2",
+  "version": "2026.09.3",
   "optimizations": [
     {
       "id": "game-mode-enable",
