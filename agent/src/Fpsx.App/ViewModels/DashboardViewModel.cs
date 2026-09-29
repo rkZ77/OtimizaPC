@@ -228,6 +228,10 @@ public sealed class DashboardViewModel : PageViewModel
 
     /// <summary>Página oficial do fabricante da placa (processadores compatíveis e BIOS).</summary>
     public string? BoardSupportUrl => _host.Scan?.Snapshot.BoardSupportUrl;
+
+    /// <summary>Onde atualizar cada driver deste PC (vídeo, chipset, placa-mãe, Windows Update). O app só abre a página oficial.</summary>
+    public IReadOnlyList<Fpsx.Core.Diagnostics.FindingAction> DriverLinks =>
+        _host.Scan is { } scan ? Fpsx.Core.Diagnostics.DriverLinks.For(scan.Snapshot).Where(a => a.IsAllowed).ToList() : [];
     public ObservableCollection<KeyValueItem> Hardware { get; } = [];
     public ObservableCollection<ReadinessItem> Readiness { get; } = [];
     public ObservableCollection<FindingItem> Problems { get; } = [];
@@ -274,7 +278,7 @@ public sealed class DashboardViewModel : PageViewModel
             ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }
 
-        foreach (var name in new[] { nameof(HasScan), nameof(BoardSupportUrl), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
+        foreach (var name in new[] { nameof(HasScan), nameof(BoardSupportUrl), nameof(DriverLinks), nameof(ProblemCount), nameof(RecommendedCount), nameof(OptimalCount), nameof(AutoCount), nameof(BlockedCount), nameof(ScanInfo), nameof(Headline) })
             Raise(name);
         RaiseHero();
     }

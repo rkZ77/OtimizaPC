@@ -50,6 +50,28 @@
                 </Button>
             </UniformGrid>
 
+            <!-- Drivers: onde atualizar cada um, sempre pela fonte oficial. O app não baixa driver. -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding HasScan, Converter={StaticResource Visible}}">
+                <StackPanel>
+                    <TextBlock Text="Drivers do PC" Style="{StaticResource H2}" Margin="0" />
+                    <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Text="Cada botão abre o atualizador ou a página oficial do fabricante, que acha o driver certo para o seu modelo. O de vídeo é o que mais pesa nos jogos. O RKZFPS não baixa driver de outro lugar." />
+                    <ItemsControl ItemsSource="{Binding DriverLinks}" Margin="0,8,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Label}" Margin="0,6,8,0" CommandParameter="{Binding Target}"
+                                        Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <!-- Explicação com IA: o diagnóstico em palavras simples, a pedido -->
             <Border Style="{StaticResource Card}">
                 <StackPanel>

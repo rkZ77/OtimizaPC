@@ -395,14 +395,15 @@ public sealed class GpuDriverDiagnostic : IDiagnostic
         }
 
         var age = s.CapturedAt.Date - date.Date;
-        if (age.TotalDays > 365)
+        var limite = MaxDriverAgeDays(main);
+        if (age.TotalDays > limite)
         {
             yield return new Finding
             {
                 DiagnosticId = Id, Area = Areas.Driver, Status = HealthStatus.Attention, ImpactArea = "FPS",
                 Title = "Driver da GPU potencialmente desatualizado",
                 ActionUrl = main.Vendor == GpuVendor.Unknown ? null : VendorUrl(main.Vendor),
-                Detail = $"O driver instalado é de {date:dd/MM/yyyy}, há mais de um ano. Drivers novos costumam trazer correções e perfis para jogos recentes.",
+                Detail = $"O driver instalado é de {date:dd/MM/yyyy}, há mais de {(limite >= 365 ? "um ano" : "seis meses")}. Drivers novos costumam trazer correções e perfis para jogos recentes.",
                 Recommendation = "Atualize pelo programa oficial do fabricante: ele identifica sua placa e instala o driver certo. Depois, rode a análise de novo para confirmar.",
                 Evidence = evidence,
                 Actions = new[] { VendorUpdater(main.Vendor), FindingAction.WindowsUpdateDrivers }.OfType<FindingAction>().ToList(),
@@ -413,10 +414,18 @@ public sealed class GpuDriverDiagnostic : IDiagnostic
             yield return new Finding
             {
                 DiagnosticId = Id, Area = Areas.Driver, Status = HealthStatus.Ok,
-                Title = $"Driver da GPU de {date:dd/MM/yyyy}", Detail = "Driver com menos de um ano.", Evidence = evidence,
+                Title = $"Driver da GPU de {date:dd/MM/yyyy}", Detail = limite >= 365 ? "Driver com menos de um ano." : "Driver com menos de seis meses.", Evidence = evidence,
             };
         }
     }
+
+    /// <summary>
+    /// Placa dedicada NVIDIA ou AMD recebe driver quase todo mês, com perfil e
+    /// correção para os jogos que acabaram de sair: seis meses já é atraso.
+    /// Vídeo integrado e as demais marcas atualizam bem menos, e um ano segue valendo.
+    /// </summary>
+    public static int MaxDriverAgeDays(GpuInfo gpu) =>
+        !gpu.LikelyIntegrated && gpu.Vendor is GpuVendor.Nvidia or GpuVendor.Amd ? 183 : 365;
 }
 
 /// <summary>
