@@ -7,7 +7,8 @@ import PageShell from '../components/PageShell'
 import SiteHeader from '../components/SiteHeader'
 import PlansGrid from '../components/PlansGrid'
 import { Button } from '../components/ui'
-import { GAMES, GameGrid, Row, Screenshot } from '../components/Vitrine'
+import { GAMES, GameGrid, Row, ScreenTour } from '../components/Vitrine'
+import { usePlanos } from '../hooks/usePlanos'
 import { date } from '../lib/format'
 
 /*
@@ -19,6 +20,11 @@ import { date } from '../lib/format'
  */
 
 interface Version { version: string; notes: string; published_at: string }
+
+/** Numeros do conjunto. null = abaixo do minimo, e a faixa nao aparece. */
+interface Stats { matches: number | null; hours: number | null; games: number | null; scanned_pcs: number | null; found_percent: number | null }
+
+const inteiro = (n: number) => n.toLocaleString('pt-BR')
 
 const GUARANTEES = [
   { icon: CreditCard, t: 'Pagamento pelo Mercado Pago', d: 'PIX ou cartão. O RKZFPS não vê nem guarda os dados do seu cartão.' },
@@ -49,10 +55,21 @@ const FAQ: [string, string][] = [
 
 export default function Home() {
   const [versions, setVersions] = useState<Version[]>([])
+  const [stats, setStats] = useState<Stats | null>(null)
+  const { data: planos } = usePlanos()
   useEffect(() => {
     api.get<{ versions: Version[] }>('/public/changelog').then(({ data }) => setVersions(data.versions)).catch(() => setVersions([]))
+    api.get<Stats>('/public/stats').then(({ data }) => setStats(data)).catch(() => setStats(null))
   }, [])
   const latest = versions[0]
+  // O teste gratis e' a oferta sem risco: vai no botao principal, nao escondido embaixo da grade.
+  const trial = planos?.trial_days ?? 0
+  const trialTexto = trial === 1 ? '1 dia' : `${trial} dias`
+  const provas = [
+    stats?.found_percent != null && stats.scanned_pcs != null && { v: `${stats.found_percent}%`, t: `dos ${inteiro(stats.scanned_pcs)} PCs analisados tinham algo para corrigir` },
+    stats?.matches != null && { v: inteiro(stats.matches), t: 'partidas medidas com o app aberto' },
+    stats?.hours != null && { v: `${inteiro(stats.hours)} h`, t: 'de jogo medidas, antes e depois' },
+  ].filter((p): p is { v: string; t: string } => Boolean(p))
 
   return (
     <PageShell nav={<SiteHeader />} width="wide" mainClassName="!max-w-none !px-0 !py-0" revelacao={false}>
@@ -71,13 +88,34 @@ export default function Home() {
               <Button to="/download" size="lg" Icon={Download}>Baixar grátis para Windows</Button>
               <Button to="/planos" size="lg" variant="ghost">Ver planos</Button>
             </div>
+            {trial > 0 && (
+              <p className="mt-5 inline-flex items-start gap-2 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-ink-1">
+                <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" aria-hidden />
+                <span>Crie a conta no app e use o Pro completo por {trialTexto}, sem cartão.</span>
+              </p>
+            )}
             <p className="mt-4 text-sm text-ink-3">
               Windows 10 e 11, 64 bits.{latest ? ` Versão ${latest.version}, de ${date(latest.published_at)}.` : ''} O diagnóstico é grátis e não altera nada.
             </p>
           </div>
-          <Screenshot src="/img/app-dashboard.png" alt="Tela inicial do RKZFPS com o diagnóstico do PC" />
+          <ScreenTour />
         </div>
       </section>
+
+      {/* Prova social: so' numeros reais do conjunto, e so' acima do minimo */}
+      {provas.length > 0 && (
+        <section className="border-t border-line">
+          <dl className={`mx-auto grid max-w-6xl gap-6 px-4 py-8 text-center ${['', 'sm:grid-cols-1', 'sm:grid-cols-2', 'sm:grid-cols-3'][provas.length]}`}>
+            {provas.map((p) => (
+              <div key={p.t}>
+                <dt className="sr-only">{p.t}</dt>
+                <dd className="font-display text-3xl font-extrabold text-ink-1">{p.v}</dd>
+                <dd className="mt-1 text-sm text-ink-3">{p.t}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       {/* Garantias */}
       <section className="border-y border-line bg-surface-1/50">
@@ -197,7 +235,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-4 py-14 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-2xl font-bold text-ink-1">Veja o que está pesando no seu PC.</h2>
-            <p className="mt-2 text-ink-3">Grátis, em poucos minutos, sem mudar nada.</p>
+            <p className="mt-2 text-ink-3">{trial > 0 ? `Diagnóstico grátis e ${trialTexto} do Pro para corrigir, sem cartão.` : 'Grátis, em poucos minutos, sem mudar nada.'}</p>
           </div>
           <Button to="/download" size="lg" Icon={Download}>Baixar grátis</Button>
         </div>

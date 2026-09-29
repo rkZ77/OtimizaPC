@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from app import auth, signing
 from datetime import datetime
 
-from app.services import assistant, catalog, gameplay, licenses, telemetry, users
+from app.services import assistant, catalog, gameplay, licenses, referrals, telemetry, users
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
@@ -147,6 +147,13 @@ def post_gameplay(body: GameplayIn, ctx=Depends(device_context)):
     _, device = ctx
     gameplay.record(device, body.model_dump())
     return {"ok": True}
+
+
+@router.get("/referral")
+def referral(ctx=Depends(device_context)):
+    """Codigo de indicacao da conta, para o rodape da imagem de partida compartilhada."""
+    user, _ = ctx
+    return {"code": referrals.code_for(user["id"]), "reward_days": referrals.reward_days()}
 
 
 @router.get("/gameplay/peers")

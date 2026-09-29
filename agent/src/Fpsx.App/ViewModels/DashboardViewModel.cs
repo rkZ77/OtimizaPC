@@ -105,6 +105,9 @@ public sealed class DashboardViewModel : PageViewModel
     /// <summary>Otimizações que resolveriam algo mas pedem plano (no Free).</summary>
     public int BlockedCount { get; private set; }
 
+    /// <summary>Plano que libera todas as recomendadas travadas (o convite oferece esse, não a tabela).</summary>
+    public string NeededPlan { get; private set; } = "starter";
+
     // Cartão principal: a situação do PC numa frase e UM botão. É o que o
     // usuário leigo precisa; os números ficam no modo avançado.
     private enum HeroState { Scanning, Problem, CanFix, NeedsPlan, Good }
@@ -148,7 +151,9 @@ public sealed class DashboardViewModel : PageViewModel
         HeroState.CanFix => "O RKZFPS guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
         HeroState.NeedsPlan => _host.License.Expired
             ? "Seu plano venceu, mas o RKZFPS continua analisando. Veja abaixo o que cada uma resolve e renove para ele corrigir."
-            : "Veja abaixo o que cada uma resolve. Para o RKZFPS corrigir, entre com um plano na tela Conta.",
+            : !_host.License.LoggedIn
+                ? "Veja abaixo o que cada uma resolve. Crie a conta grátis e teste o Pro por alguns dias, sem cartão: o RKZFPS corrige tudo com backup."
+                : $"Veja abaixo o que cada uma resolve. O plano {Fpsx.Core.Engine.Plans.Label(NeededPlan)} corrige todas, com backup e desfazer.",
         _ => "Veja abaixo o que foi encontrado e o botão para resolver cada um.",
     };
 
@@ -156,7 +161,7 @@ public sealed class DashboardViewModel : PageViewModel
     {
         HeroState.Scanning => "Analisando...",
         HeroState.CanFix => "Corrigir agora",
-        HeroState.NeedsPlan => _host.License.Expired ? "Renovar plano" : "Ver planos",
+        HeroState.NeedsPlan => Upsell.ButtonLabel(NeededPlan),
         _ => "Otimizar de novo",
     };
 
@@ -168,7 +173,7 @@ public sealed class DashboardViewModel : PageViewModel
                 await Busy(Optimize);
                 break;
             case HeroState.NeedsPlan:
-                AppHost.OpenUrl(_host.SiteUrl + (_host.License.Expired ? "/meu-plano" : "/planos"));
+                Upsell.Go(NeededPlan, BlockedCount);
                 break;
             default:
                 // Windows, driver e jogo mudam com as atualizações: analisa de
@@ -379,7 +384,9 @@ public sealed class DashboardViewModel : PageViewModel
             RecommendedCount = report.Recommended;
             OptimalCount = report.AlreadyOptimal;
             AutoCount = scan.Optimizations.Count(o => o.AutoSelected);
-            BlockedCount = scan.Optimizations.Count(o => o.Decision == Decision.Blocked && o.Evaluation.Decision == Decision.Recommended);
+            var locked = scan.Optimizations.Where(o => Upsell.IsPlanLocked(scan.Plan, o) && o.Evaluation.Decision == Decision.Recommended).ToList();
+            BlockedCount = locked.Count;
+            NeededPlan = Upsell.RequiredPlan(scan, locked) ?? "starter";
             ScanInfo = $"Análise de {scan.Snapshot.CapturedAt.ToLocalTime():dd/MM HH:mm}, perfil {scan.ProfileId}, catálogo {scan.CatalogVersion}";
         }
 

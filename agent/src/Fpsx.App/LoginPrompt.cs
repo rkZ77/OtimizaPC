@@ -22,6 +22,9 @@ public static class LoginPrompt
         host.Ctx.Storage.SaveSettings(host.Ctx.Settings with { LoginPromptDone = true });
     }
 
+    /// <summary>Abre o login na hora (convite de upgrade), mesmo que a pessoa já tenha dispensado na instalação.</summary>
+    public static void ShowNow() => Show();
+
     private static void Show()
     {
         var res = Application.Current.Resources;

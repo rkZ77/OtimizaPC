@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 /*
  * Pecas da vitrine usadas na home e na pagina Como funciona: print real do
@@ -67,4 +67,53 @@ export function GameGrid() {
       <p className="mt-4 text-xs text-ink-4">Os nomes dos jogos são marcas dos seus donos. O RKZFPS é independente e não tem parceria com os estúdios.</p>
     </>
   )
+}
+
+/*
+ * Hero em movimento com as telas REAIS: diagnostico, otimizacoes, jogos e
+ * partidas, na ordem em que a pessoa usa o app. Troca sozinha e para quando
+ * o mouse esta' em cima ou quando o sistema pede menos movimento.
+ */
+const TOUR: { src: string; t: string; alt: string }[] = [
+  { src: '/img/app-dashboard.png', t: 'Diagnóstico', alt: 'Tela inicial do RKZFPS com o diagnóstico do PC' },
+  { src: '/img/app-otimizacoes.png', t: 'Correções', alt: 'Tela de otimizações do RKZFPS, com o motivo de cada uma' },
+  { src: '/img/app-jogos.png', t: 'Jogos', alt: 'Tela de jogos do RKZFPS' },
+  { src: '/img/app-partidas.png', t: 'Partidas', alt: 'Tela de partidas do RKZFPS com o FPS medido' },
+]
+
+export function ScreenTour() {
+  const [i, setI] = useState(0)
+  const [parado, setParado] = useState(false)
+  useEffect(() => {
+    const calmo = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (parado || calmo) return
+    const t = window.setInterval(() => setI((n) => (n + 1) % TOUR.length), 4500)
+    return () => window.clearInterval(t)
+  }, [parado])
+
+  return (
+    <figure className="min-w-0" onMouseEnter={() => setParado(true)} onMouseLeave={() => setParado(false)}>
+      <div className="relative aspect-[1180/780] overflow-hidden rounded-lg border border-line bg-surface-1 shadow-elev">
+        {TOUR.map((s, n) => (
+          <img key={s.src} src={s.src} alt={s.alt} width={1180} height={780} loading={n === 0 ? 'eager' : 'lazy'}
+               aria-hidden={n !== i}
+               className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-700 ${n === i ? 'opacity-100' : 'opacity-0'}`} />
+        ))}
+      </div>
+      <div role="tablist" aria-label="Telas do app" className="mt-3 flex flex-wrap gap-2">
+        {TOUR.map((s, n) => (
+          <button key={s.src} type="button" role="tab" aria-selected={n === i} onClick={() => { setI(n); setParado(true) }}
+                  className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors ${n === i ? 'border-accent bg-accent/10 text-ink-1' : 'border-line text-ink-3 hover:text-ink-1'}`}>
+            {s.t}
+          </button>
+        ))}
+      </div>
+      <figcaption className="mt-2 text-xs text-ink-4">Telas reais do app, sem edição.</figcaption>
+    </figure>
+  )
+}
+
+/** Nome do jogo pelo id do perfil do app (o icone tem o mesmo nome do perfil). */
+export function gameName(id: string) {
+  return GAMES.find(([, icon]) => icon?.replace(/\.\w+$/, '') === id)?.[0] ?? id
 }

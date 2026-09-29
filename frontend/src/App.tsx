@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import TopProgressBar from './components/TopProgressBar'
 import ErrorToast from './components/ErrorToast'
 import CookieBanner from './components/CookieBanner'
@@ -17,6 +17,7 @@ import Conta from './pages/Conta'
 import Admin from './pages/admin/Admin'
 import { Cadastro, Entrar, RecuperarSenha } from './pages/Auth'
 import { NotFound, Privacidade, Termos } from './pages/Legal'
+import { guardarIndicacao } from './lib/indicacao'
 
 /** Links como /#faq rolam ate' a secao; troca de pagina volta ao topo. */
 function ScrollManager() {
@@ -42,6 +43,13 @@ function RequireAuth({ children, admin }: { children: React.ReactNode; admin?: b
   return <>{children}</>
 }
 
+/** Link de indicacao /r/CODIGO: guarda o codigo e mostra a home. */
+function Indicacao() {
+  const { code = '' } = useParams()
+  guardarIndicacao(code)
+  return <Navigate to="/" replace />
+}
+
 export default function App() {
   return (
     <>
@@ -57,6 +65,7 @@ export default function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/esqueci-senha" element={<RecuperarSenha etapa="pedir" />} />
         <Route path="/redefinir-senha" element={<RecuperarSenha etapa="codigo" />} />
+        <Route path="/r/:code" element={<Indicacao />} />
         <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/termos" element={<Termos />} />
         <Route path="/conta" element={<RequireAuth><Conta /></RequireAuth>} />

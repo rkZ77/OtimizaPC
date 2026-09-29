@@ -21,10 +21,10 @@ def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def create(email: str, name: str, password_hash: str) -> dict:
+def create(email: str, name: str, password_hash: str, referred_by: int | None = None) -> dict:
     return database.fetch_one(
-        f"INSERT INTO users (email, name, password_hash) VALUES (%s, %s, %s) RETURNING {_COLUMNS}",
-        (normalize_email(email), name.strip(), password_hash),
+        f"INSERT INTO users (email, name, password_hash, referred_by) VALUES (%s, %s, %s, %s) RETURNING {_COLUMNS}",
+        (normalize_email(email), name.strip(), password_hash, referred_by),
     )
 
 

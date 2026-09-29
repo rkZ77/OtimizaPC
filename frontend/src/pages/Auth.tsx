@@ -7,6 +7,7 @@ import PageShell from '../components/PageShell'
 import PublicNav from '../components/PublicNav'
 import { LogoMark, Wordmark } from '../components/Logo'
 import { Alert, Button, Card, Input } from '../components/ui'
+import { lerIndicacao, limparIndicacao } from '../lib/indicacao'
 
 // So' aceita caminho interno: um ?voltar=https://site-falso nao vira redirect aberto.
 // Barra invertida e caractere de controle ficam de fora: o navegador trata
@@ -191,6 +192,7 @@ export function Cadastro() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const plan = params.get('plano')
+  const ref = params.get('ref') ?? lerIndicacao()
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -201,7 +203,8 @@ export function Cadastro() {
     setBusy(true)
     setError('')
     try {
-      await register(name, email, password)
+      await register(name, email, password, ref)
+      limparIndicacao()
       navigate(plan ? `/pagamento?plano=${encodeURIComponent(plan)}` : '/conta?bemvindo=1')
     } catch (err) {
       setError(errorMessage(err))
@@ -214,6 +217,7 @@ export function Cadastro() {
     <TelaDeConta title="Criar conta">
       <h1 className="font-display text-2xl font-bold text-ink-1">Criar conta</h1>
       <p className="mt-1 text-ink-3">Conta nova ganha um período de teste do plano Pro em 1 PC, sem cartão.</p>
+      {ref && <p className="mt-2 text-sm text-accent-ink">Você chegou por indicação de um amigo.</p>}
       <Card className="mt-6 p-6">
         <form onSubmit={submit} className="space-y-4">
           {error && <Alert>{error}</Alert>}

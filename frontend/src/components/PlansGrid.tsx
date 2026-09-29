@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, Monitor, RotateCcw } from 'lucide-react'
-import api, { errorMessage, type Plan, type PlansResponse } from '../services/api'
+import { Check, Monitor, MonitorSmartphone, RotateCcw } from 'lucide-react'
+import type { Plan } from '../services/api'
 import { useAuth } from '../context/AuthContext'
+import { usePlanos } from '../hooks/usePlanos'
 import { money } from '../lib/format'
 import { cn } from '../lib/cn'
 import { Alert, Button, SkeletonCard } from './ui'
@@ -23,24 +24,21 @@ const TIERS = ['free', 'starter', 'pro', 'ultimate']
  * valor por mes e economia chegam prontos do servidor.
  */
 export default function PlansGrid({ compact }: { compact?: boolean }) {
-  const [data, setData] = useState<PlansResponse | null>(null)
-  const [error, setError] = useState('')
+  const { data, error } = usePlanos()
   const [period, setPeriod] = useState<Period>('annual')
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    api.get<PlansResponse>('/public/plans')
-      .then(({ data }) => setData(data))
-      .catch((e) => setError(errorMessage(e, 'Não foi possível carregar os planos agora.')))
-  }, [])
-
-  // Um cartão por tier: o Free sempre, os pagos no período escolhido.
+  // Um cartão por tier (planos de 1 PC): o Free sempre, os pagos no período escolhido.
   const cards = useMemo(() => {
     if (!data) return []
-    return TIERS.map((tier) => data.plans.find((p) => p.tier === tier && (tier === 'free' ? p.period === 'none' : p.period === period)))
+    return TIERS.map((tier) => data.plans.find((p) => p.tier === tier && p.max_devices === 1 && (tier === 'free' ? p.period === 'none' : p.period === period)))
       .filter((p): p is Plan => Boolean(p))
   }, [data, period])
+
+  // Planos para mais de 1 PC (Duo) ficam numa faixa propria embaixo: a grade
+  // compara niveis de recurso, e a quantidade de PCs e' outra decisao.
+  const multi = useMemo(() => data?.plans.filter((p) => p.max_devices > 1 && p.period === period) ?? [], [data, period])
 
   const savings = (p: Period) => Math.max(0, ...(data?.plans.filter((x) => x.period === p).map((x) => x.savings_percent) ?? [0]))
 
@@ -67,7 +65,6 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
 
   return (
     <div className="space-y-6">
-      {error && <Alert>{error}</Alert>}
 
       <div className="flex justify-center">
         <div role="tablist" aria-label="Período da assinatura" className="inline-flex rounded-lg border border-line bg-surface-1 p-1">
@@ -98,7 +95,7 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
             <div key={plan.key} className={cn('card relative flex flex-col p-5', destaque && 'border-accent/50 shadow-elev')}>
               {destaque && (
                 <span className="absolute -top-2.5 left-5 rounded-sm bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black">
-                  Mais escolhido
+                  Recomendado
                 </span>
               )}
               <h3 className="font-display text-lg font-bold text-ink-1">{plan.name}</h3>
@@ -111,7 +108,7 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
                 {free ? 'Para sempre' : period === 'monthly' ? `Pagamento único de ${plan.days} dias, sem renovação automática` : `${money(plan.price_cents)} ${every}`}
                 {plan.savings_percent > 0 && <span className="ml-1 font-semibold text-accent-ink">(economia de {plan.savings_percent}%)</span>}
               </p>
-              <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-3"><Monitor className="h-3.5 w-3.5" aria-hidden />1 PC por assinatura</p>
+              <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-3"><Monitor className="h-3.5 w-3.5" aria-hidden />{plan.max_devices === 1 ? '1 PC por assinatura' : `${plan.max_devices} PCs por assinatura`}</p>
               {!compact && (
                 <ul className="mt-4 flex-1 space-y-2 text-sm text-ink-2">
                   {plan.features.map((f) => (
@@ -127,8 +124,28 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
         })}
       </div>
 
+      {multi.map((plan) => (
+        <div key={plan.key} className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <MonitorSmartphone className="mt-0.5 h-6 w-6 shrink-0 text-accent-ink" aria-hidden />
+            <div className="min-w-0">
+              <h3 className="font-display text-lg font-bold text-ink-1">{plan.name}: {plan.max_devices} PCs</h3>
+              <p className="text-sm text-ink-3">{plan.description}</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-4">
+            <p className="text-right">
+              <span className="font-display text-2xl font-extrabold text-ink-1">{money(plan.per_month_cents)}</span>
+              <span className="text-sm text-ink-3"> /mês</span>
+              {period !== 'monthly' && <span className="block text-xs text-ink-3">{money(plan.price_cents)} {every}</span>}
+            </p>
+            <Button variant="ghost" onClick={() => buy(plan)}>Assinar</Button>
+          </div>
+        </div>
+      ))}
+
       <div className="flex flex-col items-center gap-1.5 text-center text-sm text-ink-3">
-        {data.trial_days > 0 && <p>Conta nova ganha {data.trial_days} dias do plano Pro para testar, sem cartão.</p>}
+        {data.trial_days > 0 && <p>Conta nova ganha {data.trial_days === 1 ? '1 dia' : `${data.trial_days} dias`} do plano Pro para testar, sem cartão.</p>}
         <p className="inline-flex items-center gap-1.5"><RotateCcw className="h-3.5 w-3.5" aria-hidden />Desfazer qualquer alteração continua liberado em todos os planos, mesmo depois de cancelar.</p>
       </div>
     </div>

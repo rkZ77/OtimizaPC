@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app import auth
-from app.services import licenses, payments, plans, telemetry
+from app.services import gameplay, licenses, payments, plans, referrals, telemetry
 
 router = APIRouter(prefix="/api/account", tags=["account"])
 
@@ -61,3 +61,14 @@ def my_benchmarks(user: dict = Depends(auth.current_user)):
 @router.get("/history")
 def my_history(user: dict = Depends(auth.current_user)):
     return {"events": telemetry.history_for_user(user["id"])}
+
+
+@router.get("/recap")
+def my_recap(user: dict = Depends(auth.current_user)):
+    """O que o RKZFPS fez e mediu nos PCs da pessoa (so' com telemetria ligada no app)."""
+    return gameplay.recap_for_user(user["id"])
+
+
+@router.get("/referral")
+def my_referral(user: dict = Depends(auth.current_user)):
+    return referrals.summary(user["id"])

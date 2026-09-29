@@ -73,7 +73,7 @@ public sealed class GameplayViewModel : PageViewModel
                 Raise(nameof(LiveSummary));
             }
         };
-        ShareCommand = new RelayCommand(_ => Share(), _ => _selected?.HasChart == true);
+        ShareCommand = new AsyncCommand(Share, () => _selected?.HasChart == true);
         SelectSessionCommand = new RelayCommand(p =>
         {
             if (p is GameplayItem item)
@@ -87,7 +87,7 @@ public sealed class GameplayViewModel : PageViewModel
     /// <summary>Imagem da partida para postar no grupo (salva e copiada).</summary>
     public System.Windows.Input.ICommand ShareCommand { get; }
 
-    private void Share()
+    private async Task Share()
     {
         if (_selected is not { HasChart: true } sel)
             return;
@@ -97,7 +97,11 @@ public sealed class GameplayViewModel : PageViewModel
             var session = sel.Session.Hardware is null && _host.Scan is { } scan
                 ? sel.Session with { Hardware = HardwareSummary.From(scan.Snapshot) }
                 : sel.Session;
-            var path = ShareCard.Export(session, ChartDrops ?? [], ChartCauses);
+            // Espera pouco pelo código: sem internet a imagem sai com o site, sem travar o botão.
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            var code = await _host.Ctx.ReferralCodeAsync(cts.Token);
+            var link = code is null ? null : $"{new Uri(_host.SiteUrl).Host}/r/{code}";
+            var path = ShareCard.Export(session, ChartDrops ?? [], ChartCauses, link);
             Dialogs.Info("Imagem pronta", $"A imagem da partida foi copiada: é só colar (Ctrl+V) no Discord ou no WhatsApp. Ela também ficou salva em {path}.");
         }
         catch (System.IO.IOException ex)

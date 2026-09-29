@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app import auth, settings, signing
-from app.services import app_settings, assistant, catalog, plans
+from app.services import app_settings, assistant, catalog, gameplay, plans
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
@@ -11,6 +11,12 @@ router = APIRouter(prefix="/api/public", tags=["public"])
 def list_plans():
     """Catalogo de planos para visitante deslogado. Unica fonte de preco da tela."""
     return {"currency": "BRL", "trial_days": app_settings.get("trial_days"), "plans": plans.list_active()}
+
+
+@router.get("/stats")
+def stats():
+    """Numeros reais do conjunto para a home. Campo null = ainda abaixo do minimo."""
+    return gameplay.public_stats()
 
 
 @router.get("/releases")

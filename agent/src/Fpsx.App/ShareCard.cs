@@ -21,9 +21,9 @@ public static class ShareCard
     private static readonly CultureInfo Pt = CultureInfo.GetCultureInfo("pt-BR");
 
     /// <summary>Gera o PNG, salva em Imagens\RKZFPS e copia para a área de transferência. Devolve o caminho.</summary>
-    public static string Export(GameplaySession s, IReadOnlyList<DropCause> drops, string causes)
+    public static string Export(GameplaySession s, IReadOnlyList<DropCause> drops, string causes, string? siteLink = null)
     {
-        var card = Build(s, drops, causes);
+        var card = Build(s, drops, causes, siteLink ?? "rkzfps.com.br");
         card.Measure(new Size(Width, Height));
         card.Arrange(new Rect(0, 0, Width, Height));
         card.UpdateLayout();
@@ -70,7 +70,7 @@ public static class ShareCard
         Children = { Text(value, 44, "Text", FontWeights.Bold), Text(label, 16, "Muted") },
     };
 
-    private static FrameworkElement Build(GameplaySession s, IReadOnlyList<DropCause> drops, string causes)
+    private static FrameworkElement Build(GameplaySession s, IReadOnlyList<DropCause> drops, string causes, string siteLink)
     {
         var root = new Border
         {
@@ -121,7 +121,8 @@ public static class ShareCard
         var gpu = s.Hardware?.Gpu is { Length: > 0 } g ? g : "placa de vídeo não identificada";
         var footer = new DockPanel { Margin = new Thickness(0, 14, 0, 0) };
         DockPanel.SetDock(footer, Dock.Bottom);
-        var site = Text("Azul: FPS médio. Laranja: pior quadro. Medido com RKZFPS, rkzfps.com.br", 15, "Muted");
+        // Com conta, o link é o de indicação: quem vê a imagem e assina rende dias para quem compartilhou.
+        var site = Text($"Azul: FPS médio. Laranja: pior quadro. Medido com RKZFPS, {siteLink}", 15, "Muted");
         DockPanel.SetDock(site, Dock.Right);
         footer.Children.Add(site);
         footer.Children.Add(Text(gpu + (s.Hardware is { Threads: > 0 } h ? $", {h.Threads} threads, {h.RamGb:0} GB de RAM" : ""), 15, "Muted"));

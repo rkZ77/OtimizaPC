@@ -39,7 +39,7 @@ export default function Pagamento() {
   const plan = plans?.find((p) => p.key === planKey && p.price_cents > 0)
   // Outros periodos do mesmo plano, para trocar sem voltar a tela de planos.
   const periodos = useMemo(
-    () => (plan && plans ? PERIOD_ORDER.map((per) => plans.find((p) => p.tier === plan.tier && p.period === per)).filter((p): p is Plan => Boolean(p)) : []),
+    () => (plan && plans ? PERIOD_ORDER.map((per) => plans.find((p) => p.tier === plan.tier && p.max_devices === plan.max_devices && p.period === per)).filter((p): p is Plan => Boolean(p)) : []),
     [plan, plans],
   )
 
@@ -92,6 +92,11 @@ export default function Pagamento() {
     )
   }
 
+  // Veio do app, com o diagnostico feito: lembrar o que esta' esperando no PC
+  // e' o que faz a pessoa terminar a compra. So' o numero que o app mandou.
+  const achados = Math.max(0, Math.min(99, Number.parseInt(params.get('achados') ?? '', 10) || 0))
+  const doApp = params.get('origem') === 'app'
+
   const atual = overview?.license
   const mesmoTierAtivo = atual && atual.tier === plan.tier && atual.status === 'active'
 
@@ -102,6 +107,12 @@ export default function Pagamento() {
           <Alert tone="warn">O pagamento não foi concluído e nada foi cobrado. Confira os dados e tente de novo, ou escolha outra forma de pagamento.</Alert>
         )}
         {error && <Alert>{error}</Alert>}
+        {doApp && achados > 0 && (
+          <Alert tone="info">
+            {achados === 1 ? 'O diagnóstico achou 1 correção esperando no seu PC.' : `O diagnóstico achou ${achados} correções esperando no seu PC.`}{' '}
+            Depois do pagamento, abra Conta no app e toque em Sincronizar para liberar.
+          </Alert>
+        )}
       </div>
 
       {/* No celular o resumo (total e botao de pagar) vem logo depois do
@@ -117,7 +128,7 @@ export default function Pagamento() {
               {periodos.map((p) => (
                 <button
                   key={p.key} type="button" role="radio" aria-checked={p.key === plan.key}
-                  onClick={() => setParams({ plano: p.key }, { replace: true })}
+                  onClick={() => setParams((atual) => { atual.set('plano', p.key); return atual }, { replace: true })}
                   className={cn('rounded-lg border px-4 py-3 text-left transition-colors',
                     p.key === plan.key ? 'border-accent bg-accent/10' : 'border-line hover:border-line-strong')}
                 >
@@ -139,7 +150,7 @@ export default function Pagamento() {
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between gap-3"><dt className="text-ink-3">Plano</dt><dd className="text-ink-1">{TIER_LABEL[plan.tier] ?? plan.name} {PERIOD_LABEL[plan.period] ?? ''}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-ink-3">Duração</dt><dd className="text-ink-1">{plan.days} dias</dd></div>
-            <div className="flex justify-between gap-3"><dt className="text-ink-3">PCs</dt><dd className="text-ink-1">{plan.max_devices} PC</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-3">PCs</dt><dd className="text-ink-1">{plan.max_devices === 1 ? '1 PC' : `${plan.max_devices} PCs`}</dd></div>
             {quote && quote.percent_off > 0 && (
               <div className="flex justify-between gap-3"><dt className="text-ink-3">Cupom {quote.coupon}</dt><dd className="font-semibold text-accent-ink">-{quote.percent_off}%</dd></div>
             )}

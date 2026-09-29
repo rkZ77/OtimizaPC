@@ -120,3 +120,103 @@ def recent(limit: int = 50, offset: int = 0) -> list[dict]:
 
 def timeline(session_id: int) -> dict | None:
     return database.fetch_one("SELECT id, game_id, avg_fps, timeline FROM gameplay_sessions WHERE id = %s", (session_id,))
+
+
+# ---- numeros publicos (prova social do site) ----
+# So' contagens do conjunto, nunca de uma pessoa, e so' a partir de um minimo:
+# "3 partidas medidas" na home depoe contra, e numero pequeno aponta para alguem.
+PUBLIC_MIN_MATCHES = 200
+PUBLIC_MIN_DEVICES = 30
+_STATS_SECONDS = 600
+_stats_cache: tuple[float, dict] | None = None
+
+
+def public_stats() -> dict:
+    import time
+    global _stats_cache
+    now = time.monotonic()
+    if _stats_cache is not None and now - _stats_cache[0] < _STATS_SECONDS:
+        return _stats_cache[1]
+    row = database.fetch_one(
+        """SELECT count(*) AS matches, count(DISTINCT device_id) AS devices,
+                  coalesce(sum(measured_seconds), 0) / 3600 AS hours,
+                  count(DISTINCT game_id) AS games
+           FROM gameplay_sessions""") or {}
+    # PRIMEIRO scan de cada PC (antes do RKZFPS mexer): quantos tinham algo para
+    # corrigir. O ultimo scan mediria o PC ja' corrigido. Mesmo minimo de PCs.
+    scans = database.fetch_one(
+        """WITH last AS (
+               SELECT DISTINCT ON (device_id) device_id, detail
+               FROM telemetry_events WHERE event = 'scan_completed'
+               ORDER BY device_id, coalesce(occurred_at, created_at) ASC)
+           SELECT count(*) AS devices,
+                  count(*) FILTER (WHERE coalesce((detail->>'problems')::int, 0) + coalesce((detail->>'recommended')::int, 0) > 0) AS with_findings
+           FROM last""") or {}
+    result = public_payload(row, scans)
+    _stats_cache = (now, result)
+    return result
+
+
+def public_payload(row: dict, scans: dict) -> dict:
+    """Separado da consulta para o teste conferir os minimos sem banco."""
+    out: dict = {"matches": None, "hours": None, "games": None, "scanned_pcs": None, "found_percent": None}
+    if (row.get("matches") or 0) >= PUBLIC_MIN_MATCHES and (row.get("devices") or 0) >= PUBLIC_MIN_DEVICES:
+        out.update(matches=int(row["matches"]), hours=int(row["hours"] or 0), games=int(row["games"] or 0))
+    pcs = scans.get("devices") or 0
+    if pcs >= PUBLIC_MIN_DEVICES:
+        # Arredonda para baixo: nunca anunciar mais do que o medido.
+        out.update(scanned_pcs=int(pcs), found_percent=int((scans.get("with_findings") or 0) * 100 // pcs))
+    return out
+
+
+# ---- o que o RKZFPS fez para esta pessoa (pagina Meu plano) ----
+#: Partidas de cada lado para comparar antes e depois. Com menos, a variacao
+#: normal entre partidas engole a diferenca e o numero mentiria.
+RECAP_MIN_SIDE = 3
+
+
+def recap_for_user(user_id: int) -> dict:
+    applied = database.fetch_one(
+        """SELECT count(DISTINCT t.optimization_id) AS optimizations,
+                  min(coalesce(t.occurred_at, t.created_at)) AS first_at
+           FROM telemetry_events t JOIN devices d ON d.id = t.device_id
+           WHERE d.user_id = %s AND t.event IN ('optimization_applied', 'fix_applied') AND t.success IS NOT FALSE""",
+        (user_id,)) or {}
+    sessions = database.fetch_all(
+        """SELECT g.game_id, g.started_at, g.avg_fps, g.low1_fps, g.measured_seconds
+           FROM gameplay_sessions g JOIN devices d ON d.id = g.device_id
+           WHERE d.user_id = %s ORDER BY g.started_at""", (user_id,))
+    return build_recap(applied, sessions)
+
+
+def _median(values: list[float]) -> float:
+    s = sorted(values)
+    n = len(s)
+    return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def build_recap(applied: dict, sessions: list[dict]) -> dict:
+    first = applied.get("first_at")
+    games = []
+    by_game: dict[str, list[dict]] = {}
+    for s in sessions:
+        by_game.setdefault(s["game_id"], []).append(s)
+    for game, rows in by_game.items():
+        if first is None:
+            continue
+        before = [r for r in rows if r["started_at"] < first]
+        after = [r for r in rows if r["started_at"] >= first]
+        if len(before) < RECAP_MIN_SIDE or len(after) < RECAP_MIN_SIDE:
+            continue
+        b, a = _median([r["avg_fps"] for r in before]), _median([r["avg_fps"] for r in after])
+        bl, al = _median([r["low1_fps"] for r in before]), _median([r["low1_fps"] for r in after])
+        games.append({"game_id": game, "matches_before": len(before), "matches_after": len(after),
+                      "avg_fps_before": round(b, 1), "avg_fps_after": round(a, 1),
+                      "low1_fps_before": round(bl, 1), "low1_fps_after": round(al, 1)})
+    return {
+        "optimizations": int(applied.get("optimizations") or 0),
+        "first_optimization_at": first,
+        "matches": len(sessions),
+        "hours": round(sum(s["measured_seconds"] for s in sessions) / 3600, 1),
+        "games": games,
+    }

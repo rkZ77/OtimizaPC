@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   BadgeCheck, Download as DownloadIcon, Fingerprint, Gauge, LogIn, MonitorCheck, RefreshCw, ScanSearch,
-  ShieldCheck, UserRound, Wifi,
+  ShieldAlert, ShieldCheck, UserRound, Wifi,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import api, { type Release } from '../services/api'
@@ -113,6 +113,32 @@ export default function Download() {
           </li>
         ))}
       </ol>
+
+      {/* O instalador ainda nao tem certificado de editor: o SmartScreen do
+          Windows avisa em todo app novo assim. Explicar ANTES evita que a
+          pessoa desista achando que e' virus. O SHA-256 acima e' a conferencia. */}
+      <div className="mt-12 card p-6">
+        <div className="flex items-start gap-3">
+          <ShieldAlert className="mt-0.5 h-6 w-6 shrink-0 text-accent-ink" aria-hidden />
+          <div className="min-w-0">
+            <p className="font-semibold text-ink-1">Apareceu "O Windows protegeu o computador"?</p>
+            <p className="mt-1 text-sm text-ink-3">
+              É o aviso que o Windows mostra para programas novos, que ainda não têm muitos downloads. Não quer dizer que achou vírus.
+            </p>
+            <ol className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <li className="rounded-lg border border-line p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-accent-ink">1</p>
+                <p className="mt-1 text-ink-2">Na janela azul, clique em <span className="font-semibold text-ink-1">Mais informações</span>.</p>
+              </li>
+              <li className="rounded-lg border border-line p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-accent-ink">2</p>
+                <p className="mt-1 text-ink-2">Confira o nome RKZFPS e clique em <span className="font-semibold text-ink-1">Executar assim mesmo</span>.</p>
+              </li>
+            </ol>
+            <p className="mt-3 text-xs text-ink-4">Quer conferir o arquivo? Compare o SHA-256 do instalador com o que está nesta página. O app confere a assinatura de cada atualização sozinho.</p>
+          </div>
+        </div>
+      </div>
 
       {versions.length > 0 && (
         <>

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr, Field
 
 from app import auth, email_templates
-from app.services import app_settings, emails, licenses, password_reset, users
+from app.services import app_settings, emails, licenses, password_reset, referrals, users
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -12,6 +12,8 @@ class RegisterIn(BaseModel):
     email: EmailStr
     name: str = Field(default="", max_length=80)
     password: str = Field(min_length=8, max_length=128)
+    # Codigo de quem indicou (link /r/CODIGO). Codigo errado e' ignorado, nao barra o cadastro.
+    ref: str | None = Field(default=None, max_length=20)
 
 
 class LoginIn(BaseModel):
@@ -37,7 +39,7 @@ def _client_ip(request: Request) -> str:
 def register(body: RegisterIn, request: Request, response: Response):
     auth.rate_limit("register", _client_ip(request), limit=10, window_seconds=3600)
     try:
-        user = users.create(body.email, body.name, auth.hash_password(body.password))
+        user = users.create(body.email, body.name, auth.hash_password(body.password), referrals.referrer_id(body.ref))
     except psycopg2.errors.UniqueViolation:
         raise HTTPException(409, "Já existe uma conta com este e-mail.")
     # Trial nasce com a conta, mas so' vale num PC que ainda nao usou trial

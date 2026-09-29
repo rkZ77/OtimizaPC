@@ -239,6 +239,26 @@ public sealed class AgentContext
     /// a comparação existe porque todos contribuem. null = sem conta, sem
     /// consentimento ou sem internet.
     /// </summary>
+    private string? _referralCode;
+
+    /// <summary>
+    /// Código de indicação da conta, para o rodapé da imagem compartilhada.
+    /// null = sem conta ou sem internet: a imagem sai sem o link, e só.
+    /// </summary>
+    public async Task<string?> ReferralCodeAsync(CancellationToken ct = default)
+    {
+        if (_referralCode is not null || Storage.LoadToken() is not { } token)
+            return _referralCode;
+        try
+        {
+            return _referralCode = await Api().ReferralCodeAsync(token, ct);
+        }
+        catch (Exception ex) when (ex is ApiException or HttpRequestException or TaskCanceledException)
+        {
+            return null;
+        }
+    }
+
     public async Task<PeerStats?> PeersAsync(string gameId, CancellationToken ct = default)
     {
         if (!Settings.GameplayConsent || Storage.LoadToken() is not { } token)

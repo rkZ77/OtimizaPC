@@ -111,6 +111,13 @@ public sealed class ApiClient(HttpClient http)
         return body.Deserialize<PeerStats>(FpsxJson.Options) ?? new PeerStats();
     }
 
+    /// <summary>Código de indicação da conta deste PC.</summary>
+    public async Task<string?> ReferralCodeAsync(string deviceToken, CancellationToken ct = default)
+    {
+        var body = await SendAsync(HttpMethod.Get, "api/agent/referral", null, null, deviceToken, ct);
+        return body.TryGetProperty("code", out var code) ? code.GetString() : null;
+    }
+
     public Task SendBenchmarkAsync(string deviceToken, object benchmark, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Post, "api/agent/benchmarks", benchmark, null, deviceToken, ct);
 

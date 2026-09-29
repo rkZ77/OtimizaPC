@@ -10,9 +10,11 @@ SCHEMA: dict[str, type] = {
     "trial_plan": str,
     "offline_grace_days": int,
     "telemetry_enabled": bool,
+    # Dias que quem indicou ganha na primeira compra de quem foi indicado. 0 desliga.
+    "referral_days": int,
 }
 
-DEFAULTS = {"trial_days": 7, "trial_plan": "pro", "offline_grace_days": 7, "telemetry_enabled": True}
+DEFAULTS = {"trial_days": 7, "trial_plan": "pro", "offline_grace_days": 7, "telemetry_enabled": True, "referral_days": 7}
 
 
 def get(key: str):
@@ -37,7 +39,7 @@ def validate(key: str, value):
         raise ValueError(f"{key} precisa ser um número inteiro.")
     if not isinstance(value, expected):
         raise ValueError(f"{key} precisa ser do tipo {expected.__name__}.")
-    if key in ("trial_days", "offline_grace_days") and not 0 <= value <= 90:
+    if key in ("trial_days", "offline_grace_days", "referral_days") and not 0 <= value <= 90:
         raise ValueError(f"{key} precisa estar entre 0 e 90.")
     if key == "trial_plan" and value not in ("starter", "pro", "ultimate"):
         raise ValueError("trial_plan precisa ser starter, pro ou ultimate.")

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { ArrowRight, CalendarClock, Check, Crown, Laptop, Lock, Receipt, RotateCcw } from 'lucide-react'
 import api, { errorMessage, type Overview, type Plan, type PlansResponse } from '../services/api'
 import PageShell from '../components/PageShell'
+import { Indique, OQueFoiFeito } from '../components/ResumoPlano'
 import {
   Alert, Badge, Button, EmptyState, ErrorState, PlanBadge, SkeletonRows, StatTile, Table,
 } from '../components/ui'
@@ -63,11 +64,11 @@ export default function MeuPlano() {
   // Vencido: o plano atual e' o Free, mas renovar oferece o plano que a pessoa tinha.
   const planoAtual = plans.find((p) => p.key === (lic.ended_plan_key ?? lic.plan_key))
   // Renovar o mesmo plano: o que a pessoa ja' tem, ou o mensal do mesmo tier.
-  const renovar = planoAtual && planoAtual.price_cents > 0 ? planoAtual : plans.find((p) => p.tier === tier && p.period === 'monthly')
+  const renovar = planoAtual && planoAtual.price_cents > 0 ? planoAtual : plans.find((p) => p.tier === tier && p.max_devices === 1 && p.period === 'monthly')
   const proximoTier = PLAN_ORDER[PLAN_ORDER.indexOf(tier as (typeof PLAN_ORDER)[number]) + 1]
   // Proximo tier no mesmo periodo que a pessoa ja' usa; sem periodo, o mensal.
   const periodo = planoAtual && planoAtual.period !== 'none' ? planoAtual.period : 'monthly'
-  const doProximo = (per: string) => plans.find((p) => p.tier === proximoTier && p.period === per)
+  const doProximo = (per: string) => plans.find((p) => p.tier === proximoTier && p.max_devices === 1 && p.period === per)
   const proximo = proximoTier ? doProximo(periodo) ?? doProximo('monthly') : undefined
   const libera = FEATURES.filter((f) => includes(tier, f.plan))
   const acrescenta = proximoTier ? FEATURES.filter((f) => f.plan === proximoTier) : []
@@ -126,6 +127,9 @@ export default function MeuPlano() {
           </ul>
         </div>
       </div>
+
+      <OQueFoiFeito />
+      <Indique />
 
       {!expirado && proximo && acrescenta.length > 0 && (
         <div className="card mt-4 p-6">

@@ -31,6 +31,7 @@ public sealed class FindingItem
         {
             FixId = fix.Definition.Id;
             FixBlockedReason = fix.Decision == Decision.Blocked ? fix.Reason : null;
+            FixPlan = Upsell.IsPlanLocked(scan.Plan, fix) ? fix.Definition.MinPlan : null;
         }
 
         var impact = f.Impact ?? (fix is not null && fix.Evaluation.Potential != Potential.None ? fix.Evaluation.Potential : null);
@@ -49,7 +50,11 @@ public sealed class FindingItem
     public string? FixId { get; }
     public string? FixBlockedReason { get; }
     public bool HasFix => FixId is not null;
-    public string FixLabel => FixBlockedReason is null ? "Resolver" : "Resolver (bloqueado)";
+    /// <summary>Plano que libera a correção, quando é o plano que trava.</summary>
+    public string? FixPlan { get; }
+
+    // O botão diz o que destrava ("Liberar no Pro"), não só que está travado.
+    public string FixLabel => FixBlockedReason is null ? "Resolver" : FixPlan is { } p ? $"Liberar no {Plans.Label(p)}" : "Indisponível";
     public string? ActionUrl => Finding.ActionUrl;
 
     /// <summary>Ações externas (driver, backup, espaço). Só as permitidas viram botão.</summary>

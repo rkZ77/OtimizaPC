@@ -17,7 +17,7 @@ from typing import Protocol
 from urllib.parse import quote_plus
 
 from app import database, settings
-from app.services import licenses, plans
+from app.services import licenses, plans, referrals
 
 logger = logging.getLogger("fpsx.payments")
 
@@ -233,6 +233,8 @@ def apply_approved_payment(payment: NormalizedPayment, source: str) -> dict:
         cur.execute("UPDATE payments SET license_id = %s WHERE id = %s", (lic["id"], inserted["id"]))
         if ref.coupon:
             cur.execute("UPDATE coupons SET used_count = used_count + 1 WHERE code = %s", (ref.coupon,))
+        # Mesma transacao: pagamento estornado por erro depois nao deixa premio orfao.
+        referrals.reward_on_payment(cur, ref.user_id, inserted["id"], at)
 
     record_event(source, "applied", payment.provider_payment_id, f"user {ref.user_id} plano {plan['key']}")
     _send_receipt(ref.user_id, plan, lic, payment)

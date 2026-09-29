@@ -71,9 +71,18 @@ public static class ApplyFlow
         if (blocked.Count == 0)
             return true;
 
-        var plan = blocked.First();
-        if (Dialogs.Show("Disponível em outro plano", $"\"{plan.Definition.Name}\": {plan.Reason}", "Ver planos", "Fechar") == 0)
-            AppHost.OpenUrl(AppHost.Current.SiteUrl + "/planos");
+        var first = blocked.First();
+        var scan = AppHost.Current.Scan!;
+        if (Upsell.RequiredPlan(scan, blocked) is not { } plan)
+        {
+            // Travada por outro motivo (desativada pelo administrador): plano não resolve.
+            Dialogs.Info("Indisponível", $"\"{first.Definition.Name}\": {first.Reason}");
+            return false;
+        }
+
+        // O número que vai para o pagamento é o que espera no PC inteiro, não só neste clique.
+        var waiting = scan.Optimizations.Count(o => Upsell.IsPlanLocked(scan.Plan, o) && o.Evaluation.Decision == Decision.Recommended);
+        Upsell.Offer(plan, Math.Max(waiting, blocked.Count), $"\"{first.Definition.Name}\": {first.Reason}");
         return false;
     }
 
