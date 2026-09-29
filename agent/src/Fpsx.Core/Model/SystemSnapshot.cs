@@ -191,6 +191,9 @@ public sealed record GamingFeatures
     /// <summary>EnableTransparency do tema. null = valor ausente (padrão do Windows: ligado).</summary>
     public int? TransparencyValue { get; init; }
 
+    /// <summary>MouseSpeed de Control Panel\Mouse: "0" = aceleração desligada; "1" (padrão) ou "2" = ligada. null = não lido.</summary>
+    public string? MouseSpeedValue { get; init; }
+
     /// <summary>Texto cru de DirectXUserGlobalSettings ("SwapEffectUpgradeEnable=1;..."). null = ausente.</summary>
     public string? DirectXGlobalSettings { get; init; }
 

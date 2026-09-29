@@ -57,6 +57,28 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
                 key.SetValue(name, value.Data.Split('\n', StringSplitOptions.RemoveEmptyEntries), RegistryValueKind.MultiString);
                 break;
         }
+
+        // O Windows só lê Control Panel\Mouse no logon: sem o aviso abaixo,
+        // desligar (ou desfazer) a aceleração só valeria depois de sair da conta.
+        if (root == RegistryRoot.CurrentUser && string.Equals(path, Core.Optimizations.RegistryPaths.Mouse, StringComparison.OrdinalIgnoreCase))
+            ApplyMouseNow(key);
+    }
+
+    private const uint SpiSetMouse = 0x0004;
+    private const uint SpifSendChange = 0x0002;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SystemParametersInfo(uint action, uint param, int[] values, uint winIni);
+
+    private static void ApplyMouseNow(RegistryKey key)
+    {
+        static int Read(RegistryKey k, string name, int fallback) =>
+            int.TryParse(k.GetValue(name) as string, NumberStyles.None, CultureInfo.InvariantCulture, out var v) ? v : fallback;
+
+        // Ordem do SPI_SETMOUSE: limiar 1, limiar 2, aceleração. Os padrões
+        // são os do próprio Windows (6, 10, 1).
+        int[] values = [Read(key, "MouseThreshold1", 6), Read(key, "MouseThreshold2", 10), Read(key, "MouseSpeed", 1)];
+        SystemParametersInfo(SpiSetMouse, 0, values, SpifSendChange);
     }
 
     // ---- processos ----

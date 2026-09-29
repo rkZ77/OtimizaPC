@@ -27,6 +27,7 @@ public static partial class SafetyPolicy
         new(RegistryRoot.LocalMachine, RegistryPaths.StartupApproved + @"\StartupFolder", false, null),
         new(RegistryRoot.LocalMachine, RegistryPaths.MemoryManagement, false, ["PagingFiles"]),
         new(RegistryRoot.CurrentUser, RegistryPaths.Personalize, false, ["EnableTransparency"]),
+        new(RegistryRoot.CurrentUser, RegistryPaths.Mouse, false, ["MouseSpeed", "MouseThreshold1", "MouseThreshold2"]),
         // Nome do valor é o executável do jogo ou o global: conferido em ValidateDirectX.
         new(RegistryRoot.CurrentUser, RegistryPaths.DirectXUserGpuPreferences, false, null),
     ];
@@ -207,6 +208,20 @@ public static partial class SafetyPolicy
         if (string.Equals(path, RegistryPaths.Personalize, StringComparison.OrdinalIgnoreCase)
             && r.Value is not null && (r.Value.Kind != RegistryKind.DWord || r.Value.Data is not ("0" or "1")))
             throw new SafetyViolationException("EnableTransparency só aceita 0 ou 1.");
+
+        // Mouse: texto numérico curto, como o próprio Windows grava. MouseSpeed
+        // vai de 0 a 2; os limiares, de 0 a 20. Não pode apagar: sem o valor o
+        // Windows perde a configuração do ponteiro.
+        if (string.Equals(path, RegistryPaths.Mouse, StringComparison.OrdinalIgnoreCase))
+        {
+            if (r.Value is null || r.Value.Kind != RegistryKind.String)
+                throw new SafetyViolationException("Valores do mouse precisam ser texto e não podem ser apagados.");
+            var ok = string.Equals(r.Name, "MouseSpeed", StringComparison.OrdinalIgnoreCase)
+                ? r.Value.Data is "0" or "1" or "2"
+                : int.TryParse(r.Value.Data, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) && n is >= 0 and <= 20;
+            if (!ok)
+                throw new SafetyViolationException($"Valor do mouse fora do permitido: {r.Name} = {r.Value.Data}");
+        }
 
         // PagingFiles só aceita linhas no formato do próprio Windows
         // ("?:\pagefile.sys" = gerenciado pelo sistema). Vazio é permitido só

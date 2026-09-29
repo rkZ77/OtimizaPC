@@ -3,7 +3,7 @@
   // A lógica de cada id vive em agent/src/Fpsx.Core/Optimizations e o Agent
   // recusa o arquivo inteiro se houver id sem handler, handler sem id ou
   // justificativa incompleta (CatalogValidator).
-  "version": "2026.09.1",
+  "version": "2026.09.2",
   "optimizations": [
     {
       "id": "game-mode-enable",
@@ -479,6 +479,30 @@
         "evidence": "Opção oficial do Discord (Configurações > Avançado > Aceleração de hardware), indicada pelo suporte do Discord para problemas de desempenho.",
         "safer_alternative": "Desligar pela própria tela do Discord.",
         "user_need": "Quem joga com o Discord aberto num PC de vídeo fraco."
+      }
+    },
+    {
+      "id": "mouse-acceleration-off",
+      "name": "Mira consistente: aceleração do mouse desligada",
+      "category": "gaming",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "SYSTEM",
+      "description": "Desliga \"Aumentar precisão do ponteiro\", que faz o mesmo movimento da mão andar mais ou menos na tela conforme a velocidade.",
+      "min_plan": "starter",
+      "requires_user_confirmation": false,
+      "measurement": false,
+      "justification": {
+        "problem": "Com a aceleração ligada (padrão do Windows), a distância que o ponteiro anda depende da velocidade do movimento, e a mira não repete.",
+        "works_on": "Jogos sem entrada bruta do mouse, menus, launchers e o próprio Windows, com a aceleração ligada.",
+        "does_not_work_on": "Jogos com entrada bruta (CS2, Valorant e a maioria dos FPS atuais), que já ignoram a opção. Não muda FPS em nenhum jogo.",
+        "expected_benefit": "Baixo e de controle, não de desempenho: o mesmo gesto leva o ponteiro ao mesmo lugar, o que ajuda a memória muscular.",
+        "how_to_measure": "Não há número de FPS: é sensação de controle. Dá para conferir movendo o mouse devagar e rápido pela mesma distância na mesa.",
+        "risk": "Baixo. Nos primeiros minutos o ponteiro parece diferente; quem prefere a aceleração desfaz com um clique.",
+        "rollback": "Restaura MouseSpeed, MouseThreshold1 e MouseThreshold2 anteriores e avisa o Windows na hora, sem sair da conta.",
+        "evidence": "É a opção oficial \"Aumentar precisão do ponteiro\" do Windows; jogos competitivos usam entrada bruta justamente para não sofrer dela.",
+        "safer_alternative": "Configurações > Bluetooth e dispositivos > Mouse > Configurações adicionais > Aumentar precisão do ponteiro.",
+        "user_need": "Quem joga com mouse e quer a mira igual em todo jogo e no Windows."
       }
     },
 

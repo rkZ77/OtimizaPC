@@ -112,3 +112,49 @@ public sealed class HagsOptimization : IOptimization
         };
     }
 }
+
+/// <summary>
+/// "Aumentar precisão do ponteiro" é aceleração: o mesmo movimento da mão
+/// anda mais ou menos na tela conforme a velocidade. Vem ligada no Windows.
+/// Jogo com entrada bruta (CS2, Valorant, a maioria dos FPS atuais) ignora
+/// isso, mas jogo sem entrada bruta, menus e o próprio Windows não. Não mexe
+/// em FPS: é mira consistente. Por ser preferência, nunca entra na seleção
+/// automática; fica como opcional.
+/// </summary>
+public sealed class MouseAccelerationOptimization : IOptimization
+{
+    public string Id => "mouse-acceleration-off";
+
+    public Evaluation Evaluate(EvaluationContext context)
+    {
+        var speed = context.Snapshot.Gaming.MouseSpeedValue;
+        var evidence = Ev.Of(("MouseSpeed", speed ?? "não lido"));
+
+        if (speed is null)
+            return Evaluation.NotApplicable("Não deu para ler a configuração do mouse.", evidence);
+        if (speed == "0")
+            return Evaluation.Optimal("A aceleração do mouse já está desligada.", evidence);
+
+        static RegistryValueChange Set(string name, string value, string label) =>
+            new(RegistryRoot.CurrentUser, RegistryPaths.Mouse, name, new RegValue(RegistryKind.String, value), Label: label);
+
+        return new Evaluation
+        {
+            Decision = Decision.Optional,
+            Potential = Potential.Low,
+            Reason = "A aceleração do mouse está ligada: o mesmo movimento da mão anda mais ou menos na tela conforme a velocidade. Desligada, a mira fica igual toda vez, o que ajuda a memória muscular.",
+            Warning = "Nos primeiros minutos o ponteiro vai parecer diferente. Jogos com entrada bruta (CS2, Valorant) já ignoram essa opção.",
+            Evidence = evidence,
+            Proposals =
+            [
+                new Proposal(Id, "Desligar a aceleração do mouse",
+                    [
+                        Set("MouseSpeed", "0", "Desligar \"Aumentar precisão do ponteiro\""),
+                        Set("MouseThreshold1", "0", "Zerar o primeiro limiar de aceleração"),
+                        Set("MouseThreshold2", "0", "Zerar o segundo limiar de aceleração"),
+                    ],
+                    Potential.Low, "Mesma opção de Configurações > Bluetooth e dispositivos > Mouse."),
+            ],
+        };
+    }
+}

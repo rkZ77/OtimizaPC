@@ -28,6 +28,7 @@ public static class OptimizationRegistry
         new WindowedGamesOptimization(),
         new TransparencyOptimization(),
         new DiscordHardwareAccelerationOptimization(),
+        new MouseAccelerationOptimization(),
     ];
 }
 

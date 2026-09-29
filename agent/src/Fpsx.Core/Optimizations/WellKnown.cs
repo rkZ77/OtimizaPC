@@ -22,6 +22,9 @@ public static class RegistryPaths
     public const string DirectXUserGpuPreferences = @"Software\Microsoft\DirectX\UserGpuPreferences";
 
     public const string Personalize = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+
+    /// <summary>Mesma chave que "Aumentar precisão do ponteiro" (Configurações > Mouse) grava.</summary>
+    public const string Mouse = @"Control Panel\Mouse";
 }
 
 /// <summary>

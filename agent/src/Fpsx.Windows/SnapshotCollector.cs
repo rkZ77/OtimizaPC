@@ -450,6 +450,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         BackgroundRecordingValue = ReadDword(Registry.CurrentUser, RegistryPaths.GameDvr, "HistoricalCaptureEnabled"),
         HagsValue = ReadDword(Registry.LocalMachine, RegistryPaths.GraphicsDrivers, "HwSchMode"),
         TransparencyValue = ReadDword(Registry.CurrentUser, RegistryPaths.Personalize, "EnableTransparency"),
+        MouseSpeedValue = ReadString(Registry.CurrentUser, RegistryPaths.Mouse, "MouseSpeed"),
         DirectXGlobalSettings = ReadString(Registry.CurrentUser, RegistryPaths.DirectXUserGpuPreferences, DirectXSettings.GlobalValueName),
         // Só os executáveis dos jogos com perfil: a lista inteira diria que
         // programas a pessoa usa, e isso não é da conta do RKZFPS.
