@@ -7,8 +7,8 @@ namespace Fpsx.Client;
 
 public sealed record ClientSettings
 {
-    /// <summary>URL da API em produção. Atualizar aqui quando o domínio definitivo for configurado no Railway.</summary>
-    public const string ProductionApiUrl = "https://otimizapc-production.up.railway.app";
+    /// <summary>URL da API em produção: o domínio próprio, que não muda se o serviço do Railway for recriado.</summary>
+    public const string ProductionApiUrl = "https://rkzfps.com.br";
 
     /// <summary>
     /// Endereço da API. NÃO é salvo nas configurações: uma versão antiga

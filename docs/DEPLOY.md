@@ -6,7 +6,7 @@ Mesmo desenho do Pickia: uma imagem Docker (API + site) no Railway, banco no Sup
 
 | Ambiente | Railway | Branch | URL |
 |---|---|---|---|
-| Produção | projeto `ample-energy`, serviço `OtimizaPC`, ambiente `production` | `main` | https://otimizapc-production.up.railway.app |
+| Produção | projeto `ample-energy`, serviço `OtimizaPC`, ambiente `production` | `main` | https://rkzfps.com.br (o otimizapc-production.up.railway.app atende apps antigos) |
 | Staging (`noprod` do Pickia) | serviço `surprising-unity`, ambiente `dev` | `dev` | https://surprising-unity-dev.up.railway.app |
 
 Supabase: projeto `qntwjeeximnztzxwnejj`, região **us-west-2**, Postgres 17. Pooler em

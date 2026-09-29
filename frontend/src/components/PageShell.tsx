@@ -22,7 +22,7 @@ import { useRevelacao, classesRevelacao, FADE_REVELACAO_MS } from '../hooks/useR
 /** Origem do site. Fixa, e não `window.location.origin`: o canonical precisa
  *  apontar pro endereço público mesmo quando a página é aberta por
  *  localhost:5173 ou pelo domínio do Railway. */
-const ORIGEM = 'https://otimizapc-production.up.railway.app'
+const ORIGEM = 'https://rkzfps.com.br'
 
 /** Description de fallback · a mesma do index.html. Serve as cinco páginas que
  *  não passam uma própria (Login, VerifyEmail, ForgotPassword, NotFound e o
