@@ -91,7 +91,7 @@
                                                             <Button Style="{StaticResource BoostSwitch}" CommandParameter="{Binding}"
                                                                     Command="{Binding DataContext.SwitchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                     Visibility="{Binding ShowSwitch, Converter={StaticResource Visible}}" />
-                                                            <Button Content="Fazer agora" Style="{StaticResource Primary}" CommandParameter="{Binding}"
+                                                            <Button Content="Fazer agora" Style="{StaticResource Secondary}" CommandParameter="{Binding}"
                                                                     Command="{Binding DataContext.RepairCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                     Visibility="{Binding ShowAction, Converter={StaticResource Visible}}" />
                                                             <Button Content="Escolher" CommandParameter="{Binding}"

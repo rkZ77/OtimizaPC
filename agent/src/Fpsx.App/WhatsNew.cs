@@ -13,6 +13,7 @@ public static class WhatsNew
         "Vigia do PC: com o RKZFPS na bandeja, ele confere o PC depois que o Windows liga e a cada 6 horas. " +
         "Se uma atualização do Windows, um driver novo ou um jogo desfez uma correção, você recebe um aviso para corrigir de novo.\n\n" +
         "Resumo da semana: uma vez por semana, o FPS medido nas suas partidas, com a semana anterior ao lado.\n\n" +
+        "Visual mais limpo: barra de rolagem escura e só a ação principal da tela em destaque.\n\n" +
         "Correção travada agora mostra o plano que libera, e a imagem da partida compartilhada leva o seu link de indicação.\n\n" +
         "Os avisos podem ser desligados em Configurações. Novidades e dicas no Instagram @rkzfps.br.";
 

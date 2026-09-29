@@ -67,7 +67,7 @@
                                             <Button Content="Voltar como era" Margin="0,0,8,0" CommandParameter="{Binding GameId}"
                                                     Command="{Binding DataContext.RevertGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     Visibility="{Binding CanRevert, Converter={StaticResource Visible}}" />
-                                            <Button Content="Otimizar este jogo" Style="{StaticResource Primary}" CommandParameter="{Binding GameId}"
+                                            <Button Content="Otimizar este jogo" Style="{StaticResource Secondary}" CommandParameter="{Binding GameId}"
                                                     Command="{Binding DataContext.OptimizeGameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     Visibility="{Binding CanOptimize, Converter={StaticResource Visible}}" />
                                         </StackPanel>

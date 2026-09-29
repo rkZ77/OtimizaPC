@@ -82,7 +82,7 @@
                                Text="Cada botão abre o atualizador ou a página oficial do fabricante, que acha o driver certo para o seu modelo. O de vídeo é o que mais pesa nos jogos. O RKZFPS não baixa driver de outro lugar." />
                     <!-- Procura de verdade no Windows Update (só leitura); instalar é na tela dele. -->
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="Procurar drivers novos" Style="{StaticResource Primary}" Command="{Binding DriverSearchCommand}" />
+                        <Button Content="Procurar drivers novos" Style="{StaticResource Secondary}" Command="{Binding DriverSearchCommand}" />
                         <Button Content="Instalar pelo Windows Update" Margin="8,0,0,0" Command="{Binding InstallDriversCommand}"
                                 Visibility="{Binding HasDriverUpdates, Converter={StaticResource Visible}}" />
                     </StackPanel>
@@ -108,7 +108,7 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <DockPanel>
-                        <Button DockPanel.Dock="Right" Content="Sugestão com IA" Style="{StaticResource Primary}" Command="{Binding UpgradeCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <Button DockPanel.Dock="Right" Content="Sugestão com IA" Style="{StaticResource Secondary}" Command="{Binding UpgradeCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
                         <StackPanel>
                             <TextBlock Text="Qual peça trocar para ganhar mais FPS" Style="{StaticResource H2}" Margin="0" />
                             <TextBlock Text="{Binding UpgradeVerdict}" TextWrapping="Wrap" Margin="0,4,0,0" />
@@ -196,7 +196,7 @@
                                 <Border BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="0,12">
                                     <DockPanel>
                                         <StackPanel DockPanel.Dock="Right" VerticalAlignment="Top" Margin="16,0,0,0">
-                                            <Button Content="{Binding FixLabel}" Style="{StaticResource Primary}"
+                                            <Button Content="{Binding FixLabel}" Style="{StaticResource Secondary}"
                                                     CommandParameter="{Binding}"
                                                     Command="{Binding DataContext.FixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Visibility="{Binding HasFix, Converter={StaticResource Visible}}" />
                                             <ItemsControl ItemsSource="{Binding Actions}">
