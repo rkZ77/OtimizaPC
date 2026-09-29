@@ -18,6 +18,7 @@ public sealed class SettingsViewModel : PageViewModel
         _telemetry = s.TelemetryConsent == true;
         OpenDataCommand = new RelayCommand(() => Process.Start(new ProcessStartInfo(_host.Ctx.DataDir) { UseShellExecute = true }));
         PrivacyCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/privacidade"));
+        InstagramCommand = new RelayCommand(() => AppHost.OpenUrl(AppHost.InstagramUrl));
     }
 
     public override string Title => "Configurações";
@@ -26,6 +27,7 @@ public sealed class SettingsViewModel : PageViewModel
 
     public ICommand OpenDataCommand { get; }
     public ICommand PrivacyCommand { get; }
+    public ICommand InstagramCommand { get; }
     public IReadOnlyList<ProfileDefinition> Profiles => _host.Ctx.Catalog.Profiles;
     public string Version => "RKZFPS " + AgentContext.Version;
 
@@ -61,6 +63,16 @@ public sealed class SettingsViewModel : PageViewModel
                 if (!value)
                     _host.Ctx.Storage.ClearQueue();
             }
+        }
+    }
+
+    public bool WatchNotify
+    {
+        get => _host.Ctx.Settings.WatchNotify;
+        set
+        {
+            Save(s => s with { WatchNotify = value });
+            Raise();
         }
     }
 

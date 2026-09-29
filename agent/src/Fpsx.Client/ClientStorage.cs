@@ -49,6 +49,15 @@ public sealed record ClientSettings
 
     /// <summary>O tutorial da primeira abertura já foi visto (ou pulado).</summary>
     public bool TutorialDone { get; init; }
+
+    /// <summary>Avisos na bandeja: vigia do PC (atualização que desfez correção) e resumo da semana.</summary>
+    public bool WatchNotify { get; init; } = true;
+
+    /// <summary>Último resumo semanal mostrado: no máximo um a cada 7 dias.</summary>
+    public DateTimeOffset? LastWeeklySummaryAt { get; init; }
+
+    /// <summary>Versão cujas novidades a pessoa já viu. null = instalação nova, sem tela de novidades.</summary>
+    public string? LastSeenVersion { get; init; }
 }
 
 /// <summary>Arquivos do app em %LOCALAPPDATA%\FPSX. Nada disso sai do PC sem ação do usuário.</summary>

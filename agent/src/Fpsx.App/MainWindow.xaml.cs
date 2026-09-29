@@ -22,6 +22,9 @@ public partial class MainWindow : Window
             // Tutorial na primeira abertura, depois que a janela já apareceu.
             if (!AppHost.Current.Ctx.Settings.TutorialDone)
                 Tutorial.Show();
+            else
+                WhatsNew.ShowIfUpdated();
+            WhatsNew.MarkSeen();
         };
         StateChanged += (_, _) => AjustarMaximizado();
     }

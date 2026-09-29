@@ -105,6 +105,9 @@ public partial class App : Application
         AppHost.Current.RenewalDue += (titulo, texto) => _tray?.Notify(titulo, texto);
         AppHost.Current.CheckRenewal();
         AppHost.Current.StartMonitor();
+        // Vigia do PC e resumo da semana: só avisam, e só com a janela fechada.
+        AppHost.Current.WatchNews += (titulo, texto) => _tray?.Notify(titulo, texto);
+        AppHost.Current.StartWatch(() => MainWindow is { IsVisible: true, WindowState: not WindowState.Minimized });
         // Quem abre direto na bandeja (com o Windows) também recebe o aviso.
         if (startInTray)
             AppHost.Current.StartUpdateChecks();

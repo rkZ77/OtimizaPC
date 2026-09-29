@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { MessageCircle } from 'lucide-react'
-import { SUPPORT_IS_EXTERNAL, SUPPORT_URL } from '../lib/support'
+import { Instagram, MessageCircle } from 'lucide-react'
+import { INSTAGRAM_URL, SUPPORT_IS_EXTERNAL, SUPPORT_URL } from '../lib/support'
 import Logo from './Logo'
 
 /*
@@ -42,6 +42,15 @@ export default function Footer() {
                 className="w-9 h-9 rounded-md border border-line flex items-center justify-center text-ink-3 hover:text-ink-1 hover:border-line-strong transition-colors duration-1 ease-smooth"
               >
                 <MessageCircle className="w-4 h-4" />
+              </a>
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram do RKZFPS"
+                className="w-9 h-9 rounded-md border border-line flex items-center justify-center text-ink-3 hover:text-ink-1 hover:border-line-strong transition-colors duration-1 ease-smooth"
+              >
+                <Instagram className="w-4 h-4" />
               </a>
             </div>
           </div>

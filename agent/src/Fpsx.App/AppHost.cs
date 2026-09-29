@@ -60,6 +60,9 @@ public sealed class AppHost : ObservableObject
 
     public string SiteUrl => Ctx.Settings.ApiUrl;
 
+    /// <summary>Instagram oficial: novidades de versão e dicas (mesmo link do rodapé do site).</summary>
+    public const string InstagramUrl = "https://www.instagram.com/rkzfps.br";
+
     public bool Allows(Feature f) => PlanFeatures.Allows(License.Plan, f);
 
     public void RefreshLicense()
@@ -109,6 +112,8 @@ public sealed class AppHost : ObservableObject
         });
         Scan = result;
         Ctx.RecordScan(result);
+        // Toda análise vira a base do vigia: o aviso da bandeja compara com a última que a pessoa viu.
+        SaveWatchState(ChangeWatch.StateOf(result));
         File.WriteAllText(Ctx.LastScanPath, JsonSerializer.Serialize(ReportBuilder.Build(result), FpsxJson.Options));
         return result;
     }
@@ -374,6 +379,88 @@ public sealed class AppHost : ObservableObject
 
     /// <summary>Encerramento do app: espera o monitor salvar o que der da partida em andamento.</summary>
     public void ShutdownMonitor() => _monitor?.Dispose();
+
+    // ---- vigia do PC e resumo da semana (bandeja) ----
+    // Windows Update, driver e patch de jogo mudam configuração sem avisar. O
+    // vigia analisa (só leitura) com o app na bandeja e avisa o que mudou;
+    // corrigir de novo continua passando pela confirmação de sempre.
+
+    /// <summary>Título e texto para o aviso da bandeja.</summary>
+    public event Action<string, string>? WatchNews;
+
+    private System.Threading.Timer? _watchTimer;
+    private int _watching;
+
+    private string WatchStatePath => Path.Combine(Ctx.DataDir, "watch-state.json");
+
+    private WatchState? LoadWatchState()
+    {
+        try
+        {
+            return File.Exists(WatchStatePath) ? JsonSerializer.Deserialize<WatchState>(File.ReadAllText(WatchStatePath), FpsxJson.Options) : null;
+        }
+        catch (Exception ex) when (ex is IOException or JsonException)
+        {
+            return null;
+        }
+    }
+
+    private void SaveWatchState(WatchState state)
+    {
+        try
+        {
+            File.WriteAllText(WatchStatePath, JsonSerializer.Serialize(state, FpsxJson.Options));
+        }
+        catch (IOException)
+        {
+            // Sem base nova o próximo aviso compara com a anterior: nada se perde.
+        }
+    }
+
+    /// <summary>Começa a vigiar: primeira volta alguns minutos depois de ligar o PC, depois a cada 6 horas.</summary>
+    public void StartWatch(Func<bool> windowVisible) =>
+        _watchTimer ??= new System.Threading.Timer(_ => OnUi(() => _ = WatchAsync(windowVisible)), null, TimeSpan.FromMinutes(2), TimeSpan.FromHours(6));
+
+    private async Task WatchAsync(Func<bool> windowVisible)
+    {
+        // Com a janela aberta a pessoa já vê o Início; e uma análise por vez.
+        if (windowVisible() || Interlocked.Exchange(ref _watching, 1) == 1)
+            return;
+        try
+        {
+            if (Ctx.Settings.WatchNotify)
+            {
+                var before = LoadWatchState();
+                var scan = await RunScanAsync(new Progress<string>(_ => { }), network: false);
+                var report = ChangeWatch.Compare(before, scan, Ctx.Store.All(), id => Ctx.Catalog.Find(id)?.Name);
+                if (report.HasNews)
+                    WatchNews?.Invoke(report.Title, report.Text);
+            }
+
+            WeeklyCheck();
+        }
+        catch (Exception ex)
+        {
+            // Vigia é extra: falhar aqui nunca derruba o app na bandeja.
+            Dialogs.Log(ex);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _watching, 0);
+        }
+    }
+
+    private void WeeklyCheck()
+    {
+        var now = DateTimeOffset.Now;
+        var s = Ctx.Settings;
+        if (!s.WatchNotify || s.LastWeeklySummaryAt is { } last && now - last < TimeSpan.FromDays(7))
+            return;
+        if (Fpsx.Core.Benchmark.WeeklySummary.Build(Ctx.Gameplay.All(), now) is not { } summary)
+            return;
+        Ctx.Storage.SaveSettings(s with { LastWeeklySummaryAt = now });
+        WatchNews?.Invoke(summary.Title, summary.Text);
+    }
 
     private static void OnUi(Action action) => System.Windows.Application.Current?.Dispatcher.BeginInvoke(action);
 
