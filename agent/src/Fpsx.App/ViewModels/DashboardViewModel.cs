@@ -80,6 +80,7 @@ public sealed class DashboardViewModel : PageViewModel
         GoGamesCommand = new RelayCommand(() => _host.Navigate<GamesViewModel>());
         GoGameplayCommand = new RelayCommand(() => _host.Navigate<GameplayViewModel>());
         GoHistoryCommand = new RelayCommand(() => _host.Navigate<HistoryViewModel>());
+        GoDriversCommand = new RelayCommand(() => _host.Navigate<DriversViewModel>());
         RenewCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/meu-plano"));
         _host.PropertyChanged += (_, e) =>
         {
@@ -87,6 +88,9 @@ public sealed class DashboardViewModel : PageViewModel
                 Load();
             if (e.PropertyName == nameof(AppHost.AdvancedMode))
                 Raise(nameof(IsAdvanced));
+            if (e.PropertyName is nameof(AppHost.HardwareChanges) or nameof(AppHost.Scan))
+                foreach (var n in new[] { nameof(HasHardwareChanges), nameof(HardwareTitle), nameof(HardwareText) })
+                    Raise(n);
         };
         PropertyChanged += (_, e) =>
         {
@@ -100,6 +104,12 @@ public sealed class DashboardViewModel : PageViewModel
     public ICommand GoGamesCommand { get; }
     public ICommand GoGameplayCommand { get; }
     public ICommand GoHistoryCommand { get; }
+    public ICommand GoDriversCommand { get; }
+
+    // ---- peça trocada ----
+    public bool HasHardwareChanges => _host.HardwareChanges.Count > 0;
+    public string HardwareTitle => HasHardwareChanges ? Fpsx.Core.Diagnostics.HardwareAdvisor.Title(_host.HardwareChanges) : "";
+    public string HardwareText => HasHardwareChanges ? Fpsx.Core.Diagnostics.HardwareAdvisor.Text(_host.HardwareChanges).Replace(" Clique para ver o que fazer.", "").Replace(" Clique para ver como preparar.", "") : "";
     public bool IsAdvanced => _host.AdvancedMode;
 
     /// <summary>Otimizações que resolveriam algo mas pedem plano (no Free).</summary>

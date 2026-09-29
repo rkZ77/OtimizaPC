@@ -3,7 +3,7 @@
   // A lógica de cada id vive em agent/src/Fpsx.Core/Optimizations e o Agent
   // recusa o arquivo inteiro se houver id sem handler, handler sem id ou
   // justificativa incompleta (CatalogValidator).
-  "version": "2026.09.4",
+  "version": "2026.09.5",
   "optimizations": [
     {
       "id": "game-mode-enable",
@@ -310,6 +310,30 @@
         "evidence": "Windows Update Agent API (Microsoft Learn): drivers entregues pelo Windows Update são assinados e testados pela Microsoft (WHQL).",
         "safer_alternative": "Abrir o Windows Update e instalar por lá.",
         "user_need": "Só quando a pessoa escolhe o driver na lista."
+      }
+    },
+    {
+      "id": "driver-kit-install",
+      "name": "Reinstalar drivers salvos antes de formatar",
+      "category": "system",
+      "classification": "TROUBLESHOOTING",
+      "risk": "LOW",
+      "impact_area": "SYSTEM",
+      "description": "Instala com o pnputil do Windows os drivers que o RKZFPS salvou deste PC antes da formatação, conferindo o SHA-256 de cada arquivo.",
+      "min_plan": "starter",
+      "requires_user_confirmation": true,
+      "measurement": false,
+      "justification": {
+        "problem": "Depois de formatar, o Windows pode ficar sem driver de rede (sem internet para baixar o resto), de áudio ou de chipset.",
+        "works_on": "PC formatado que tem o kit salvo pelo Preparar formatação do RKZFPS.",
+        "does_not_work_on": "Pasta que não seja um kit do RKZFPS, ou kit com arquivo alterado: nada é instalado. Não traz driver mais novo do que o PC já tinha.",
+        "expected_benefit": "O PC volta a ter os drivers de antes, inclusive a internet, sem procurar um por um.",
+        "how_to_measure": "Gerenciador de Dispositivos sem aparelho com ponto de exclamação; internet e áudio funcionando.",
+        "risk": "Baixo. São os drivers que o próprio PC usava, assinados, e o Windows recusa driver sem assinatura.",
+        "rollback": "Ponto de restauração do Windows criado antes; Reverter driver no Gerenciador de Dispositivos.",
+        "evidence": "Documentação do PnPUtil (Microsoft Learn): /export-driver e /add-driver /install.",
+        "safer_alternative": "Gerenciador de Dispositivos, Atualizar driver, Procurar no computador, apontando para a pasta do kit.",
+        "user_need": "Só quando a pessoa escolhe a pasta do kit depois de formatar."
       }
     },
 

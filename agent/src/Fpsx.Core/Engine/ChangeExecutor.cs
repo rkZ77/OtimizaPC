@@ -63,6 +63,12 @@ public sealed class ChangeExecutor(ISystemAccess system)
                 if (install.ExitCode != 0)
                     throw new InvalidOperationException($"O Windows Update não instalou o driver: {install.Output.Trim()}");
                 return $"{install.Output.Trim()} {_restorePoint}".Trim();
+            case DriverPackageInstallChange k:
+                _restorePoint ??= RestorePoint();
+                var package = system.InstallDriverPackage(k.Folder);
+                if (package.ExitCode != 0)
+                    throw new InvalidOperationException(package.Output.Trim());
+                return $"{package.Output.Trim()} {_restorePoint}".Trim();
             case ProcessCloseChange p:
                 var current = system.ProcessName(p.Pid);
                 if (current is null)

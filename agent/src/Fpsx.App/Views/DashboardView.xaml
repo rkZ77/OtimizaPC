@@ -50,6 +50,19 @@
                 </Button>
             </UniformGrid>
 
+            <!-- Peça trocada desde a análise anterior: diz se precisa formatar e leva à página com o passo a passo. -->
+            <Border Style="{StaticResource Card}" BorderBrush="{StaticResource Warn}" BorderThickness="1"
+                    Visibility="{Binding HasHardwareChanges, Converter={StaticResource Visible}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Ver o que fazer" Style="{StaticResource Secondary}"
+                            Command="{Binding GoDriversCommand}" VerticalAlignment="Top" Margin="16,0,0,0" />
+                    <StackPanel>
+                        <TextBlock Text="{Binding HardwareTitle}" Style="{StaticResource H2}" Margin="0" />
+                        <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" Text="{Binding HardwareText}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
             <!-- Plano perto de vencer ou vencido: o que o RKZFPS fez aqui e o convite para renovar.
                  Nada é desfeito sozinho quando o plano acaba. -->
             <Border Style="{StaticResource Card}" BorderBrush="{StaticResource Accent}" BorderThickness="1"

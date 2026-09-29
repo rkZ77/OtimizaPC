@@ -18,6 +18,7 @@ namespace Fpsx.Core.Model;
 [JsonDerivedType(typeof(AppSettingChange), "app_setting")]
 [JsonDerivedType(typeof(SystemRepairChange), "system_repair")]
 [JsonDerivedType(typeof(DriverInstallChange), "driver_install")]
+[JsonDerivedType(typeof(DriverPackageInstallChange), "driver_package_install")]
 public abstract record Change
 {
     /// <summary>Texto curto em pt-BR para o usuário ver antes de confirmar.</summary>
@@ -144,6 +145,21 @@ public sealed record DriverInstallChange(string UpdateId, string Title) : Change
     public override bool RequiresAdmin => true;
 
     public override string Describe() => $"Instalar pelo Windows Update: {Title} (cria um ponto de restauração do Windows antes)";
+}
+
+/// <summary>
+/// Reinstala, depois de formatar, os drivers que o próprio RKZFPS salvou
+/// antes ("Preparar formatação"). Só uma pasta com o manifesto do RKZFPS e
+/// todos os arquivos batendo com o SHA-256 gravado; o Windows ainda exige
+/// driver assinado.
+/// </summary>
+public sealed record DriverPackageInstallChange(string Folder) : Change
+{
+    public override bool Reversible => false;
+
+    public override bool RequiresAdmin => true;
+
+    public override string Describe() => $"Instalar os drivers salvos antes de formatar (pasta {Folder})";
 }
 
 public sealed record NetworkRepairChange(NetworkRepairKind Repair) : Change

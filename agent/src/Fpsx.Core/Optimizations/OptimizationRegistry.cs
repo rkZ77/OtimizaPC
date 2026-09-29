@@ -21,6 +21,7 @@ public static class OptimizationRegistry
         new WinsockReset(),
         new SystemFilesRepairOptimization(),
         new DriverUpdateOptimization(),
+        new DriverKitInstallOptimization(),
         new PagefileRestoreOptimization(),
         new BackgroundProcessCloseOptimization(),
         new TempCleanupOptimization(),

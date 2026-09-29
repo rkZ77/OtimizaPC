@@ -17,6 +17,9 @@ public sealed record ElevatedRequest
     public string? SessionId { get; init; }
     public string? ChangeId { get; init; }
     public bool Force { get; init; }
+
+    /// <summary>Pasta escolhida pela pessoa: destino do kit (exportar) ou kit a reinstalar.</summary>
+    public string? Folder { get; init; }
 }
 
 /// <summary>
@@ -84,6 +87,13 @@ public static class ElevatedHelper
             var manager = new RollbackManager(system, ctx.Store);
             session = request.ChangeId is null ? manager.RollbackSession(sid, request.Force) : manager.RollbackChange(sid, request.ChangeId, request.Force);
         }
+        else if (request.Action == "export-drivers" && request.Folder is { } target)
+        {
+            // Copia drivers para a pasta escolhida: não muda nada no Windows.
+            var snap = new SnapshotCollector(ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false });
+            File.WriteAllText(full + ".result", JsonSerializer.Serialize(DriverBackup.Export(target, snap), FpsxJson.Options));
+            return 0;
+        }
         else if (request.Action == "system-check")
         {
             // Só leitura: o resultado volta em JSON no lugar do id de sessão.
@@ -100,6 +110,9 @@ public static class ElevatedHelper
             // confiar na lista que o app comum mostrou. Só entra o que ele oferece agora.
             if (request.Ids.Any(id => id.StartsWith("driver-update", StringComparison.OrdinalIgnoreCase)))
                 snapshot = snapshot with { PendingDrivers = WindowsUpdateDrivers.SearchAsync().GetAwaiter().GetResult() };
+            // Kit de drivers: confere a pasta de novo aqui dentro antes de a proposta existir.
+            if (request.Folder is { } kit && request.Ids.Contains("driver-kit-install") && DriverBackup.Check(kit) is null)
+                snapshot = snapshot with { DriverKitFolder = kit };
             var scan = new DecisionEngine(ctx.Catalog, ctx.GameProfiles).Evaluate(snapshot, ctx.Settings.Profile, ctx.License().Plan);
             session = new OptimizationEngine(system, ctx.Store).Apply(scan, request.Ids, new ApplyOptions
             {

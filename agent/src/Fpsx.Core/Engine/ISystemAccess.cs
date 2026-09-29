@@ -40,6 +40,9 @@ public interface ISystemAccess
     /// <summary>Baixa e instala pelo Windows Update a atualização de driver com esse id.</summary>
     CommandResult InstallDriverUpdate(string updateId);
 
+    /// <summary>Confere o kit contra o manifesto e instala os drivers dele. Nada é instalado se algo não bater.</summary>
+    CommandResult InstallDriverPackage(string folder);
+
     /// <summary>Nome do processo com esse PID agora, ou null se ele já terminou.</summary>
     string? ProcessName(int pid);
 

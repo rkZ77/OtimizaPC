@@ -28,6 +28,30 @@ public sealed class SystemFilesRepairOptimization : IOptimization
 }
 
 /// <summary>
+/// Depois de formatar: reinstala os drivers salvos pelo "Preparar formatação".
+/// Só existe proposta quando a pessoa escolheu uma pasta de kit já conferida.
+/// </summary>
+public sealed class DriverKitInstallOptimization : IOptimization
+{
+    public string Id => "driver-kit-install";
+
+    public Evaluation Evaluate(EvaluationContext context) => context.Snapshot.DriverKitFolder is { Length: > 0 } folder
+        ? new Evaluation
+        {
+            Decision = Decision.Optional,
+            Potential = Potential.None,
+            Reason = "Reinstala os drivers que este PC tinha antes de formatar, inclusive o de rede, sem precisar de internet.",
+            Warning = "A tela pode piscar enquanto os drivers instalam. Reinicie o PC no fim.",
+            Proposals = [new Proposal(Id, "Instalar os drivers salvos", [new DriverPackageInstallChange(folder)], Potential.None, "Kit salvo pelo RKZFPS antes de formatar.")],
+        }
+        : new Evaluation
+        {
+            Decision = Decision.NotApplicable,
+            Reason = "Nenhum kit de drivers escolhido. Depois de formatar, use Reinstalar drivers salvos na página Drivers e reparo.",
+        };
+}
+
+/// <summary>
 /// Drivers novos do Windows Update, instalados pelo próprio Windows Update.
 /// Só existe proposta depois que a pessoa procurou (a busca preenche
 /// PendingDrivers); nunca entra em seleção automática.

@@ -108,15 +108,17 @@ public sealed class AppHost : ObservableObject
         // Drivers achados na última busca continuam valendo até a próxima busca:
         // uma análise comum (vigia, botão Analisar) não pergunta ao Windows Update.
         var drivers = Scan?.Snapshot.PendingDrivers ?? [];
+        var kit = Scan?.Snapshot.DriverKitFolder;
         var result = await Task.Run(() =>
         {
-            var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(options, progress.Report) with { PendingDrivers = drivers };
+            var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(options, progress.Report) with { PendingDrivers = drivers, DriverKitFolder = kit };
             return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, settings.Profile, License.Plan);
         });
         Scan = result;
         Ctx.RecordScan(result);
         // Toda análise vira a base do vigia: o aviso da bandeja compara com a última que a pessoa viu.
         SaveWatchState(ChangeWatch.StateOf(result));
+        CheckHardware(result.Snapshot);
         File.WriteAllText(Ctx.LastScanPath, JsonSerializer.Serialize(ReportBuilder.Build(result), FpsxJson.Options));
         return result;
     }
@@ -131,7 +133,7 @@ public sealed class AppHost : ObservableObject
         var fresh = await Task.Run(() =>
         {
             var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false }, progress.Report)
-                with { PendingDrivers = Scan?.Snapshot.PendingDrivers ?? [] };
+                with { PendingDrivers = Scan?.Snapshot.PendingDrivers ?? [], DriverKitFolder = Scan?.Snapshot.DriverKitFolder };
             return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, Ctx.Settings.Profile, License.Plan);
         });
 
@@ -160,6 +162,93 @@ public sealed class AppHost : ObservableObject
         Scan = new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(scan.Snapshot with { PendingDrivers = drivers }, Ctx.Settings.Profile, License.Plan);
     }
 
+    // ---- troca de peça e formatação ----
+
+    private string HardwarePath => Path.Combine(Ctx.DataDir, "hardware.json");
+    private string HardwareChangesPath => Path.Combine(Ctx.DataDir, "hardware-changes.json");
+
+    /// <summary>Peças trocadas desde a análise anterior, até a pessoa marcar como visto.</summary>
+    public IReadOnlyList<Fpsx.Core.Diagnostics.HardwareAdvice> HardwareChanges { get; private set; } = [];
+
+    private void CheckHardware(Fpsx.Core.Model.SystemSnapshot snapshot)
+    {
+        var now = Fpsx.Core.Diagnostics.HardwareFingerprint.From(snapshot);
+        var before = ReadJson<Fpsx.Core.Diagnostics.HardwareFingerprint>(HardwarePath);
+        var changes = Fpsx.Core.Diagnostics.HardwareAdvisor.Compare(before, now);
+        WriteJson(HardwarePath, now);
+        if (changes.Count == 0)
+        {
+            HardwareChanges = ReadJson<List<Fpsx.Core.Diagnostics.HardwareAdvice>>(HardwareChangesPath) ?? [];
+            return;
+        }
+
+        HardwareChanges = changes;
+        WriteJson(HardwareChangesPath, changes);
+        Raise(nameof(HardwareChanges));
+        WatchNews?.Invoke(Fpsx.Core.Diagnostics.HardwareAdvisor.Title(changes), Fpsx.Core.Diagnostics.HardwareAdvisor.Text(changes));
+    }
+
+    public void DismissHardwareChanges()
+    {
+        HardwareChanges = [];
+        try
+        {
+            File.Delete(HardwareChangesPath);
+        }
+        catch (IOException)
+        {
+        }
+
+        Raise(nameof(HardwareChanges));
+    }
+
+    private static T? ReadJson<T>(string path) where T : class
+    {
+        try
+        {
+            return File.Exists(path) ? JsonSerializer.Deserialize<T>(File.ReadAllText(path), FpsxJson.Options) : null;
+        }
+        catch (Exception ex) when (ex is IOException or JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static void WriteJson<T>(string path, T value)
+    {
+        try
+        {
+            File.WriteAllText(path, JsonSerializer.Serialize(value, FpsxJson.Options));
+        }
+        catch (IOException)
+        {
+        }
+    }
+
+    /// <summary>Salva o kit de drivers na pasta escolhida (processo elevado: o pnputil precisa). null = permissão recusada.</summary>
+    public async Task<DriverExportResult?> ExportDriversAsync(string folder, IProgress<string> progress)
+    {
+        progress.Report("Salvando os drivers deste PC. Pode levar alguns minutos");
+        if (IsElevated)
+        {
+            var snap = Scan?.Snapshot ?? await Task.Run(() => new SnapshotCollector(Ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false }));
+            return await Task.Run(() => DriverBackup.Export(folder, snap));
+        }
+
+        var json = await ElevatedHelper.RunAsync(Ctx, new ElevatedRequest { Action = "export-drivers", Folder = folder });
+        return json is null ? null : JsonSerializer.Deserialize<DriverExportResult>(json, FpsxJson.Options);
+    }
+
+    /// <summary>Kit escolhido para reinstalar: confere antes e, se válido, entra no scan como proposta.</summary>
+    public string? SetDriverKit(string folder)
+    {
+        if (DriverBackup.Check(folder) is { } problem)
+            return problem;
+        if (Scan is { } scan)
+            Scan = new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(scan.Snapshot with { DriverKitFolder = folder }, Ctx.Settings.Profile, License.Plan);
+        return null;
+    }
+
     /// <summary>
     /// Verificação dos arquivos do Windows (só leitura). Precisa de
     /// administrador: vai pelo processo elevado. null = permissão recusada.
@@ -177,7 +266,7 @@ public sealed class AppHost : ObservableObject
     public async Task<SessionRecord?> ApplyElevatedAsync(IReadOnlyList<string> ids, bool allowExperimental, IProgress<string> progress)
     {
         progress.Report("Aguardando a permissão do Windows");
-        var id = await ElevatedHelper.RunAsync(Ctx, new ElevatedRequest { Action = "apply", Ids = ids, Experimental = allowExperimental });
+        var id = await ElevatedHelper.RunAsync(Ctx, new ElevatedRequest { Action = "apply", Ids = ids, Experimental = allowExperimental, Folder = Scan?.Snapshot.DriverKitFolder });
         if (id is null)
             return null;
         await RunScanAsync(progress, network: false);

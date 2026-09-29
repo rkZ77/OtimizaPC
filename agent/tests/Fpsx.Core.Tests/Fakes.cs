@@ -82,6 +82,12 @@ public sealed class FakeSystem : ISystemAccess
         return RestorePointsEnabled ? new CommandResult(0, "ok") : new CommandResult(1, "Proteção do sistema desligada");
     }
 
+    public CommandResult InstallDriverPackage(string folder)
+    {
+        Log.Add($"kit {folder}");
+        return new CommandResult(0, "Drivers do kit instalados.");
+    }
+
     public CommandResult InstallDriverUpdate(string updateId)
     {
         Log.Add($"driver {updateId}");

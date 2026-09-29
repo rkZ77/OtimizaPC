@@ -29,6 +29,9 @@ public sealed record SystemSnapshot
     /// </summary>
     public IReadOnlyList<Diagnostics.DriverUpdate> PendingDrivers { get; init; } = [];
 
+    /// <summary>Pasta de kit de drivers que a pessoa escolheu para reinstalar (já conferida). null = nenhuma.</summary>
+    public string? DriverKitFolder { get; init; }
+
     /// <summary>Fabricante e modelo da placa-mãe: define o caminho na BIOS de cada ajuste.</summary>
     public string BoardManufacturer { get; init; } = "";
 

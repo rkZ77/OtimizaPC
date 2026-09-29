@@ -32,10 +32,19 @@ public sealed class DriversViewModel : PageViewModel
         OpenUrlCommand = new RelayCommand(p => AppHost.OpenUrl((string)p!), p => p is string);
         CheckCommand = new AsyncCommand(() => Busy(Check), () => !IsBusy);
         RepairCommand = new AsyncCommand(() => Busy(() => ApplyFlow.RunAsync(["system-files-repair"], Reporter)), () => !IsBusy);
+        ExportCommand = new AsyncCommand(() => Busy(Export), () => !IsBusy);
+        RestoreKitCommand = new AsyncCommand(() => Busy(RestoreKit), () => !IsBusy);
+        DismissChangesCommand = new RelayCommand(() => _host.DismissHardwareChanges());
+        WindowsMediaCommand = new RelayCommand(() => AppHost.OpenUrl(WindowsMediaUrl));
         _host.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppHost.Scan))
                 Raise(nameof(DriverLinks));
+            if (e.PropertyName == nameof(AppHost.HardwareChanges))
+            {
+                Raise(nameof(HardwareChanges));
+                Raise(nameof(HasHardwareChanges));
+            }
         };
     }
 
@@ -117,6 +126,73 @@ public sealed class DriversViewModel : PageViewModel
         // Instalou (ou tentou): pergunta de novo, para a lista mostrar só o que falta.
         if (session is not null)
             await Search();
+    }
+
+    // ---- troca de peça e formatação ----
+
+    /// <summary>Página oficial da Microsoft para criar o pendrive de instalação do Windows 11.</summary>
+    public const string WindowsMediaUrl = "https://www.microsoft.com/pt-br/software-download/windows11";
+
+    public ICommand ExportCommand { get; }
+    public ICommand RestoreKitCommand { get; }
+    public ICommand DismissChangesCommand { get; }
+    public ICommand WindowsMediaCommand { get; }
+
+    public IReadOnlyList<HardwareAdvice> HardwareChanges => _host.HardwareChanges;
+    public bool HasHardwareChanges => _host.HardwareChanges.Count > 0;
+
+    private string _kitText = "";
+
+    /// <summary>Resultado do último salvar ou reinstalar kit.</summary>
+    public string KitText
+    {
+        get => _kitText;
+        private set => Set(ref _kitText, value);
+    }
+
+    private static string? PickFolder(string title)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title };
+        return dialog.ShowDialog() == true ? dialog.FolderName : null;
+    }
+
+    private async Task Export()
+    {
+        if (PickFolder("Onde salvar os drivers (pendrive ou outro disco)") is not { } folder)
+            return;
+        // O disco do Windows é o que a formatação apaga: salvar nele não serve.
+        var systemRoot = System.IO.Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\";
+        if (folder.StartsWith(systemRoot, StringComparison.OrdinalIgnoreCase)
+            && !Dialogs.Confirm("Pasta no disco do Windows",
+                $"A pasta escolhida está em {systemRoot}, o disco que a formatação apaga. Salve num pendrive ou em outro disco.\n\nSalvar aqui mesmo assim (para copiar depois)?", "Salvar aqui"))
+            return;
+
+        var result = await _host.ExportDriversAsync(folder, Reporter);
+        if (result is null)
+        {
+            Dialogs.Info("Permissão recusada", "Sem a permissão do Windows, os drivers não foram salvos. Nada foi mudado.");
+            return;
+        }
+
+        KitText = result.Message + (result.StorageWarning is { } w ? "\n\n" + w : "");
+        if (result.Ok)
+            Dialogs.Info("Drivers salvos", KitText + "\n\nNa pasta também ficou um LEIA-ME com as peças deste PC e o passo a passo.");
+    }
+
+    private async Task RestoreKit()
+    {
+        if (PickFolder("Escolha a pasta \"RKZFPS drivers\" salva antes de formatar") is not { } folder)
+            return;
+        if (_host.SetDriverKit(folder) is { } problem)
+        {
+            KitText = problem;
+            Dialogs.Info("Kit de drivers", problem);
+            return;
+        }
+
+        var session = await ApplyFlow.RunAsync(["driver-kit-install"], Reporter);
+        if (session is not null)
+            KitText = "Drivers do kit instalados. Reinicie o PC para concluir.";
     }
 
     // ---- arquivos do Windows ----

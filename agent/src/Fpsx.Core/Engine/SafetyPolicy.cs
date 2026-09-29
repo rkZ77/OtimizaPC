@@ -131,6 +131,11 @@ public static partial class SafetyPolicy
             // existe caminho de arquivo, URL ou .inf solto que chegue aqui.
             case DriverInstallChange d when !GuidPattern().IsMatch(d.UpdateId) || d.Title.Length is 0 or > 300:
                 throw new SafetyViolationException($"Atualização de driver inválida: {d.UpdateId}");
+            // Kit salvo pelo RKZFPS: pasta absoluta, sem "..". O conteúdo é conferido
+            // contra o manifesto (SHA-256) antes de qualquer instalação.
+            case DriverPackageInstallChange k when !System.IO.Path.IsPathFullyQualified(k.Folder) || k.Folder.Length > 240
+                                                  || k.Folder.Replace('/', '\\').Split('\\').Contains(".."):
+                throw new SafetyViolationException($"Pasta de drivers inválida: {k.Folder}");
             case ProcessCloseChange p:
                 ValidateProcessClose(p);
                 break;

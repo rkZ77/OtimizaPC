@@ -10,6 +10,8 @@ public static class WhatsNew
 {
     // Atualizar junto com a versão do Directory.Build.props e com a nota do admin.
     private const string Notes =
+        "Troca de peça e formatação: o RKZFPS nota quando uma peça muda e diz se precisa formatar (só placa-mãe nova pede). " +
+        "Antes de formatar, salve os drivers deste PC num pendrive; depois, o app reinstala todos, inclusive o de rede, sem internet.\n\n" +
         "Página Drivers e reparo: o RKZFPS procura driver novo no Windows Update e instala pelo próprio app, com ponto de restauração antes. " +
         "Também verifica se os arquivos do Windows estão corrompidos e repara com as ferramentas da Microsoft.\n\n" +
         "Vigia do PC: com o RKZFPS na bandeja, ele confere o PC depois que o Windows liga e a cada 6 horas. " +

@@ -302,6 +302,8 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
         }
     }
 
+    public CommandResult InstallDriverPackage(string folder) => DriverBackup.Install(folder);
+
     public CommandResult RunNetworkRepair(NetworkRepairKind kind)
     {
         var (exe, args) = kind switch
