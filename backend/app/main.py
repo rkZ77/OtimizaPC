@@ -18,6 +18,11 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Endereco publico no log de cada subida: e' dele que saem o retorno do
+    # checkout, o aviso do Mercado Pago e os links dos e-mails. Com o dominio
+    # trocado, esta linha responde "para onde o pagamento volta?" sem abrir
+    # as variaveis (que tem segredo junto).
+    logger.info("[CONFIG] PUBLIC_URL=%s CORS=%s", settings.PUBLIC_URL, ",".join(settings.CORS_ORIGINS))
     if settings.AUTO_MIGRATE:
         from app import migrate
 
