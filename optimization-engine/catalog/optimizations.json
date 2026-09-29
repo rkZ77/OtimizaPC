@@ -482,6 +482,30 @@
       }
     },
     {
+      "id": "game-graphics-profile",
+      "name": "Perfil de gráficos por jogo",
+      "category": "game",
+      "classification": "CONDITIONAL",
+      "risk": "LOW",
+      "impact_area": "FPS",
+      "description": "A pessoa escolhe, em cada jogo, o perfil Máximo FPS ou Equilibrado, independente do nível do PC.",
+      "min_plan": "pro",
+      "requires_user_confirmation": false,
+      "measurement": true,
+      "justification": {
+        "problem": "O preset automático só oferece o perfil do nível do PC; quem quer mais FPS num PC intermediário, ou mais imagem num PC fraco, não tinha como escolher.",
+        "works_on": "Jogos com perfil no RKZFPS (CS2, Fortnite e Minecraft) que já criaram o arquivo de configuração de vídeo.",
+        "does_not_work_on": "Jogos sem perfil ou que ainda não foram abertos. Não mexe em nada fora das chaves de vídeo do perfil.",
+        "expected_benefit": "Depende do jogo e do PC: Máximo FPS troca imagem por quadros, Equilibrado devolve imagem onde custa pouco. Sem número prometido: a medição das partidas mostra.",
+        "how_to_measure": "FPS médio e 1% low das partidas do jogo antes e depois, pela medição automática do RKZFPS.",
+        "risk": "Baixo. Muda só a aparência do jogo, com chaves e valores numa whitelist compilada.",
+        "rollback": "Voltar como era restaura os valores anteriores de cada chave no arquivo do jogo, com cópia do original.",
+        "evidence": "São as mesmas opções do menu de vídeo do jogo, escritas no arquivo que o próprio jogo lê.",
+        "safer_alternative": "Ajustar pelo menu de vídeo do próprio jogo.",
+        "user_need": "Quem quer escolher entre mais FPS e mais imagem em cada jogo, com um clique."
+      }
+    },
+    {
       "id": "mouse-acceleration-off",
       "name": "Mira consistente: aceleração do mouse desligada",
       "category": "gaming",

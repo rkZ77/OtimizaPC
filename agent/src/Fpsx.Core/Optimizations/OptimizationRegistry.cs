@@ -29,6 +29,7 @@ public static class OptimizationRegistry
         new TransparencyOptimization(),
         new DiscordHardwareAccelerationOptimization(),
         new MouseAccelerationOptimization(),
+        new GraphicsProfileOptimization(),
     ];
 }
 

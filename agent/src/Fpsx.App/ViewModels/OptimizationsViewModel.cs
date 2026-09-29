@@ -119,7 +119,8 @@ public sealed class OptimizationsViewModel : PageViewModel
         {
             var history = _host.Ctx.Store.All();
             var items = scan.Optimizations
-                .Where(o => o.Definition.Classification != Classification.NotRecommended)
+                // Perfil de gráficos se escolhe na tela Jogos, jogo a jogo.
+                .Where(o => o.Definition.Classification != Classification.NotRecommended && o.Definition.Id != "game-graphics-profile")
                 .Select(o => new OptimizationItem(o, history)).ToList();
 
             void Add(string title, string hint, Func<OptimizationItem, bool> filter, bool collapsible = false)

@@ -1,4 +1,5 @@
 using Fpsx.Core.Diagnostics;
+using Fpsx.Core.Games;
 using Fpsx.Core.Model;
 
 namespace Fpsx.Core.Optimizations;
@@ -207,6 +208,63 @@ public sealed class TransparencyOptimization : IOptimization
                     [new RegistryValueChange(RegistryRoot.CurrentUser, RegistryPaths.Personalize, "EnableTransparency", RegValue.DWord(0), Label: "Desligar os efeitos de transparência do Windows")],
                     Potential.Low, "Mesma opção de Configurações > Personalização > Cores."),
             ],
+        };
+    }
+}
+
+/// <summary>
+/// Perfil de gráficos por jogo, escolhido pela pessoa na tela Jogos: "Máximo
+/// FPS" ou "Equilibrado", seja qual for o nível do PC (o preset automático só
+/// oferece o do nível). Aplica o perfil inteiro, nos dois sentidos: quem está
+/// no Máximo FPS e escolhe Equilibrado volta a ter um pouco mais de imagem.
+/// Nunca entra na seleção automática; "Voltar como era" é o desfazer de sempre.
+/// </summary>
+public sealed class GraphicsProfileOptimization : IOptimization
+{
+    public string Id => "game-graphics-profile";
+
+    /// <summary>Nome de tela de cada perfil: a pessoa escolhe pelo efeito, não pelo nível do PC.</summary>
+    public static string Label(GamePreset preset) => preset.Id switch
+    {
+        "pc-fraco" => "Máximo FPS",
+        "equilibrado" => "Equilibrado",
+        _ => preset.Title,
+    };
+
+    public static string ProposalId(string gameId, string presetId) => $"game-graphics-profile:{gameId}:{presetId}";
+
+    public Evaluation Evaluate(EvaluationContext context)
+    {
+        var proposals = new List<Proposal>();
+        foreach (var profile in context.GameProfiles)
+        {
+            var game = context.Game(profile.Id);
+            if (game is null || game.Config.Count == 0)
+                continue;
+            foreach (var preset in profile.Presets)
+            {
+                // Só chave que já existe no arquivo do jogo e está diferente do perfil.
+                var changes = preset.Settings
+                    .Where(kv => game.Config.TryGetValue(kv.Key, out var current) && current != kv.Value)
+                    .Select(kv => (Change)new GameConfigChange(profile.Id, kv.Key, kv.Value))
+                    .ToList();
+                if (changes.Count > 0)
+                    proposals.Add(new Proposal(ProposalId(profile.Id, preset.Id), $"{profile.Name}: {Label(preset)}", changes, Potential.Moderate, preset.Description));
+            }
+        }
+
+        var evidence = Ev.Of(("perfis", proposals.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        if (proposals.Count == 0)
+            return Evaluation.NotApplicable("Nenhum jogo com perfil de gráficos encontrado, ou os jogos já estão no perfil.", evidence);
+
+        return new Evaluation
+        {
+            Decision = Decision.Optional,
+            Potential = Potential.Moderate,
+            Reason = "Escolha na tela Jogos o perfil de gráficos de cada jogo: Máximo FPS ou Equilibrado.",
+            Warning = "Muda a aparência do jogo. Feche o jogo antes de aplicar. Voltar como era desfaz.",
+            Evidence = evidence,
+            Proposals = proposals,
         };
     }
 }

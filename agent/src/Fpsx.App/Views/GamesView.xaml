@@ -83,6 +83,42 @@
                                 <TextBlock Text="{Binding ManualNote}" Style="{StaticResource MutedText}" Margin="0,12,0,0"
                                            Visibility="{Binding ManualNote, Converter={StaticResource Visible}}" />
 
+                                <!-- Perfil de gráficos: a pessoa escolhe entre mais FPS e mais imagem, jogo a jogo. -->
+                                <StackPanel Margin="0,14,0,0" Visibility="{Binding HasProfiles, Converter={StaticResource Visible}}">
+                                    <TextBlock Text="Perfil de gráficos" FontWeight="SemiBold" />
+                                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,2,0,8"
+                                               Text="Máximo FPS baixa sombras, efeitos e texturas. Equilibrado devolve imagem onde custa pouco FPS. Feche o jogo antes." />
+                                    <ItemsControl ItemsSource="{Binding Profiles}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Margin="0,0,8,8" CommandParameter="{Binding ProposalId}" ToolTip="{Binding Description}"
+                                                        Command="{Binding DataContext.ProfileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource Accent}" />
+                                                                    <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center"
+                                                                   Visibility="{Binding IsActive, Converter={StaticResource Visible}}" />
+                                                        <TextBlock Text="{Binding Label}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Text="{Binding DataContext.PlanNote, RelativeSource={RelativeSource AncestorType=UserControl}}" Style="{StaticResource MutedText}" FontSize="12"
+                                               Visibility="{Binding DataContext.PlanNote, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Visible}}" />
+                                </StackPanel>
+
                                 <WrapPanel Margin="0,12,0,0" Visibility="{Binding HasShaderCache, Converter={StaticResource Visible}}">
                                     <Button Content="Limpar cache de shaders" Margin="0,0,8,8"
                                             ToolTip="Só para stutter anormal ou erro gráfico depois de atualização. Não aumenta FPS."

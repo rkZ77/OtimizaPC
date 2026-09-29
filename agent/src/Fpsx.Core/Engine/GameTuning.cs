@@ -29,4 +29,31 @@ public static class GameTuning
             .OrderByDescending(x => x.Change.At)
             .Select(x => (x.Session.Id, x.Change.Id, x.Change.At))
             .ToList();
+
+    /// <summary>
+    /// Perfis de gráficos do jogo para a tela Jogos: nome, se já é o que está
+    /// no arquivo do jogo (todas as chaves do perfil iguais) e a proposta que
+    /// aplica. Proposta nula com perfil ativo = nada a mudar.
+    /// </summary>
+    public static IReadOnlyList<GraphicsProfileOption> Profiles(ScanResult scan, Games.GameProfile profile)
+    {
+        var install = scan.Snapshot.Games.FirstOrDefault(g => g.GameId == profile.Id);
+        if (install is null || install.Config.Count == 0)
+            return [];
+        var proposals = scan.Optimizations
+            .Where(o => o.Definition.Id == "game-graphics-profile")
+            .SelectMany(o => o.Evaluation.Proposals)
+            .Select(p => p.Id)
+            .ToHashSet();
+        return profile.Presets.Select(preset =>
+        {
+            var keys = preset.Settings.Where(kv => install.Config.ContainsKey(kv.Key)).ToList();
+            var active = keys.Count > 0 && keys.All(kv => install.Config[kv.Key] == kv.Value);
+            var id = Optimizations.GraphicsProfileOptimization.ProposalId(profile.Id, preset.Id);
+            return new GraphicsProfileOption(preset.Id, Optimizations.GraphicsProfileOptimization.Label(preset), preset.Description,
+                proposals.Contains(id) ? id : null, active);
+        }).ToList();
+    }
 }
+
+public sealed record GraphicsProfileOption(string PresetId, string Label, string Description, string? ProposalId, bool IsActive);

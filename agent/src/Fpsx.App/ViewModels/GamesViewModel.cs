@@ -23,6 +23,10 @@ public sealed class GameCard
     public IReadOnlyList<KeyValueItem> Recommended { get; init; } = [];
     public bool HasShaderCache { get; init; }
 
+    /// <summary>Perfis de gráficos deste jogo (Máximo FPS, Equilibrado), com o ativo marcado.</summary>
+    public IReadOnlyList<Fpsx.Core.Engine.GraphicsProfileOption> Profiles { get; init; } = [];
+    public bool HasProfiles => Profiles.Count > 0;
+
     // ---- Otimizar este jogo / Voltar como era ----
 
     /// <summary>O RKZFPS sabe editar a configuração deste jogo (CS2, Fortnite, Minecraft).</summary>
@@ -51,6 +55,9 @@ public sealed class GamesViewModel : PageViewModel
         OptimizeGameCommand = new AsyncCommand(p => Busy(() => Optimize((string)p!)), p => !IsBusy && p is string);
         RevertGameCommand = new AsyncCommand(p => Busy(() => Revert((string)p!)), p => !IsBusy && p is string);
         ShaderCommand = new AsyncCommand(() => Busy(ClearShaders), () => !IsBusy);
+        // Perfil escolhido pela pessoa: mesmo fluxo de aplicar (confirmação, backup, desfazer).
+        ProfileCommand = new AsyncCommand(p => Busy(async () => { await ApplyFlow.RunAsync([(string)p!], Reporter); Load(); }),
+            p => !IsBusy && p is string && CanFix);
         ScanCommand = new AsyncCommand(() => Busy(() => _host.RunScanAsync(Reporter, network: false)), () => !IsBusy);
         _host.PropertyChanged += (_, e) =>
         {
@@ -67,6 +74,7 @@ public sealed class GamesViewModel : PageViewModel
     public ICommand OptimizeGameCommand { get; }
     public ICommand RevertGameCommand { get; }
     public ICommand ShaderCommand { get; }
+    public ICommand ProfileCommand { get; }
     public ICommand ScanCommand { get; }
 
     public string OtherGames { get; private set; } = "";
@@ -191,6 +199,7 @@ public sealed class GamesViewModel : PageViewModel
                 Findings = findings,
                 Recommended = profile.RecommendedSettings.Select(kv => new KeyValueItem(kv.Key, kv.Value)).ToList(),
                 HasShaderCache = install is not null && profile.Optimizations.Contains("shader-cache-clear-cs2"),
+                Profiles = scan is null ? [] : Fpsx.Core.Engine.GameTuning.Profiles(scan, profile),
                 Tunable = tunable,
                 TuneTitle = title,
                 TuneDetail = detail,
