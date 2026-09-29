@@ -23,5 +23,28 @@ public partial class MainWindow : Window
             if (!AppHost.Current.Ctx.Settings.TutorialDone)
                 Tutorial.Show();
         };
+        StateChanged += (_, _) => AjustarMaximizado();
+    }
+
+    // ---- barra de título própria ----
+
+    private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void Maximize_Click(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    // Fechar segue o caminho de sempre: com a medição ligada, vai para a bandeja.
+    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>
+    /// Maximizada sem a moldura do Windows, a janela passa uns pixels de cada
+    /// lado da tela e corta a barra de título. A margem devolve o que sobra.
+    /// </summary>
+    private void AjustarMaximizado()
+    {
+        var max = WindowState == WindowState.Maximized;
+        Root.Margin = max ? new Thickness(7) : new Thickness(0);
+        MaxButton.Content = max ? "" : "";
+        MaxButton.ToolTip = max ? "Restaurar" : "Maximizar";
     }
 }

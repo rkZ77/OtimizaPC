@@ -24,6 +24,8 @@
     <SolidColorBrush x:Key="Border" Color="{StaticResource BorderColor}" />
     <SolidColorBrush x:Key="Text" Color="{StaticResource TextColor}" />
     <SolidColorBrush x:Key="Muted" Color="{StaticResource MutedColor}" />
+    <!-- Fechar da barra de titulo: o vermelho do proprio Windows, para ninguem estranhar. -->
+    <SolidColorBrush x:Key="CaptionClose" Color="#C42B1C" />
     <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentHoverColor}" />
     <SolidColorBrush x:Key="Warn" Color="{StaticResource WarnColor}" />

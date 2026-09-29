@@ -6,7 +6,55 @@
         Title="RKZFPS" Width="1180" Height="780" MinWidth="960" MinHeight="620"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
         Icon="Assets/fpsx.ico">
+    <!-- Barra de titulo propria (a do Windows e' branca e destoava do app).
+         WindowChrome mantem arrastar, redimensionar e o encaixe do Windows. -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="34" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
     <Window.Resources>
+        <Style x:Key="CaptionButton" TargetType="Button">
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Foreground" Value="{StaticResource Muted}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="{TemplateBinding Background}">
+                            <!-- TextBlock direto: o estilo padrao de texto do tema trocaria a fonte de icones. -->
+                            <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource Surface2}" />
+                                <Setter Property="Foreground" Value="{StaticResource Text}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="CloseCaptionButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="{TemplateBinding Background}">
+                            <!-- TextBlock direto: o estilo padrao de texto do tema trocaria a fonte de icones. -->
+                            <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource CaptionClose}" />
+                                <Setter Property="Foreground" Value="{StaticResource Text}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><v:DashboardView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:OptimizationsViewModel}"><v:OptimizationsView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:GamesViewModel}"><v:GamesView /></DataTemplate>
@@ -18,75 +66,98 @@
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><v:SettingsView /></DataTemplate>
     </Window.Resources>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="232" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+    <Border x:Name="Root">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="34" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- Barra lateral -->
-        <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,1,0">
-            <DockPanel Margin="14,20">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,26">
-                    <Image Source="Assets/fpsx.ico" Width="30" Height="30" />
-                    <TextBlock FontSize="22" FontWeight="Black" FontStyle="Italic" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <Run Text="RKZ" /><Run Text="FPS" Foreground="{StaticResource Accent}" />
-                    </TextBlock>
+            <!-- Barra de titulo: continua a cor da barra lateral e do conteudo -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="232" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,1,0" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource CaptionButton}" Content="&#xE921;" ToolTip="Minimizar" Click="Minimize_Click" />
+                    <Button x:Name="MaxButton" Style="{StaticResource CaptionButton}" Content="&#xE922;" ToolTip="Maximizar" Click="Maximize_Click" />
+                    <Button Style="{StaticResource CloseCaptionButton}" Content="&#xE8BB;" ToolTip="Fechar" Click="Close_Click" />
                 </StackPanel>
+            </Grid>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="8,0">
-                    <Button Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="-6,0,0,12" Command="{Binding TutorialCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Info}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Text="Como usar o RKZFPS" Foreground="{StaticResource Info}" />
-                        </StackPanel>
-                    </Button>
-                    <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">
-                        <TextBlock Text="{Binding PlanLabel, StringFormat=Plano {0}}" FontSize="13" />
-                    </Border>
-                    <!-- Sem aviso de "sem administrador": o app pede a permissão do
-                         Windows sozinho, só na hora de aplicar o que precisa dela. -->
-                    <TextBlock Text="{Binding PlanHint}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap"
-                               Visibility="{Binding PlanHint, Converter={StaticResource Visible}}" />
-                </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="232" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-                <ItemsControl ItemsSource="{Binding Pages}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <RadioButton GroupName="nav" Style="{StaticResource NavItem}" IsChecked="{Binding IsCurrent, Mode=TwoWay}"
-                                         Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                         CommandParameter="{Binding}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="16" Width="28" VerticalAlignment="Center"
-                                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
-                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
-                                               Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
-                                </StackPanel>
-                            </RadioButton>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </DockPanel>
-        </Border>
+            <!-- Barra lateral -->
+            <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,1,0">
+                <DockPanel Margin="14,20">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,26">
+                        <Image Source="Assets/fpsx.ico" Width="30" Height="30" />
+                        <TextBlock FontSize="22" FontWeight="Black" FontStyle="Italic" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <Run Text="RKZ" /><Run Text="FPS" Foreground="{StaticResource Accent}" />
+                        </TextBlock>
+                    </StackPanel>
 
-        <!-- Conteúdo -->
-        <DockPanel Grid.Column="1">
-            <Border DockPanel.Dock="Top" Background="{StaticResource Info}" Padding="16,8"
-                    Visibility="{Binding UpdateAvailable, Converter={StaticResource Visible}}">
-                <DockPanel>
-                    <Button DockPanel.Dock="Right" Content="{Binding UpdateButton}" Command="{Binding UpdateCommand}" Padding="14,6" Margin="12,0,0,0" />
-                    <TextBlock Text="{Binding UpdateAvailable}" Foreground="#06121F" VerticalAlignment="Center" />
+                    <StackPanel DockPanel.Dock="Bottom" Margin="8,0">
+                        <Button Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="-6,0,0,12" Command="{Binding TutorialCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Info}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Como usar o RKZFPS" Foreground="{StaticResource Info}" />
+                            </StackPanel>
+                        </Button>
+                        <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding PlanLabel, StringFormat=Plano {0}}" FontSize="13" />
+                        </Border>
+                        <!-- Sem aviso de "sem administrador": o app pede a permissão do
+                             Windows sozinho, só na hora de aplicar o que precisa dela. -->
+                        <TextBlock Text="{Binding PlanHint}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap"
+                                   Visibility="{Binding PlanHint, Converter={StaticResource Visible}}" />
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding Pages}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <RadioButton GroupName="nav" Style="{StaticResource NavItem}" IsChecked="{Binding IsCurrent, Mode=TwoWay}"
+                                             Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                             CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="16" Width="28" VerticalAlignment="Center"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+                                    </StackPanel>
+                                </RadioButton>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </DockPanel>
             </Border>
-            <!-- FPS ao vivo: aparece sozinho quando um jogo abre, em qualquer tela. -->
-            <Border DockPanel.Dock="Top" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1" Padding="20,10"
-                    Visibility="{Binding LiveFps, Converter={StaticResource Visible}}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Accent}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
-                    <TextBlock Text="{Binding LiveFps}" FontWeight="SemiBold" FontSize="15" Foreground="{StaticResource Accent}" />
-                </StackPanel>
-            </Border>
-            <ContentControl Content="{Binding Current}" />
-        </DockPanel>
-    </Grid>
+
+            <!-- Conteúdo -->
+            <DockPanel Grid.Column="1">
+                <Border DockPanel.Dock="Top" Background="{StaticResource Info}" Padding="16,8"
+                        Visibility="{Binding UpdateAvailable, Converter={StaticResource Visible}}">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="{Binding UpdateButton}" Command="{Binding UpdateCommand}" Padding="14,6" Margin="12,0,0,0" />
+                        <TextBlock Text="{Binding UpdateAvailable}" Foreground="#06121F" VerticalAlignment="Center" />
+                    </DockPanel>
+                </Border>
+                <!-- FPS ao vivo: aparece sozinho quando um jogo abre, em qualquer tela. -->
+                <Border DockPanel.Dock="Top" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1" Padding="20,10"
+                        Visibility="{Binding LiveFps, Converter={StaticResource Visible}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Accent}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBlock Text="{Binding LiveFps}" FontWeight="SemiBold" FontSize="15" Foreground="{StaticResource Accent}" />
+                    </StackPanel>
+                </Border>
+                <ContentControl Content="{Binding Current}" />
+            </DockPanel>
+        </Grid>
+        </Grid>
+    </Border>
 </Window>
