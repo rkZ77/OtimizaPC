@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import {
-  ArrowRight, BadgeCheck, CircleSlash, CreditCard, Download, RotateCcw, ShieldCheck, Undo2,
-} from 'lucide-react'
+import { ArrowRight, BadgeCheck, CircleSlash, Download } from 'lucide-react'
 import api from '../services/api'
 import PageShell from '../components/PageShell'
 import SiteHeader from '../components/SiteHeader'
 import PlansGrid from '../components/PlansGrid'
+import { Faq, Garantias, PERGUNTAS } from '../components/Confianca'
 import { Button } from '../components/ui'
 import { GAMES, GameGrid, Row, ScreenTour } from '../components/Vitrine'
 import { usePlanos } from '../hooks/usePlanos'
@@ -26,13 +25,6 @@ interface Stats { matches: number | null; hours: number | null; games: number | 
 
 const inteiro = (n: number) => n.toLocaleString('pt-BR')
 
-const GUARANTEES = [
-  { icon: CreditCard, t: 'Pagamento pelo Mercado Pago', d: 'PIX ou cartão. O RKZFPS não vê nem guarda os dados do seu cartão.' },
-  { icon: Undo2, t: '7 dias para desistir', d: 'Não gostou? Peça o reembolso em até 7 dias da compra, como manda o Código de Defesa do Consumidor.' },
-  { icon: RotateCcw, t: 'Desfazer tudo, sempre', d: 'Toda alteração guarda o estado anterior. Desfazer funciona em qualquer plano, mesmo depois de cancelar.' },
-  { icon: ShieldCheck, t: 'Segurança do Windows intocada', d: 'Antivírus, firewall e Windows Update ficam exatamente como estão.' },
-]
-
 const NOT_DOING = [
   'Desligar antivírus, firewall ou Windows Update',
   'Desligar dezenas de serviços do Windows de uma vez',
@@ -42,17 +34,7 @@ const NOT_DOING = [
   'Fechar programa à força e perder o que você não salvou',
 ]
 
-const FAQ: [string, string][] = [
-  ['O RKZFPS aumenta meu FPS?', 'Depende do seu PC, e é isso que ele descobre primeiro. Em PC com configuração errada (monitor rodando a 60 Hz, plano de economia de energia, jogo na placa integrada, programas pesando) o ganho costuma ser grande. Em PC já bem configurado, o RKZFPS diz que não há o que mudar. A medição das partidas mostra o número real, antes e depois.'],
-  ['O que eu consigo fazer no plano grátis?', 'Ver tudo: o diagnóstico completo, os problemas encontrados, o que cada otimização resolveria no seu PC e o FPS das suas partidas. Para aplicar as correções, é preciso um plano pago.'],
-  ['Se as correções ficam no PC, por que assinar?', 'Porque o PC não fica parado. Atualização do Windows, driver novo e patch de jogo mudam configuração, religam coisas e criam problemas novos. Com um plano, o RKZFPS analisa de novo a cada abertura e corrige o que aparecer, ajusta seus jogos e compara suas partidas antes e depois. O que ele já fez continua no PC mesmo sem plano, e desfazer segue liberado.'],
-  ['É seguro? E se der problema?', 'Cada alteração guarda o estado anterior e é conferida depois de aplicada. Qualquer uma pode ser desfeita com um clique, em qualquer plano. O RKZFPS só executa operações de uma lista fechada e revisada.'],
-  ['Funciona com anti-cheat (Vanguard, Easy Anti-Cheat)?', 'Sim. A medição de FPS usa o registro de quadros do próprio Windows e não injeta nada no jogo. O RKZFPS também nunca fecha nem mexe em anti-cheat.'],
-  ['Preciso ser administrador do PC?', 'Não para usar. Quando uma correção mexe em configuração do sistema, o Windows pede a sua permissão só para ela, e você vê antes o que vai mudar.'],
-  ['Posso usar em mais de um PC?', 'Cada assinatura vale para 1 PC por vez. Trocou de PC? Desative o antigo em Minha conta e entre no novo.'],
-  ['Como cancelo?', 'Não precisa cancelar: cada compra é um pagamento único, sem renovação automática. O plano vale até o fim do período pago, e o desfazer continua liberado depois. Desistiu em até 7 dias? Peça o reembolso pelo suporte.'],
-  ['O app recebe atualizações?', 'Sim. Novos jogos, novas correções e ajustes para versões novas do Windows e dos jogos entram nas atualizações, sem custo a mais para quem assina. O histórico está nesta página.'],
-]
+const FAQ = Object.values(PERGUNTAS)
 
 export default function Home() {
   const [versions, setVersions] = useState<Version[]>([])
@@ -121,14 +103,7 @@ export default function Home() {
 
       {/* Garantias */}
       <section className="border-y border-line bg-surface-1/50">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
-          {GUARANTEES.map(({ icon: Icon, t, d }) => (
-            <div key={t} className="flex gap-3">
-              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
-              <div><p className="font-semibold text-ink-1">{t}</p><p className="mt-1 text-sm text-ink-3">{d}</p></div>
-            </div>
-          ))}
-        </div>
+        <Garantias className="mx-auto max-w-6xl px-4 py-10" />
       </section>
 
       {/* Como funciona, com as telas reais */}
@@ -208,7 +183,7 @@ export default function Home() {
             <h2 className="font-display text-3xl font-bold text-ink-1">Planos</h2>
             <p className="mt-3 text-ink-3">Comece grátis para ver o diagnóstico do seu PC. Assine quando quiser que o RKZFPS corrija.</p>
           </div>
-          <div className="mt-10"><PlansGrid compact /></div>
+          <div className="mt-10"><PlansGrid /></div>
           <div className="mt-6"><Button variant="ghost" to="/planos" IconRight={ArrowRight}>Comparar os planos em detalhe</Button></div>
         </div>
       </section>
@@ -220,16 +195,7 @@ export default function Home() {
             <h2 className="font-display text-2xl font-bold text-ink-1">Perguntas frequentes</h2>
             <p className="mt-3 text-ink-3">Não achou sua dúvida? Pergunte ao assistente ou fale com o suporte pelo menu.</p>
           </div>
-          <div className="divide-y divide-line rounded-lg border border-line">
-            {FAQ.map(([q, a]) => (
-              <details key={q} className="group p-5">
-                <summary className="flex cursor-pointer list-none justify-between gap-4 font-semibold text-ink-1">
-                  {q}<span className="text-ink-3 transition-transform group-open:rotate-45" aria-hidden>+</span>
-                </summary>
-                <p className="mt-3 leading-relaxed text-ink-3">{a}</p>
-              </details>
-            ))}
-          </div>
+          <Faq itens={FAQ} />
         </div>
       </section>
 

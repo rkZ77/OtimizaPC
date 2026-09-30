@@ -23,7 +23,7 @@ const TIERS = ['free', 'starter', 'pro', 'ultimate']
  * escrito a mao na tela divergiu do cobrado). O front nao calcula preco:
  * valor por mes e economia chegam prontos do servidor.
  */
-export default function PlansGrid({ compact }: { compact?: boolean }) {
+export default function PlansGrid() {
   const { data, error } = usePlanos()
   const [period, setPeriod] = useState<Period>('annual')
   const { user } = useAuth()
@@ -92,7 +92,9 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
           const destaque = plan.tier === 'pro'
           const free = plan.price_cents === 0
           return (
-            <div key={plan.key} className={cn('card relative flex flex-col p-5', destaque && 'border-accent/50 shadow-elev')}>
+            // No celular (uma coluna) o recomendado vem primeiro: antes o Pro
+            // ficava duas telas abaixo do Free e muita gente nem chegava nele.
+            <div key={plan.key} className={cn('card relative flex flex-col p-5', destaque && 'order-first border-accent/50 shadow-elev sm:order-none')}>
               {destaque && (
                 <span className="absolute -top-2.5 left-5 rounded-sm bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-black">
                   Recomendado
@@ -109,16 +111,23 @@ export default function PlansGrid({ compact }: { compact?: boolean }) {
                 {plan.savings_percent > 0 && <span className="ml-1 font-semibold text-accent-ink">(economia de {plan.savings_percent}%)</span>}
               </p>
               <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-3"><Monitor className="h-3.5 w-3.5" aria-hidden />{plan.max_devices === 1 ? '1 PC por assinatura' : `${plan.max_devices} PCs por assinatura`}</p>
-              {!compact && (
-                <ul className="mt-4 flex-1 space-y-2 text-sm text-ink-2">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />{f}</li>
-                  ))}
-                </ul>
-              )}
+              {/* Recursos sempre visiveis, tambem na home: so' preco sem o que
+                  vem junto nao da' motivo para escolher um plano. */}
+              <ul className="mt-4 flex-1 space-y-2 text-sm text-ink-2">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden />{f}</li>
+                ))}
+              </ul>
               <Button className="mt-5" block variant={destaque ? 'primary' : 'ghost'} onClick={() => buy(plan)}>
-                {free ? 'Baixar grátis' : 'Assinar'}
+                {free ? 'Baixar grátis' : `Assinar o ${plan.name}`}
               </Button>
+              {/* O teste sem cartao e' a porta de entrada mais facil: fica no
+                  cartao do plano testado, nao so' numa linha embaixo da grade. */}
+              {destaque && data.trial_days > 0 && !user && (
+                <Button className="mt-2" block variant="link" size="sm" to="/download">
+                  {`Ou teste ${data.trial_days === 1 ? '1 dia' : `${data.trial_days} dias`} grátis, sem cartão`}
+                </Button>
+              )}
             </div>
           )
         })}

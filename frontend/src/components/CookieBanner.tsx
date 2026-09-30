@@ -33,13 +33,15 @@ export default function CookieBanner() {
             if (el) raiz.style.setProperty('--aviso-offset', `${el.offsetHeight}px`)
             else raiz.style.removeProperty('--aviso-offset')
           }}
-          className="fixed bottom-0 inset-x-0 z-40 bg-surface-1 border-t border-line px-4 py-4 sm:py-3"
-          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+          className="fixed bottom-0 inset-x-0 z-40 bg-surface-1 border-t border-line px-4 py-3"
+          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
         >
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
-            <p className="text-xs text-ink-2 flex-1 leading-relaxed">
-              Usamos cookies essenciais para autenticação e funcionamento do site.
-              Ao continuar, você concorda com nossa Política de Privacidade.
+          {/* No celular a barra ocupava um terco da primeira tela, bem em cima
+              do botao de baixar. Frase curta e botoes lado a lado. */}
+          <div className="max-w-5xl mx-auto flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 sm:gap-6">
+            <p className="text-xs text-ink-2 basis-full sm:basis-auto flex-1 leading-relaxed">
+              Usamos só cookies essenciais, para login e funcionamento do site.
+              Ao continuar, você concorda com a Política de Privacidade.
             </p>
             {/* A política saiu de dentro da frase e virou botão ao lado do
                 "Entendi": ler antes de aceitar é uma escolha, não uma nota de

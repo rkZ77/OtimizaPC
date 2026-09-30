@@ -1,6 +1,7 @@
 import { Check, Minus } from 'lucide-react'
 import PageShell from '../components/PageShell'
 import PlansGrid from '../components/PlansGrid'
+import { Faq, Garantias, PERGUNTAS } from '../components/Confianca'
 import { SectionHead } from '../components/ui'
 import { FEATURES, PLAN_ORDER, includes } from '../lib/features'
 import { TIER_LABEL } from '../lib/format'
@@ -44,6 +45,12 @@ export default function Planos() {
       <p className="mt-4 text-sm text-ink-3">
         Pagamento por PIX ou cartão pelo Mercado Pago. Precisa de uma oferta para vários PCs? Fale com o suporte.
       </p>
+
+      {/* As duvidas de quem esta' prestes a pagar, respondidas aqui mesmo. */}
+      <div className="panel mt-12 p-6"><Garantias /></div>
+
+      <SectionHead className="mt-16" title="Antes de assinar" sub="O que mais perguntam na hora de escolher um plano." />
+      <Faq itens={[PERGUNTAS.porqueAssinar, PERGUNTAS.gratis, PERGUNTAS.cancelar, PERGUNTAS.variosPcs, PERGUNTAS.fps, PERGUNTAS.seguro]} />
     </PageShell>
   )
 }

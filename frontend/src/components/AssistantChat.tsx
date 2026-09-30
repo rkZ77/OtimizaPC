@@ -60,8 +60,11 @@ export default function AssistantChat() {
   return (
     <>
       {!open && (
+        // Sobe junto com a barra de cookies (--aviso-offset): antes o botao
+        // ficava por cima do "Entendi" e escondia parte da barra.
         <button type="button" onClick={() => setOpen(true)} aria-label="Tirar dúvidas com o assistente"
-                className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-bold text-black shadow-elev hover:bg-accent-hover active:bg-accent-press transition-colors">
+                style={{ bottom: 'calc(1rem + var(--aviso-offset, 0px))' }}
+                className="fixed right-4 z-40 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-bold text-black shadow-elev hover:bg-accent-hover active:bg-accent-press transition-colors">
           <MessageCircle className="h-5 w-5" aria-hidden />
           <span className="hidden sm:inline">Tirar dúvidas</span>
         </button>
