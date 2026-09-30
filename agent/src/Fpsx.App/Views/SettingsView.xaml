@@ -8,8 +8,8 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="Modo de uso" Style="{StaticResource H2}" />
-                    <CheckBox IsChecked="{Binding Advanced}" Content="Modo avançado" />
-                    <TextBlock Style="{StaticResource MutedText}" Margin="26,4,0,0" TextWrapping="Wrap"
+                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Advanced}" Content="Modo avançado" />
+                    <TextBlock Style="{StaticResource MutedText}" Margin="54,4,0,0" TextWrapping="Wrap"
                                Text="Desligado (modo simples): só o essencial, com botões grandes. Ligado: mostra também cada otimização item a item, o benchmark, o teste de CPU e os detalhes técnicos do PC." />
                 </StackPanel>
             </Border>
@@ -17,8 +17,8 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="Avisos na bandeja" Style="{StaticResource H2}" />
-                    <CheckBox IsChecked="{Binding WatchNotify}" Content="Vigiar o PC e mandar o resumo da semana" />
-                    <TextBlock Style="{StaticResource MutedText}" Margin="26,4,0,0" TextWrapping="Wrap"
+                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding WatchNotify}" Content="Vigiar o PC e mandar o resumo da semana" />
+                    <TextBlock Style="{StaticResource MutedText}" Margin="54,4,0,0" TextWrapping="Wrap"
                                Text="Com o RKZFPS na bandeja, ele analisa o PC depois que o Windows liga e a cada 6 horas, só lendo. Avisa quando uma atualização do Windows, um driver novo ou um jogo desfez uma correção ou criou um problema. Uma vez por semana, mostra o FPS medido nas suas partidas." />
                 </StackPanel>
             </Border>
@@ -45,10 +45,10 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="Privacidade" Style="{StaticResource H2}" />
-                    <CheckBox IsChecked="{Binding Telemetry}" Content="Enviar dados anônimos de uso para melhorar o RKZFPS" />
-                    <TextBlock Style="{StaticResource MutedText}" Margin="26,6,0,0"
+                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Telemetry}" Content="Enviar dados anônimos de uso para melhorar o RKZFPS" />
+                    <TextBlock Style="{StaticResource MutedText}" Margin="54,6,0,0"
                                Text="Somente: otimizações aplicadas e se funcionaram, o FPS das partidas medidas (números e gráfico), um resumo do hardware (processador, placa de vídeo, memória, Windows) e a versão do app. É o que permite comparar seu PC com PCs parecidos. Nunca arquivos, nomes de programas, nome do PC, caminhos ou conteúdo pessoal." />
-                    <Button Content="Política de privacidade" Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="20,6,0,0" Command="{Binding PrivacyCommand}" />
+                    <Button Content="Política de privacidade" Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="42,6,0,0" Command="{Binding PrivacyCommand}" />
                 </StackPanel>
             </Border>
 

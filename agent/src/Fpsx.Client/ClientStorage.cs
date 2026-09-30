@@ -41,6 +41,15 @@ public sealed record ClientSettings
     /// <summary>Medir o FPS das partidas sozinho, com o app aberto ou na bandeja.</summary>
     public bool AutoMeasure { get; init; } = true;
 
+    /// <summary>
+    /// Modo Gaming: "manual" (padrão, nada é aplicado sozinho) ou "auto"
+    /// (aplica ao abrir o jogo só o que está em GamingAuthorized e desfaz ao fechar).
+    /// </summary>
+    public string GamingMode { get; init; } = "manual";
+
+    /// <summary>Otimizações que a pessoa autorizou para o modo Automático (ids do catálogo).</summary>
+    public IReadOnlyList<string> GamingAuthorized { get; init; } = [];
+
     /// <summary>A tela de entrada da primeira abertura já apareceu (entrou ou escolheu o Free).</summary>
     public bool LoginPromptDone { get; init; }
 

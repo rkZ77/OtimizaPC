@@ -60,6 +60,37 @@ public static class ProcessClassifier
         return ProcessCategory.User;
     }
 
+    // Programas que ficam em tela cheia e usam a GPU sem ser jogo: vídeo,
+    // navegador, streaming, apresentação. Medir um deles viraria "partida" falsa.
+    private static readonly HashSet<string> FullscreenNonGames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "chrome", "msedge", "firefox", "opera", "opera_gx", "brave", "vivaldi", "iexplore", "msedgewebview2",
+        "vlc", "mpc-hc", "mpc-hc64", "mpc-be64", "PotPlayerMini64", "PotPlayerMini", "wmplayer", "Video.UI", "Microsoft.Media.Player",
+        "Netflix", "Spotify", "obs64", "obs32", "Discord", "Teams", "ms-teams", "Zoom", "POWERPNT", "WINWORD", "EXCEL", "Acrobat", "AcroRd32",
+        "ApplicationFrameHost", "mstsc", "vmware", "VirtualBoxVM", "Photoshop", "Resolve", "Premiere", "blender", "Code", "devenv",
+        "RKZFPS", "Fpsx.App", "PresentMon",
+    };
+
+    /// <summary>
+    /// Jogo sem perfil: janela em tela cheia na frente, fora da pasta do
+    /// Windows, que não é launcher, sistema nem programa conhecido de tela
+    /// cheia, E usando a GPU de verdade. Tela cheia sozinha pega vídeo; GPU
+    /// sozinha pega programa 3D em janela. Os dois juntos são um jogo rodando.
+    /// </summary>
+    public const double MinGame3dPercent = 15;
+
+    public static bool IsLikelyGame(string processName, string? exePath, bool fullscreen, double? gpu3dPercent)
+    {
+        if (!fullscreen || gpu3dPercent is not >= MinGame3dPercent)
+            return false;
+        if (Classify(processName) is ProcessCategory.Critical or ProcessCategory.System or ProcessCategory.Launcher)
+            return false;
+        if (FullscreenNonGames.Contains(processName))
+            return false;
+        var windows = Environment.GetEnvironmentVariable("SystemRoot") ?? @"C:\Windows";
+        return exePath is null || !exePath.StartsWith(windows, StringComparison.OrdinalIgnoreCase);
+    }
+
     public static string Label(ProcessCategory c) => c switch
     {
         ProcessCategory.Critical => "Essencial",

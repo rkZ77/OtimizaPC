@@ -42,11 +42,74 @@ public sealed record GameplaySession
 
     /// <summary>Resumo do hardware na hora da partida (para comparar com PCs parecidos).</summary>
     public HardwareSummary? Hardware { get; init; }
+
+    /// <summary>Resolução da tela principal durante a partida (lida depois do carregamento). null = não lida.</summary>
+    public int? ScreenWidth { get; init; }
+
+    public int? ScreenHeight { get; init; }
+
+    /// <summary>
+    /// Opções gráficas do arquivo de configuração do jogo, lidas quando a
+    /// partida terminou (o jogo grava o que foi usado ao fechar). Só as chaves
+    /// que o perfil do jogo conhece. Vazio = jogo sem perfil ou arquivo não lido.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> GameSettings { get; init; } = new Dictionary<string, string>();
+
+    /// <summary>Jogo reconhecido por tela cheia, sem perfil do RKZFPS.</summary>
+    public bool Detected { get; init; }
+
+    /// <summary>Placa de vídeo que o jogo usou e a de alto desempenho do PC. null = partida antiga.</summary>
+    public GpuSelection? Gpu { get; init; }
 }
 
 /// <param name="T">Segundo da partida, na mesma escala do <see cref="FpsPoint.T"/>.</param>
 /// <param name="App">Programa (fora o jogo e o RKZFPS) que mais usou processador no trecho. Fica só no PC.</param>
-public sealed record LoadSample(int T, double? Cpu, double? Gpu, string? App, double AppCpu);
+public sealed record LoadSample(int T, double? Cpu, double? Gpu, string? App, double AppCpu)
+{
+    // Campos abaixo vieram depois: partida antiga não tem, e null quer dizer
+    // "não lido" (nunca zero). O diagnóstico de gargalo trata null como ausente.
+
+    /// <summary>Jogo em primeiro plano no momento da amostra.</summary>
+    public bool? Foreground { get; init; }
+
+    /// <summary>Núcleo lógico mais ocupado (% do tempo). Jogo preso numa thread aparece aqui, não no total.</summary>
+    public double? CpuMaxCore { get; init; }
+
+    /// <summary>Thread do jogo mais ocupada, em % de um núcleo. null quando o anti-cheat protege o processo.</summary>
+    public double? GameThreadMax { get; init; }
+
+    /// <summary>Clock atual do processador em % do nominal (contador "% Processor Performance").</summary>
+    public double? CpuClockPercent { get; init; }
+
+    /// <summary>Clock atual calculado pelo Windows (nominal x desempenho), em MHz.</summary>
+    public double? CpuClockMhz { get; init; }
+
+    /// <summary>"% Performance Limit": abaixo de 100 o processador está sendo contido (temperatura, energia, firmware).</summary>
+    public double? CpuPerfLimit { get; init; }
+
+    /// <summary>Zona térmica ACPI da placa. Não é o sensor do núcleo: serve de indício, não de medida exata.</summary>
+    public double? CpuTempC { get; init; }
+
+    public double? GpuTempC { get; init; }
+    public double? GpuClockMhz { get; init; }
+
+    /// <summary>Clock do motor 3D em % do máximo informado pelo driver.</summary>
+    public double? GpuClockPercent { get; init; }
+
+    /// <summary>Memória de vídeo dedicada em uso no adaptador do jogo.</summary>
+    public double? VramUsedMb { get; init; }
+
+    /// <summary>Memória compartilhada usada pela GPU: cresce quando a VRAM transborda para a RAM.</summary>
+    public double? SharedGpuMb { get; init; }
+
+    public double? RamPercent { get; init; }
+
+    /// <summary>Páginas lidas do disco por segundo (falta de página que foi ao disco).</summary>
+    public double? HardFaultsPerSec { get; init; }
+
+    /// <summary>Tempo ativo dos discos (100 menos o tempo ocioso).</summary>
+    public double? DiskActivePercent { get; init; }
+}
 
 /// <summary>Por que uma queda aconteceu, na medida do que dá para afirmar.</summary>
 public enum DropCauseKind
@@ -177,6 +240,10 @@ public sealed record HardwareSummary
     public int Threads { get; init; }
     public string Gpu { get; init; } = "";
     public double VramGb { get; init; }
+
+    /// <summary>GPU integrada: usa a RAM como memória de vídeo, e VRAM "cheia" não quer dizer o mesmo.</summary>
+    public bool GpuIntegrated { get; init; }
+
     public double RamGb { get; init; }
     public int WindowsBuild { get; init; }
 
@@ -191,6 +258,7 @@ public sealed record HardwareSummary
             Threads = s.Cpu?.Threads ?? 0,
             Gpu = gpu?.Name.Trim() ?? "",
             VramGb = Math.Round((gpu?.VramBytes ?? 0) / gb, 1),
+            GpuIntegrated = gpu?.LikelyIntegrated ?? false,
             RamGb = Math.Round((s.Memory?.TotalBytes ?? 0) / gb, 1),
             WindowsBuild = s.Os.Build,
         };
@@ -332,6 +400,15 @@ public sealed record GameplayComparison
     public int AfterCount { get; init; }
     public Comparison? Result { get; init; }
 
+    /// <summary>
+    /// Uso médio de CPU e GPU de cada lado. É contexto, não veredito: uso
+    /// maior ou menor não quer dizer ganho, e por isso não entra no teste de
+    /// diferença significativa. null = partidas sem a leitura.
+    /// </summary>
+    public (double? Before, double? After) Cpu { get; init; }
+
+    public (double? Before, double? After) Gpu { get; init; }
+
     /// <summary>Texto para quem ainda não tem partidas suficientes.</summary>
     public string Status { get; init; } = "";
 }
@@ -359,6 +436,16 @@ public static class GameplayComparer
 
         if (before.Count == 0 || after.Count == 0)
         {
+            // Havia partida, mas todas desse lado vieram logo depois de limpar o
+            // cache de shaders: dizer "não há partida" mandaria jogar à toa.
+            var excludedBefore = before.Count == 0 && all.Any(s => s.EndedAt <= pivotAt && tainted.Contains(s.Id));
+            var excludedAfter = after.Count == 0 && all.Any(s => s.StartedAt >= pivotAt && tainted.Contains(s.Id));
+            if (excludedBefore || excludedAfter)
+                return baseResult with
+                {
+                    Status = $"As partidas de {gameName} medidas {(excludedBefore ? "antes" : "depois")} desta otimização foram jogadas logo depois de limpar o cache de shaders, quando o jogo trava mais por recriar os shaders, e ficaram fora da conta. Jogue mais uma partida {(excludedBefore ? "antes da próxima otimização" : "normalmente")} para comparar.",
+                };
+
             var status = (before.Count, after.Count) switch
             {
                 (0, 0) => $"Nenhuma partida de {gameName} medida antes nem depois desta otimização.",
@@ -374,9 +461,12 @@ public static class GameplayComparer
             warnings.Add($"{tainted.Count} partida(s) logo depois de limpar o cache de shaders ficaram fora da conta: o jogo recria os shaders nela e trava mais, o que faria qualquer otimização seguinte parecer melhor do que é.");
         if (before.Concat(after).Any(s => s.DisplayHz is { } hz && s.Stats.AvgFps >= hz * 0.97))
             warnings.Add("O FPS ficou preso perto da taxa do monitor em alguma partida. Com V-Sync ou limite de FPS ligado, otimização não aparece em FPS médio: olhe o 1% low e as travadas.");
+        static double? Avg(IEnumerable<double?> v) => v.Where(x => x is not null).Select(x => x!.Value).DefaultIfEmpty(double.NaN).Average() is var a && double.IsNaN(a) ? null : a;
         return baseResult with
         {
             Ready = true,
+            Cpu = (Avg(before.Select(s => s.AvgCpuPercent)), Avg(after.Select(s => s.AvgCpuPercent))),
+            Gpu = (Avg(before.Select(s => s.AvgGpuPercent)), Avg(after.Select(s => s.AvgGpuPercent))),
             Result = result with { Warnings = warnings },
             Status = before.Count < 2 || after.Count < 2
                 ? "Resultado preliminar: com 2 ou mais partidas de cada lado, diferenças menores passam a ser detectadas."
@@ -391,7 +481,12 @@ public static class GameplayComparer
     /// </summary>
     public static IEnumerable<SessionRecord> Pivots(IEnumerable<SessionRecord> sessions) =>
         sessions.Where(s => s.Status == SessionStatus.Completed
-                            && s.Changes.Any(c => c.Status == ChangeStatus.Applied && c.Applied is not (Model.CacheClearChange or Model.NetworkRepairChange)))
+                            // Sessão temporária do modo Gaming volta ao fechar o jogo: não é marco.
+                            && s.GamingGame is null
+                            // Fechar programa e reparar Windows são de uma vez só: não mudam
+                            // nada que fique valendo nas partidas seguintes.
+                            && s.Changes.Any(c => c.Status == ChangeStatus.Applied
+                                                  && c.Applied is not (Model.CacheClearChange or Model.NetworkRepairChange or Model.ProcessCloseChange or Model.SystemRepairChange)))
             .OrderByDescending(s => s.StartedAt);
 
     private static readonly Model.CacheTarget[] ShaderCaches =

@@ -104,7 +104,13 @@ public partial class App : Application
         // Plano perto de vencer: aviso na bandeja com o que o RKZFPS fez neste PC.
         AppHost.Current.RenewalDue += (titulo, texto) => _tray?.Notify(titulo, texto);
         AppHost.Current.CheckRenewal();
-        AppHost.Current.StartMonitor();
+        // Sobra de modo Gaming de quando o app fechou com o jogo aberto (queda,
+        // desligamento): volta antes de o monitor procurar jogo de novo.
+        Task.Run(() =>
+        {
+            AppHost.Current.RestoreGamingLeftovers();
+            Dispatcher.BeginInvoke(AppHost.Current.StartMonitor);
+        });
         // Vigia do PC e resumo da semana: só avisam, e só com a janela fechada.
         AppHost.Current.WatchNews += (titulo, texto) => _tray?.Notify(titulo, texto);
         AppHost.Current.StartWatch(() => MainWindow is { IsVisible: true, WindowState: not WindowState.Minimized });

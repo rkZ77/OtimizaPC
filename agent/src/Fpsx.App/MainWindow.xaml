@@ -12,49 +12,6 @@
         <WindowChrome CaptionHeight="34" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
     <Window.Resources>
-        <Style x:Key="CaptionButton" TargetType="Button">
-            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
-            <Setter Property="Width" Value="46" />
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Foreground" Value="{StaticResource Muted}" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-            <Setter Property="FontSize" Value="10" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="bg" Background="{TemplateBinding Background}">
-                            <!-- TextBlock direto: o estilo padrao de texto do tema trocaria a fonte de icones. -->
-                            <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="{StaticResource Surface2}" />
-                                <Setter Property="Foreground" Value="{StaticResource Text}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="CloseCaptionButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="bg" Background="{TemplateBinding Background}">
-                            <!-- TextBlock direto: o estilo padrao de texto do tema trocaria a fonte de icones. -->
-                            <TextBlock Text="{TemplateBinding Content}" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bg" Property="Background" Value="{StaticResource CaptionClose}" />
-                                <Setter Property="Foreground" Value="{StaticResource Text}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><v:DashboardView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:OptimizationsViewModel}"><v:OptimizationsView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:GamesViewModel}"><v:GamesView /></DataTemplate>
@@ -111,6 +68,13 @@
                                 <TextBlock Text="Como usar o RKZFPS" Foreground="{StaticResource Info}" />
                             </StackPanel>
                         </Button>
+                        <!-- Modo Gaming ativo, visível em qualquer tela -->
+                        <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,6" ToolTip="Troque na tela FPS Boost">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="7" Height="7" Fill="{Binding GamingDot}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding GamingLabel}" FontSize="13" />
+                            </StackPanel>
+                        </Border>
                         <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">
                             <TextBlock Text="{Binding PlanLabel, StringFormat=Plano {0}}" FontSize="13" />
                         </Border>
@@ -124,6 +88,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <RadioButton GroupName="nav" Style="{StaticResource NavItem}" IsChecked="{Binding IsCurrent, Mode=TwoWay}"
+                                             AutomationProperties.Name="{Binding Title}"
                                              Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                              CommandParameter="{Binding}">
                                     <StackPanel Orientation="Horizontal">

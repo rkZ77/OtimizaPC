@@ -25,6 +25,25 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Configuracao_antiga_abre_no_modo_gaming_manual_e_guarda_a_escolha()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "fpsx-settings-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "settings.json"), "{ \"profile\": \"competitive\", \"auto_measure\": true }");
+
+        var storage = new ClientStorage(dir);
+        var old = storage.LoadSettings();
+        // Quem atualiza o app não ganha nada automático sem escolher.
+        Assert.Equal(Fpsx.Core.Engine.GamingModeKind.Manual, Fpsx.Core.Engine.GamingPolicy.Parse(old.GamingMode));
+        Assert.Empty(old.GamingAuthorized);
+
+        storage.SaveSettings(old with { GamingMode = "auto", GamingAuthorized = ["power-plan-leave-power-saver"] });
+        var back = storage.LoadSettings();
+        Assert.Equal("auto", back.GamingMode);
+        Assert.Equal(["power-plan-leave-power-saver"], back.GamingAuthorized);
+    }
+
+    [Fact]
     public void Partida_so_sobe_com_o_consentimento_que_fala_de_partidas()
     {
         Assert.False(new ClientSettings { TelemetryConsent = true, TelemetryConsentVersion = 1 }.GameplayConsent);

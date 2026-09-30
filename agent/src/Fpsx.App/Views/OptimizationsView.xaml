@@ -59,6 +59,41 @@
                 <TextBlock Text="Rode a análise na tela Início para ver as otimizações deste PC." Style="{StaticResource MutedText}"
                            Visibility="{Binding HasScan, Converter={StaticResource Hidden}}" />
 
+                <!-- Modo Gaming: qual está ativo fica visível no seletor e na frase logo abaixo -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel>
+                            <Border DockPanel.Dock="Right" Background="{StaticResource Surface2}" CornerRadius="10" Padding="4" VerticalAlignment="Top">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Style="{StaticResource Segment}" GroupName="gaming" Content="Automático" IsChecked="{Binding IsAuto}" />
+                                    <RadioButton Style="{StaticResource Segment}" GroupName="gaming" Content="Manual" IsChecked="{Binding IsManual}" />
+                                </StackPanel>
+                            </Border>
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="Modo Gaming" Style="{StaticResource H2}" />
+                                <TextBlock Text="{Binding GamingModeText}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DockPanel>
+                        <TextBlock Text="{Binding GamingStatus}" Foreground="{StaticResource Accent}" TextWrapping="Wrap" Margin="0,10,0,0"
+                                   Visibility="{Binding GamingStatus, Converter={StaticResource Visible}}" />
+                        <TextBlock Text="O que o Automático pode fazer" FontWeight="SemiBold" Margin="0,14,0,6" />
+                        <TextBlock Style="{StaticResource MutedText}" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,8"
+                                   Text="Só entra aqui o que tem volta, não precisa de administrador nem de reiniciar e vale na hora, com o jogo já aberto. Fechar programas, mudar arquivos do jogo, a tela ou drivers nunca acontece sozinho." />
+                        <TextBlock Style="{StaticResource MutedText}" FontSize="13" Text="Nada para o Automático fazer neste PC agora: o que ele pode ligar sozinho (plano de energia) já está certo aqui ou não se aplica. Se isso mudar, a opção aparece nesta lista."
+                                   Visibility="{Binding HasGamingCandidates, Converter={StaticResource Hidden}}" />
+                        <ItemsControl ItemsSource="{Binding GamingCandidates}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4">
+                                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Authorized}" Content="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding State}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="54,2,0,0" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
                 <ItemsControl ItemsSource="{Binding Groups}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

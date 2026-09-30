@@ -184,7 +184,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
             AvgPerformanceLimitPercent = limit.Count > 0 ? limit.Average() : null,
             MinPerformanceLimitPercent = limit.Count > 0 ? limit.Min() : null,
             SampledUnderLoad = options.CpuStressTest,
-            TemperatureC = Temperature(),
+            TemperatureC = AcpiTemperature(),
         };
         return (cpu, relevant);
     }
@@ -220,7 +220,7 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
     }
 
     /// <summary>Zona térmica ACPI: muitas placas não expõem ou expõem valor fixo. Só é usada se plausível.</summary>
-    private static double? Temperature()
+    internal static double? AcpiTemperature()
     {
         var temps = Wmi.Query("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature", @"root\wmi")
             .Select(r => r.Long("CurrentTemperature"))
@@ -264,13 +264,9 @@ public sealed class SnapshotCollector(IReadOnlyList<GameProfile> gameProfiles)
         return GpuVendor.Unknown;
     }
 
-    private static bool IsIntegrated(GpuVendor vendor, string name) => vendor switch
-    {
-        GpuVendor.Intel => !name.Contains("Arc", StringComparison.OrdinalIgnoreCase),
-        // APUs aparecem como "AMD Radeon(TM) Graphics" ou "Radeon Vega 8 Graphics", sem modelo RX.
-        GpuVendor.Amd => name.EndsWith("Graphics", StringComparison.OrdinalIgnoreCase) && !name.Contains(" RX ", StringComparison.OrdinalIgnoreCase),
-        _ => false,
-    };
+    private static bool IsIntegrated(GpuVendor vendor, string name) => Fpsx.Core.Benchmark.GpuSelector.NameLooksIntegrated(vendor, name);
+
+    internal static GpuVendor VendorOfName(string s) => VendorOf(s);
 
     // Win32_VideoController.AdapterRAM é uint32 e trava em 4 GB. O valor real
     // fica na chave da classe de vídeo, gravada pelo driver.

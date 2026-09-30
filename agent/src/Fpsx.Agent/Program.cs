@@ -35,6 +35,7 @@ try
         "benchmark" => Commands.Benchmark(ctx, cli),
         "monitor" => Commands.Monitor(ctx, cli),
         "gameplay" => Commands.Gameplay(ctx, cli),
+        "sensors" => Commands.Sensors(),
         "update" => await Commands.Update(ctx, cli),
         "catalog" => Commands.CatalogList(ctx, cli),
         "license" => Commands.License(ctx),

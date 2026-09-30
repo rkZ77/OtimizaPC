@@ -29,6 +29,9 @@ public sealed record ApplyOptions
 
     /// <summary>Teste grátis: quantas otimizações diferentes ainda cabem. null = sem limite (plano pago).</summary>
     public TrialQuota? Trial { get; init; }
+
+    /// <summary>Marca a sessão como temporária do modo Gaming (nome do jogo) desde o primeiro save.</summary>
+    public string? GamingGame { get; init; }
 }
 
 /// <summary>Criar backup, aplicar, validar e registrar: o resto do fluxo da seção 25.</summary>
@@ -46,6 +49,9 @@ public sealed class OptimizationEngine(ISystemAccess system, SessionStore store)
             CatalogVersion = scan.CatalogVersion,
             MachineName = Environment.MachineName,
             Status = SessionStatus.Running,
+            // Marcada desde o início: se o app cair no meio, a próxima abertura
+            // sabe que é temporária e restaura.
+            GamingGame = options.GamingGame,
             AlreadyOptimal = scan.Optimizations.Where(o => o.Decision == Decision.AlreadyOptimal).Select(o => o.Definition.Id).ToList(),
         };
         var changes = new List<ChangeRecord>();

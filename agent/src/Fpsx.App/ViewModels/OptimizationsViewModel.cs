@@ -77,8 +77,65 @@ public sealed class OptimizationsViewModel : PageViewModel
         {
             if (e.PropertyName == nameof(AppHost.Scan))
                 Load();
+            if (e.PropertyName is nameof(AppHost.GamingMode) or nameof(AppHost.GamingAuthorized) or nameof(AppHost.Scan))
+                LoadGaming();
+            if (e.PropertyName == nameof(AppHost.GamingStatus))
+                Raise(nameof(GamingStatus));
         };
         Load();
+        LoadGaming();
+    }
+
+    // ---- modo Gaming ----
+
+    public bool IsAuto
+    {
+        get => _host.GamingMode == GamingModeKind.Automatic;
+        set
+        {
+            if (value)
+                _host.SetGamingMode(GamingModeKind.Automatic);
+        }
+    }
+
+    public bool IsManual
+    {
+        get => _host.GamingMode == GamingModeKind.Manual;
+        set
+        {
+            if (value)
+                _host.SetGamingMode(GamingModeKind.Manual);
+        }
+    }
+
+    public string GamingModeText => IsAuto
+        ? "Automático: quando um jogo abre, o RKZFPS aplica só o que você autorizou abaixo e desfaz quando o jogo fecha. Tudo fica no Histórico. A medição das partidas fica ligada, porque é ela que percebe o jogo abrindo e fechando."
+        : "Manual: nada muda sozinho. Você liga e desliga as otimizações nesta tela quando quiser, e desfaz pelo Histórico.";
+
+    public string GamingStatus => _host.GamingStatus;
+
+    public ObservableCollection<GamingCandidateItem> GamingCandidates { get; } = [];
+
+    public bool HasGamingCandidates => GamingCandidates.Count > 0;
+
+    private void LoadGaming()
+    {
+        GamingCandidates.Clear();
+        if (_host.Scan is { } scan)
+            foreach (var c in GamingPolicy.Candidates(scan, _host.GamingAuthorized))
+                GamingCandidates.Add(new GamingCandidateItem(c, IsAuto, Authorize));
+        foreach (var n in new[] { nameof(IsAuto), nameof(IsManual), nameof(GamingModeText), nameof(HasGamingCandidates), nameof(GamingStatus) })
+            Raise(n);
+    }
+
+    /// <summary>Autorizar é o consentimento para o Automático mexer sozinho: por isso pede confirmação com o que vai acontecer.</summary>
+    private bool Authorize(GamingCandidate c, bool on)
+    {
+        if (on && !Dialogs.Confirm("Autorizar no modo Automático",
+                $"\"{c.Name}\" vai ser aplicada sozinha sempre que um jogo abrir, com backup, e desfeita quando o jogo fechar. Cada vez fica registrada no Histórico.\n\nVocê pode tirar a autorização quando quiser.", "Autorizar"))
+            return false;
+        _host.SetGamingAuthorized(c.OptimizationId, on);
+        return true;
     }
 
     public override string Title => "FPS Boost";
@@ -183,4 +240,37 @@ public sealed class OptimizationsViewModel : PageViewModel
                 break;
         }
     }
+}
+
+/// <summary>Uma otimização que pode ser autorizada para o modo Automático, com a chave de autorização.</summary>
+public sealed class GamingCandidateItem(GamingCandidate candidate, bool auto, Func<GamingCandidate, bool, bool> authorize) : ObservableObject
+{
+    private bool _authorized = candidate.Authorized;
+
+    public string Name => candidate.Name;
+    public string Reason => candidate.Reason;
+
+    public bool Authorized
+    {
+        get => _authorized;
+        set
+        {
+            if (value == _authorized)
+                return;
+            // Recusou a confirmação: a chave volta para onde estava.
+            if (authorize(candidate, value))
+                _authorized = value;
+            Raise();
+            Raise(nameof(State));
+        }
+    }
+
+    /// <summary>O que vai acontecer com ela, em uma frase.</summary>
+    public string State => (auto, _authorized, candidate.ApplicableNow) switch
+    {
+        (_, false, _) => "Não autorizada: o Automático não mexe nela.",
+        (false, true, _) => "Autorizada, mas o modo está em Manual: nada é aplicado sozinho.",
+        (true, true, true) => "Autorizada: entra quando um jogo abrir e sai quando fechar.",
+        (true, true, false) => "Autorizada, mas já está certa neste PC agora (ou não se aplica): o Automático não muda nada.",
+    };
 }

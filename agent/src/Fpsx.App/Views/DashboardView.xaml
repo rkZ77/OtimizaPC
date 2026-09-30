@@ -21,7 +21,7 @@
 
             <!-- Atalhos -->
             <UniformGrid Columns="3" Margin="0,0,0,6">
-                <Button Command="{Binding GoGamesCommand}" Margin="0,0,8,12" Padding="16,14" HorizontalContentAlignment="Left">
+                <Button Command="{Binding GoGamesCommand}" Margin="0,0,8,12" Padding="16,14">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0" />
                         <StackPanel>

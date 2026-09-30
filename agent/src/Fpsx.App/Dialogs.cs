@@ -30,7 +30,7 @@ public static class Dialogs
             ShowInTaskbar = owner is null,
         };
 
-        var root = new StackPanel { Margin = new Thickness(24) };
+        var root = new StackPanel { Margin = new Thickness(24, 0, 24, 24) };
         root.Children.Add(new TextBlock { Text = title, Style = (Style)Application.Current.Resources["H2"] });
         root.Children.Add(new ScrollViewer
         {
@@ -55,7 +55,7 @@ public static class Dialogs
         }
 
         root.Children.Add(row);
-        window.Content = root;
+        ThemedWindow.Apply(window, root);
         window.ShowDialog();
         return result;
     }

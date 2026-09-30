@@ -60,6 +60,13 @@ public sealed record SessionRecord
 
     public string? BenchmarkBeforeId { get; init; }
     public string? BenchmarkAfterId { get; init; }
+
+    /// <summary>
+    /// Sessão temporária do modo Gaming Automático: nome do jogo que a abriu.
+    /// É desfeita quando o jogo fecha (ou na próxima abertura do app, se ele
+    /// fechou no meio). null = sessão normal, que fica até a pessoa desfazer.
+    /// </summary>
+    public string? GamingGame { get; init; }
 }
 
 /// <summary>Uma linha do log de alterações (seção 44), em JSON Lines.</summary>

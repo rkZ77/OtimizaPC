@@ -3,7 +3,7 @@ namespace Fpsx.Core.Benchmark;
 /// <summary>O que foi medido nas partidas de um jogo, em números que a IA consegue ler.</summary>
 public sealed record GameEvidence(
     string GameId, string Game, int Matches, double AvgFps, double Low1Fps, int? DisplayHz,
-    double? AvgCpu, double? AvgGpu, int Drops, int GpuDrops, int CpuDrops, int AppDrops);
+    double? AvgCpu, double? AvgGpu, int Drops, int GpuDrops, int CpuDrops, int AppDrops, LimitKind? Diagnosed = null);
 
 /// <summary>Onde o PC trava o FPS, pelo que foi medido.</summary>
 public enum Bottleneck
@@ -45,7 +45,8 @@ public static class UpgradeEvidence
                     causes.Count,
                     causes.Count(c => c.Kind == DropCauseKind.Gpu),
                     causes.Count(c => c.Kind == DropCauseKind.Cpu),
-                    causes.Count(c => c.Kind == DropCauseKind.App));
+                    causes.Count(c => c.Kind == DropCauseKind.App),
+                    Majority(recent.Select(s => LimitAnalyzer.Diagnose(s).Kind)));
             })
             .OrderByDescending(e => e.Matches)
             .ToList();
@@ -54,6 +55,12 @@ public static class UpgradeEvidence
     {
         if (games.Count == 0)
             return Bottleneck.Unknown;
+
+        // Partidas com leitura por núcleo têm diagnóstico completo (LimitAnalyzer):
+        // ele pesa CPU e GPU juntos e vale mais que a média de uso abaixo.
+        var diagnosed = games.Where(g => g.Diagnosed is LimitKind.Cpu or LimitKind.Gpu).ToList();
+        if (diagnosed.Count > 0 && diagnosed.All(g => g.Diagnosed == diagnosed[0].Diagnosed))
+            return diagnosed[0].Diagnosed == LimitKind.Cpu ? Bottleneck.Cpu : Bottleneck.Gpu;
 
         // Quedas dizem mais que a média: é nelas que a pessoa sente o jogo travar.
         var drops = games.Sum(g => g.Drops);
@@ -91,6 +98,14 @@ public static class UpgradeEvidence
             Bottleneck.Balanced => "Nas suas partidas, nenhuma peça ficou claramente no limite.",
             _ => "Ainda não há partida medida. Jogue com o RKZFPS aberto para a sugestão usar o que acontece de verdade no seu PC.",
         };
+    }
+
+    /// <summary>Diagnóstico que aparece em mais da metade das partidas conclusivas; null sem maioria.</summary>
+    private static LimitKind? Majority(IEnumerable<LimitKind> kinds)
+    {
+        var list = kinds.Where(k => k != LimitKind.Insufficient).ToList();
+        var top = list.GroupBy(k => k).OrderByDescending(g => g.Count()).FirstOrDefault();
+        return top is not null && top.Count() * 2 > list.Count ? top.Key : null;
     }
 
     private static double? Avg(IEnumerable<double?> values)

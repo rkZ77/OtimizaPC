@@ -17,9 +17,43 @@ public sealed record GameplayItem(GameplaySession Session)
     public string Title => $"{Session.StartedAt.ToLocalTime():dd/MM HH:mm}  {Session.GameName}";
 
     public string Stats => string.Format(CultureInfo.GetCultureInfo("pt-BR"),
-        "FPS médio {0:0}, 1% low {1:0}, {2:0.#} travadas por minuto, {3:0} min medidos",
-        Session.Stats.AvgFps, Session.Stats.Low1Fps, Session.Stats.StuttersPerMinute, Session.MeasuredSeconds / 60);
+        "FPS médio {0:0}, 1% low {1:0}, 0.1% low {2:0}, frametime médio {3:0.0} ms, {4:0} min medidos",
+        Session.Stats.AvgFps, Session.Stats.Low1Fps, Session.Stats.Low01Fps, Session.Stats.AvgFrametimeMs, Session.MeasuredSeconds / 60);
+
+    /// <summary>Calculado na hora (não salvo): regra melhorada vale também para partida antiga.</summary>
+    public LimitDiagnosis Diagnosis { get; } = LimitAnalyzer.Diagnose(Session);
+
+    public SessionHealth Health { get; } = SessionHealth.From(Session);
+
+    /// <summary>Uso, temperatura e tela da partida. Só o que foi lido; o que faltou não aparece como zero.</summary>
+    public string Details
+    {
+        get
+        {
+            var pt = CultureInfo.GetCultureInfo("pt-BR");
+            var h = Health;
+            var parts = new List<string>();
+            var cpu = h.CpuAvg ?? Session.AvgCpuPercent;
+            if (cpu is { } c)
+                parts.Add(h.CpuMaxCoreAvg is { } core ? string.Format(pt, "CPU {0:0}% (núcleo mais usado {1:0}%)", c, core) : string.Format(pt, "CPU {0:0}%", c));
+            var gpu = h.GpuAvg ?? Session.AvgGpuPercent;
+            if (gpu is { } g)
+                parts.Add(h.GpuTempAvg is { } t ? string.Format(pt, "GPU {0:0}% a {1:0} °C", g, t) : string.Format(pt, "GPU {0:0}%", g));
+            if (h.RamAvg is { } r)
+                parts.Add(string.Format(pt, "RAM {0:0}%", r));
+            if (Session.ScreenWidth is { } w && Session.ScreenHeight is { } hh)
+                parts.Add($"{w}x{hh}" + (Session.DisplayHz is { } hz ? $" a {hz} Hz" : ""));
+            else if (Session.DisplayHz is { } hz2)
+                parts.Add($"monitor a {hz2} Hz");
+            if (Session.Gpu is { UsedGpu: { } used } sel && sel.Status != GpuSelectionStatus.Undetermined)
+                parts.Add(sel.Status == GpuSelectionStatus.Wrong ? $"rodou na {used} (GPU diferente da de alto desempenho)" : $"rodou na {used}");
+            return string.Join(", ", parts);
+        }
+    }
 }
+
+/// <param name="Tag">Medido, Calculado ou Não disponível: a origem de cada número fica visível.</param>
+public sealed record EvidenceItem(string Tag, string Text, Brush Tone);
 
 public sealed record PivotItem(SessionRecord Session)
 {
@@ -32,6 +66,10 @@ public sealed record PivotItem(SessionRecord Session)
             return $"{Session.StartedAt.ToLocalTime():dd/MM HH:mm}: {first}{(applied.Count > 1 ? $" e mais {applied.Count - 1}" : "")}";
         }
     }
+
+    // O seletor do tema mostra o item escolhido pelo texto do item: sem isto
+    // aparecia o nome interno do registro no lugar da otimização.
+    public override string ToString() => Label;
 }
 
 public sealed record MetricItem(string Name, string Before, string After, string Delta, Brush Tone);
@@ -65,6 +103,9 @@ public sealed class GameplayViewModel : PageViewModel
             if (e.PropertyName == nameof(AppHost.License))
                 Load();
 
+            if (e.PropertyName == nameof(AppHost.LiveHealth))
+                Raise(nameof(LiveHealth));
+
             if (e.PropertyName == nameof(AppHost.LivePoints))
             {
                 Raise(nameof(LivePoints));
@@ -74,6 +115,7 @@ public sealed class GameplayViewModel : PageViewModel
             }
         };
         ShareCommand = new AsyncCommand(Share, () => _selected?.HasChart == true);
+        GpuFixCommand = new RelayCommand(_ => ShowGpuFix());
         SelectSessionCommand = new RelayCommand(p =>
         {
             if (p is GameplayItem item)
@@ -133,6 +175,186 @@ public sealed class GameplayViewModel : PageViewModel
         }
     }
 
+    /// <summary>
+    /// Leitura do PC agora, durante a partida. O que o Windows não deixou ler
+    /// aparece como "não disponível", nunca como zero.
+    /// </summary>
+    public string LiveHealth
+    {
+        get
+        {
+            if (_host.LiveHealth is not { } s)
+                return "";
+            static string V(double? v, string fmt) => v is { } x ? x.ToString(fmt, Pt) : "não disponível";
+            return $"CPU {V(s.Cpu, "0")}%, núcleo mais usado {V(s.CpuMaxCore, "0")}%, clock {V(s.CpuClockMhz, "0")} MHz. " +
+                   $"GPU {V(s.Gpu, "0")}%, temperatura {V(s.GpuTempC, "0")} °C, clock {V(s.GpuClockPercent, "0")}% do máximo, VRAM {V(s.VramUsedMb / 1024, "0.0")} GB. " +
+                   $"RAM {V(s.RamPercent, "0")}%. Temperatura da placa-mãe {V(s.CpuTempC, "0")} °C.";
+        }
+    }
+
+    // ---- diagnóstico da partida escolhida ----
+
+    public ObservableCollection<EvidenceItem> Evidence { get; } = [];
+    public string DiagTitle => _selected?.Diagnosis.Title ?? "";
+    public string DiagWhy => _selected?.Diagnosis.Why ?? "";
+    public string DiagAdvice => _selected?.Diagnosis.Advice ?? "";
+
+    public Brush DiagBrush => (Brush)App.Current.FindResource(_selected?.Diagnosis.Kind switch
+    {
+        LimitKind.Balanced => "Accent",
+        LimitKind.Insufficient or null => "Muted",
+        _ => "Warn",
+    });
+
+    /// <summary>Opções gráficas lidas do jogo quando a partida terminou.</summary>
+    public string SettingsText => _selected?.Session.GameSettings is { Count: > 0 } gs
+        ? string.Join(", ", gs.Select(kv => $"{kv.Key} = {kv.Value}"))
+        : _selected?.Session.Detected == true
+            ? "Jogo sem perfil no RKZFPS: as opções gráficas dele não são lidas."
+            : _selected?.Session.Gpu is null
+                ? "Esta partida foi medida antes de o RKZFPS guardar a configuração do jogo."
+                : "Configuração do jogo não lida nesta partida (arquivo ausente ou em uso).";
+
+    // ---- placa de vídeo usada pelo jogo ----
+
+    /// <summary>
+    /// Partida medida antes desta leitura não tem a placa guardada: o bloco
+    /// aparece com "não foi possível determinar" e o motivo, sem deduzir a
+    /// placa pelo hardware de hoje (a peça pode ter mudado desde a partida).
+    /// </summary>
+    private GpuSelection? Gpu => _selected is null ? null : _selected.Session.Gpu ?? new GpuSelection
+    {
+        Status = GpuSelectionStatus.Undetermined,
+        Text = "Esta partida foi medida antes de o RKZFPS registrar a placa de vídeo usada pelo jogo. As próximas partidas já mostram essa informação.",
+    };
+
+    public bool HasGpu => Gpu is not null;
+    public string GpuUsed => Gpu?.UsedGpu ?? "Não foi possível determinar";
+    public string GpuBest => Gpu?.HighPerformanceGpu ?? "Não foi possível determinar";
+    public string GpuStatus => Gpu is { } g ? GpuSelector.Label(g.Status) : "";
+    public string GpuText => Gpu?.Text ?? "";
+
+    /// <summary>Ícone do Segoe MDL2 (sem emoji): certo, alerta, informação ou dúvida.</summary>
+    public string GpuGlyph => Gpu?.Status switch
+    {
+        GpuSelectionStatus.Correct => "",
+        GpuSelectionStatus.Wrong => "",
+        GpuSelectionStatus.Undetermined => "",
+        _ => "",
+    };
+
+    public Brush GpuBrush => (Brush)App.Current.FindResource(Gpu?.Status switch
+    {
+        GpuSelectionStatus.Correct => "Accent",
+        GpuSelectionStatus.Wrong => "Warn",
+        _ => "Muted",
+    });
+
+    public bool GpuFixable => Gpu?.Status is GpuSelectionStatus.Wrong or GpuSelectionStatus.OtherDedicated;
+
+    public System.Windows.Input.ICommand GpuFixCommand { get; }
+
+    /// <summary>
+    /// Explica a correção e leva a quem faz. Nada é alterado daqui: a mudança
+    /// sai pela otimização "Rodar o jogo na placa dedicada" (com confirmação,
+    /// histórico e desfazer) ou pela pessoa, na tela de Gráficos do Windows.
+    /// </summary>
+    private void ShowGpuFix()
+    {
+        if (Gpu is not { } g)
+            return;
+        var text =
+            $"{g.Text}\n\n" +
+            "Como corrigir:\n" +
+            $"1. Configurações do Windows > Sistema > Tela > Elementos gráficos. Escolha o jogo (ou adicione o .exe dele), clique em Opções e marque Alto desempenho ({g.HighPerformanceGpu}).\n" +
+            "2. No PC de mesa, confira se o cabo do monitor está na saída da placa de vídeo e não na da placa-mãe: ligado na placa-mãe, o jogo pode rodar no vídeo integrado.\n" +
+            "3. Em notebook, jogue com o carregador ligado: na bateria, alguns modelos seguram a placa dedicada. No painel da NVIDIA ou no AMD Software também dá para escolher a placa por programa.\n\n" +
+            "O RKZFPS também faz o passo 1 pela otimização \"Rodar o jogo na placa dedicada\", na tela Otimizações: ela pede confirmação, fica no Histórico e pode ser desfeita. Depois, jogue uma partida para conferir aqui.";
+        switch (Dialogs.Show("Placa de vídeo do jogo", text, "Abrir Otimizações", "Abrir Gráficos do Windows", "Fechar"))
+        {
+            case 0:
+                _host.Navigate<OptimizationsViewModel>();
+                break;
+            case 1:
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-settings:display-advancedgraphics") { UseShellExecute = true })?.Dispose();
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    Dialogs.Info("Não abriu", "Abra Configurações > Sistema > Tela > Elementos gráficos.");
+                }
+
+                break;
+        }
+    }
+
+    private void LoadEvidence()
+    {
+        Evidence.Clear();
+        if (_selected is null)
+            return;
+        foreach (var e in _selected.Diagnosis.Evidence)
+        {
+            var (tag, tone) = e.Kind switch
+            {
+                EvidenceKind.Measured => ("Medido", "Accent"),
+                EvidenceKind.Calculated => ("Calculado", "Text"),
+                _ => ("Não disponível", "Muted"),
+            };
+            Evidence.Add(new EvidenceItem(tag, e.Text, (Brush)App.Current.FindResource(tone)));
+        }
+    }
+
+    // ---- histórico por jogo ----
+
+    public const string AllGames = "Todos os jogos";
+    private string _historyGame = AllGames;
+    private List<GameplayItem> _all = [];
+
+    public ObservableCollection<string> HistoryGames { get; } = [];
+
+    public string HistoryGame
+    {
+        get => _historyGame;
+        set
+        {
+            if (Set(ref _historyGame, value ?? AllGames))
+                FillHistory();
+        }
+    }
+
+    /// <summary>Média das partidas do jogo escolhido (só com um jogo escolhido: jogos diferentes não se somam).</summary>
+    public string HistorySummary
+    {
+        get
+        {
+            var list = Sessions.ToList();
+            if (_historyGame == AllGames || list.Count == 0)
+                return "";
+            var cpu = list.Select(i => i.Health.CpuAvg ?? i.Session.AvgCpuPercent).Where(v => v is not null).Select(v => v!.Value).ToList();
+            var gpu = list.Select(i => i.Health.GpuAvg ?? i.Session.AvgGpuPercent).Where(v => v is not null).Select(v => v!.Value).ToList();
+            var text = string.Format(Pt, "{0} partida(s) de {1}: FPS médio {2:0}, 1% low {3:0}, 0.1% low {4:0}, frametime {5:0.0} ms",
+                list.Count, _historyGame, list.Average(i => i.Session.Stats.AvgFps), list.Average(i => i.Session.Stats.Low1Fps),
+                list.Average(i => i.Session.Stats.Low01Fps), list.Average(i => i.Session.Stats.AvgFrametimeMs));
+            if (cpu.Count > 0)
+                text += string.Format(Pt, ", CPU {0:0}%", cpu.Average());
+            if (gpu.Count > 0)
+                text += string.Format(Pt, ", GPU {0:0}%", gpu.Average());
+            return text + ".";
+        }
+    }
+
+    private void FillHistory()
+    {
+        Sessions.Clear();
+        foreach (var i in _all.Where(i => _historyGame == AllGames || i.Session.GameName == _historyGame))
+            Sessions.Add(i);
+        Raise(nameof(HistorySummary));
+        if (_selected is null || !Sessions.Contains(_selected))
+            SelectedSession = Sessions.FirstOrDefault(i => i.HasChart) ?? Sessions.FirstOrDefault();
+    }
+
     // ---- gráfico da partida escolhida ----
 
     public GameplayItem? SelectedSession
@@ -150,6 +372,14 @@ public sealed class GameplayViewModel : PageViewModel
             Raise(nameof(ChartCauses));
             Raise(nameof(HzText));
             Raise(nameof(HzBrush));
+            Raise(nameof(DiagTitle));
+            Raise(nameof(DiagWhy));
+            Raise(nameof(DiagAdvice));
+            Raise(nameof(DiagBrush));
+            Raise(nameof(SettingsText));
+            foreach (var n in new[] { nameof(HasGpu), nameof(GpuUsed), nameof(GpuBest), nameof(GpuStatus), nameof(GpuText), nameof(GpuGlyph), nameof(GpuBrush), nameof(GpuFixable) })
+                Raise(n);
+            LoadEvidence();
             _ = LoadPeersAsync(value);
         }
     }
@@ -232,7 +462,7 @@ public sealed class GameplayViewModel : PageViewModel
     public string MonitorStatus => _host.MonitorStatus;
 
     public string MeasuredGames => "Jogos reconhecidos: " + string.Join(", ", _host.Ctx.GameProfiles.Select(p => p.Name))
-        + ". A medição usa o registro de quadros do próprio Windows, sem mexer no jogo: não conflita com anti-cheat.";
+        + ". Outro jogo aberto em tela cheia e usando a placa de vídeo também é medido. A medição usa o registro de quadros e os sensores do próprio Windows, sem mexer no jogo e sem programa extra: não conflita com anti-cheat.";
 
     public bool AutoMeasure
     {
@@ -300,11 +530,19 @@ public sealed class GameplayViewModel : PageViewModel
     private void Load()
     {
         var sessions = _host.Ctx.Gameplay.All();
-        Sessions.Clear();
-        foreach (var s in sessions)
-            Sessions.Add(new GameplayItem(s));
-        SelectedSession = Sessions.FirstOrDefault(i => i.Session.Id == _selected?.Session.Id)
-                          ?? Sessions.FirstOrDefault(i => i.HasChart) ?? Sessions.FirstOrDefault();
+        var selectedId = _selected?.Session.Id;
+        _all = sessions.Select(s => new GameplayItem(s)).ToList();
+        HistoryGames.Clear();
+        HistoryGames.Add(AllGames);
+        foreach (var name in sessions.Select(s => s.GameName).Distinct())
+            HistoryGames.Add(name);
+        if (!HistoryGames.Contains(_historyGame))
+            _historyGame = AllGames;
+        Raise(nameof(HistoryGame));
+        _selected = null;
+        FillHistory();
+        if (Sessions.FirstOrDefault(i => i.Session.Id == selectedId) is { } again)
+            SelectedSession = again;
 
         var game = _game;
         Games.Clear();
@@ -363,6 +601,12 @@ public sealed class GameplayViewModel : PageViewModel
                 : "sem diferença real";
             Metrics.Add(new MetricItem(m.Metric, m.Before.ToString("0.0", culture), m.After.ToString("0.0", culture), delta, tone));
         }
+
+        // Uso de CPU e GPU entra como contexto: não é ganho nem perda por si.
+        var muted = (Brush)App.Current.FindResource("Muted");
+        foreach (var (name, (b, a)) in new[] { ("Uso de CPU", cmp.Cpu), ("Uso de GPU", cmp.Gpu) })
+            if (b is { } vb && a is { } va)
+                Metrics.Add(new MetricItem(name, vb.ToString("0", culture) + "%", va.ToString("0", culture) + "%", "contexto, não é ganho", muted));
 
         Verdict = r.Verdict;
         Warnings = string.Join("\n", r.Warnings.Append(r.Method));

@@ -27,6 +27,8 @@
                     <app:FpsChart Points="{Binding LivePoints}" />
                     <ContentControl Content="{StaticResource Legend}" />
                     <TextBlock Text="{Binding LiveSummary}" Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding LiveHealth}" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="13"
+                               Visibility="{Binding LiveHealth, Converter={StaticResource Visible}}" />
                 </StackPanel>
             </Border>
 
@@ -55,15 +57,77 @@
                 </StackPanel>
             </Border>
 
+            <!-- O que limitou a partida escolhida, com os números que sustentam a conclusão -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding Sessions.Count, Converter={StaticResource Visible}}">
+                <StackPanel>
+                    <TextBlock Text="O que limitou esta partida" Style="{StaticResource H2}" />
+                    <Border BorderBrush="{Binding DiagBrush}" BorderThickness="3,0,0,0" Background="{StaticResource Surface2}" CornerRadius="4" Padding="12,10" Margin="0,4,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{Binding DiagTitle}" FontWeight="Bold" Foreground="{Binding DiagBrush}" />
+                            <TextBlock Text="{Binding DiagWhy}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <TextBlock Text="{Binding DiagAdvice}" TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,6,0,0"
+                                       Visibility="{Binding DiagAdvice, Converter={StaticResource Visible}}" />
+                        </StackPanel>
+                    </Border>
+                    <!-- Placa de vídeo que o jogo usou. Partida antiga (sem a leitura) não mostra o bloco. -->
+                    <StackPanel Margin="0,14,0,0" Visibility="{Binding HasGpu, Converter={StaticResource Visible}}">
+                        <TextBlock Text="Placa de vídeo" FontWeight="SemiBold" Margin="0,0,0,6" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="190" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="GPU utilizada" Style="{StaticResource MutedText}" FontSize="13" />
+                            <TextBlock Grid.Column="1" Text="{Binding GpuUsed}" FontSize="13" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="1" Text="GPU de alto desempenho" Style="{StaticResource MutedText}" FontSize="13" Margin="0,4,0,0" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding GpuBest}" FontSize="13" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <TextBlock Grid.Row="2" Text="Status" Style="{StaticResource MutedText}" FontSize="13" Margin="0,4,0,0" />
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock Text="{Binding GpuGlyph}" FontFamily="Segoe MDL2 Assets" Foreground="{Binding GpuBrush}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding GpuStatus}" Foreground="{Binding GpuBrush}" FontWeight="SemiBold" FontSize="13" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding GpuText}" TextWrapping="Wrap" FontSize="13" Margin="0,6,0,0" />
+                        <Button Content="Ver como corrigir" Command="{Binding GpuFixCommand}" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                Visibility="{Binding GpuFixable, Converter={StaticResource Visible}}" />
+                    </StackPanel>
+
+                    <TextBlock Text="Dados usados no diagnóstico" FontWeight="SemiBold" Margin="0,14,0,6" />
+                    <ItemsControl ItemsSource="{Binding Evidence}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Tag}" Foreground="{Binding Tone}" FontWeight="SemiBold" FontSize="12" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" FontSize="13" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Configuração do jogo" FontWeight="SemiBold" Margin="0,14,0,4" />
+                    <TextBlock Text="{Binding SettingsText}" TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="13" />
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0"
+                               Text="Nenhuma conclusão sai de uma métrica só: cada categoria exige dois sinais que concordam. Medido é lido direto do Windows ou do driver; calculado é conta feita sobre o que foi medido." />
+                </StackPanel>
+            </Border>
+
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="Medição automática" Style="{StaticResource H2}" />
                     <TextBlock Text="{Binding MonitorStatus}" Foreground="{StaticResource Accent}" Margin="0,0,0,10" TextWrapping="Wrap" />
-                    <CheckBox IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das minhas partidas automaticamente" />
-                    <TextBlock Text="{Binding MeasuredGames}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="26,4,0,0" />
-                    <CheckBox IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"
+                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das minhas partidas automaticamente" />
+                    <TextBlock Text="{Binding MeasuredGames}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="54,4,0,0" />
+                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"
                               Content="Iniciar com o Windows, na bandeja, para medir sempre que eu jogar" />
-                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="26,4,0,0"
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="54,4,0,0"
                                Text="Fechar a janela deixa o RKZFPS na bandeja, perto do relógio. Para encerrar de vez, clique com o botão direito no ícone e escolha Sair." />
                 </StackPanel>
             </Border>
@@ -110,8 +174,13 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Text="Partidas medidas" Style="{StaticResource H2}" />
-                    <TextBlock Text="Clique numa partida para ver o gráfico dela." Style="{StaticResource MutedText}" Margin="0,0,0,6"
+                    <DockPanel>
+                        <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding HistoryGames}" SelectedItem="{Binding HistoryGame}" MinWidth="200" VerticalAlignment="Top" />
+                        <TextBlock Text="Partidas medidas" Style="{StaticResource H2}" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding HistorySummary}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,6"
+                               Visibility="{Binding HistorySummary, Converter={StaticResource Visible}}" />
+                    <TextBlock Text="Clique numa partida para ver o gráfico e o diagnóstico dela." Style="{StaticResource MutedText}" Margin="0,0,0,6"
                                Visibility="{Binding Sessions.Count, Converter={StaticResource Visible}}" />
                     <TextBlock Text="Nenhuma partida ainda." Style="{StaticResource MutedText}"
                                Visibility="{Binding Sessions.Count, Converter={StaticResource Hidden}}" />
@@ -125,7 +194,11 @@
                                                         VerticalAlignment="Center" Margin="0,0,12,0" Focusable="False" />
                                         <StackPanel VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Stats}" Style="{StaticResource MutedText}" />
+                                            <TextBlock Text="{Binding Stats}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
+                                            <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap">
+                                                <Run Text="{Binding Diagnosis.Title, Mode=OneWay}" FontWeight="SemiBold" />
+                                                <Run Text="{Binding Details, Mode=OneWay}" />
+                                            </TextBlock>
                                         </StackPanel>
                                     </DockPanel>
                                 </Button>

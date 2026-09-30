@@ -169,7 +169,9 @@ public sealed class AgentContext
         if (!Settings.GameplayConsent)
             return;
         var sent = Storage.UploadedGameplay();
-        foreach (var match in Gameplay.All().Where(s => !sent.Contains(s.Id)).OrderBy(s => s.StartedAt).Take(GameplayBatch))
+        // Jogo reconhecido por tela cheia não sobe: o nome vem do executável e
+        // poderia ser qualquer programa da pessoa, não um jogo do catálogo.
+        foreach (var match in Gameplay.All().Where(s => !s.Detected && !sent.Contains(s.Id)).OrderBy(s => s.StartedAt).Take(GameplayBatch))
         {
             await api.SendGameplayAsync(token, GameplayUpload.From(match), ct);
             Storage.MarkGameplayUploaded(match.Id);

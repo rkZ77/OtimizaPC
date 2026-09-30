@@ -41,8 +41,13 @@ public sealed class FakeSystem : ISystemAccess
 
     public string? GetActivePowerScheme() => ActiveScheme;
 
+    /// <summary>Planos cuja ativação lança exceção (sem permissão, plano removido).</summary>
+    public HashSet<string> FailPowerSchemes { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     public void SetActivePowerScheme(string guid)
     {
+        if (FailPowerSchemes.Contains(guid))
+            throw new UnauthorizedAccessException($"acesso negado ao plano {guid}");
         Log.Add($"power {guid}");
         ActiveScheme = guid;
     }

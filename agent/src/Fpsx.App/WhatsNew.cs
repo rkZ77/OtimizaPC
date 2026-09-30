@@ -10,16 +10,14 @@ public static class WhatsNew
 {
     // Atualizar junto com a versão do Directory.Build.props e com a nota do admin.
     private const string Notes =
-        "Troca de peça e formatação: o RKZFPS nota quando uma peça muda e diz se precisa formatar (só placa-mãe nova pede). " +
-        "Antes de formatar, salve os drivers deste PC num pendrive; depois, o app reinstala todos, inclusive o de rede, sem internet.\n\n" +
-        "Página Drivers e reparo: o RKZFPS procura driver novo no Windows Update e instala pelo próprio app, com ponto de restauração antes. " +
-        "Também verifica se os arquivos do Windows estão corrompidos e repara com as ferramentas da Microsoft.\n\n" +
-        "Vigia do PC: com o RKZFPS na bandeja, ele confere o PC depois que o Windows liga e a cada 6 horas. " +
-        "Se uma atualização do Windows, um driver novo ou um jogo desfez uma correção, você recebe um aviso para corrigir de novo.\n\n" +
-        "Resumo da semana: uma vez por semana, o FPS medido nas suas partidas, com a semana anterior ao lado.\n\n" +
-        "Visual mais limpo: barra de rolagem escura e só a ação principal da tela em destaque.\n\n" +
-        "Correção travada agora mostra o plano que libera, e a imagem da partida compartilhada leva o seu link de indicação.\n\n" +
-        "Os avisos podem ser desligados em Configurações. Novidades e dicas no Instagram @rkzfps.br.";
+        "O que limitou a partida: com o jogo aberto, o RKZFPS lê uso por núcleo, clocks, temperatura da placa de vídeo, memória de vídeo, RAM e disco, " +
+        "e diz se o FPS foi segurado pelo processador, placa de vídeo, memória, temperatura, disco ou configuração. Cada conclusão mostra os números que a sustentam, " +
+        "e o que não deu para ler aparece como não disponível, nunca inventado.\n\n" +
+        "Placa de vídeo do jogo: em PC com vídeo integrado e placa dedicada, o RKZFPS avisa quando o jogo rodou na placa errada e mostra como corrigir.\n\n" +
+        "Modo Gaming: no Automático, o RKZFPS aplica ao abrir o jogo só o que você autorizou e desfaz quando ele fecha. No Manual, nada muda sozinho. Escolha na tela FPS Boost.\n\n" +
+        "Histórico por jogo: filtre as partidas por jogo e veja médias, resolução e configuração usada.\n\n" +
+        "Visual: chaves de ligar e desligar novas e avisos sem a barra branca do Windows.\n\n" +
+        "Novidades e dicas no Instagram @rkzfps.br.";
 
     public static void ShowIfUpdated()
     {

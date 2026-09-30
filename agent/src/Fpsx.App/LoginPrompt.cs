@@ -88,7 +88,7 @@ public static class LoginPrompt
             }
         };
 
-        var root = new StackPanel { Margin = new Thickness(28) };
+        var root = new StackPanel { Margin = new Thickness(28, 0, 28, 28) };
         root.Children.Add(new TextBlock { Text = "Entre na sua conta", Style = (Style)res["H2"] });
         root.Children.Add(new TextBlock
         {
@@ -108,7 +108,7 @@ public static class LoginPrompt
             Text = "No Free você vê o diagnóstico completo e o que cada otimização resolveria. Para aplicar, entre com um plano.",
             Style = (Style)res["MutedText"], FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
         });
-        window.Content = root;
+        ThemedWindow.Apply(window, root);
         window.Loaded += (_, _) => email.Focus();
         window.ShowDialog();
     }

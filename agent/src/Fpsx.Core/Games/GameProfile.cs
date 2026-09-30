@@ -155,6 +155,21 @@ public sealed record GameProfile
     public IReadOnlyDictionary<string, string> RecommendedSettings { get; init; } = new Dictionary<string, string>();
     public IReadOnlyList<GamePreset> Presets { get; init; } = [];
 
+    /// <summary>
+    /// Chaves de configuração que o perfil conhece (recomendadas, presets,
+    /// checagens e resolução/Hz). São as que vão para o histórico da partida:
+    /// o arquivo inteiro tem atalho de teclado, nome de usuário e outras coisas
+    /// que não dizem nada sobre desempenho.
+    /// </summary>
+    public IReadOnlyList<string> GraphicsKeys() =>
+        RecommendedSettings.Keys
+            .Concat(Presets.SelectMany(p => p.Settings.Keys))
+            .Concat(SettingChecks.Select(c => c.Key))
+            .Concat(RefreshRateCheck is { } r ? [r.WidthKey, r.HeightKey, r.NumeratorKey, r.DenominatorKey] : [])
+            .Where(k => !string.IsNullOrEmpty(k))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
     public static IReadOnlyList<GameProfile> LoadAll(string directory)
     {
         if (!Directory.Exists(directory))

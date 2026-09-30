@@ -41,6 +41,12 @@ public sealed class MainViewModel : ObservableObject
         UpdateCommand = new AsyncCommand(RunUpdate, () => UpdateButton == "Atualizar agora");
         _host.PropertyChanged += (_, e) =>
         {
+            if (e.PropertyName == nameof(AppHost.GamingMode))
+            {
+                Raise(nameof(GamingLabel));
+                Raise(nameof(GamingDot));
+            }
+
             if (e.PropertyName == nameof(AppHost.PlanLabel))
             {
                 Raise(nameof(PlanLabel));
@@ -90,6 +96,11 @@ public sealed class MainViewModel : ObservableObject
     public ICommand RelaunchCommand { get; }
     public ICommand UpdateCommand { get; }
     public string PlanLabel => _host.PlanLabel;
+
+    public string GamingLabel => _host.GamingMode == Fpsx.Core.Engine.GamingModeKind.Automatic ? "Modo Gaming: Automático" : "Modo Gaming: Manual";
+
+    public System.Windows.Media.Brush GamingDot => (System.Windows.Media.Brush)App.Current.FindResource(
+        _host.GamingMode == Fpsx.Core.Engine.GamingModeKind.Automatic ? "Accent" : "Muted");
 
     /// <summary>No Free, lembra que aplicar exige plano; nos pagos fica vazio.</summary>
     public string PlanHint => _host.License.Plan == "free" ? "No Free você vê tudo. Para aplicar, entre com um plano em Conta." : "";

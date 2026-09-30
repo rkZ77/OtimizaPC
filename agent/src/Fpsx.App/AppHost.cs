@@ -128,14 +128,18 @@ public sealed class AppHost : ObservableObject
     /// mudado desde o último scan, e aplicar em cima de estado velho é
     /// exatamente o que o motor de decisão existe para evitar.
     /// </summary>
+    /// <summary>Análise rápida (1 s, sem rede) do estado de agora, para aplicar em cima dele.</summary>
+    private ScanResult FreshScan(Action<string> progress)
+    {
+        var last = Scan;
+        var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false }, progress)
+            with { PendingDrivers = last?.Snapshot.PendingDrivers ?? [], DriverKitFolder = last?.Snapshot.DriverKitFolder };
+        return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, Ctx.Settings.Profile, License.Plan);
+    }
+
     public async Task<SessionRecord> ApplyAsync(IReadOnlyList<string> ids, bool allowExperimental, IProgress<string> progress)
     {
-        var fresh = await Task.Run(() =>
-        {
-            var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false }, progress.Report)
-                with { PendingDrivers = Scan?.Snapshot.PendingDrivers ?? [], DriverKitFolder = Scan?.Snapshot.DriverKitFolder };
-            return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, Ctx.Settings.Profile, License.Plan);
-        });
+        var fresh = await Task.Run(() => FreshScan(progress.Report));
 
         progress.Report("Criando backup e aplicando");
         var engine = new OptimizationEngine(new WindowsSystemAccess(Ctx.GameProfiles), Ctx.Store);
@@ -412,6 +416,15 @@ public sealed class AppHost : ObservableObject
 
     public string? LiveGame { get; private set; }
 
+    private Fpsx.Core.Benchmark.LoadSample? _liveHealth;
+
+    /// <summary>Última leitura do PC durante a partida (a cada 5 s). null fora de partida.</summary>
+    public Fpsx.Core.Benchmark.LoadSample? LiveHealth
+    {
+        get => _liveHealth;
+        private set => Set(ref _liveHealth, value);
+    }
+
     /// <summary>Janela do gráfico ao vivo: 3 minutos mostram a tendência sem virar borrão.</summary>
     public const int LiveWindowSeconds = 180;
 
@@ -466,6 +479,11 @@ public sealed class AppHost : ObservableObject
         _monitor.StatusChanged += s => OnUi(() => MonitorStatus = s);
         _monitor.LiveFps += (game, fps, low) => OnUi(() => OnLive(game, fps, low));
         _monitor.GameSeen += (gameId, exe) => OnUi(() => GameIcons.Remember(gameId, exe));
+        _monitor.LiveHealth += s => OnUi(() => LiveHealth = s);
+        // Modo Gaming: roda na linha do monitor, antes da medição começar e
+        // depois que ela termina, então início e fim nunca se cruzam.
+        _monitor.GameStarted += (_, name) => GamingStart(name);
+        _monitor.GameEnded += _ => GamingEnd();
         _monitor.Recorded += s =>
         {
             // O hardware vai junto: sem ele a partida não se compara com
@@ -495,7 +513,114 @@ public sealed class AppHost : ObservableObject
     }
 
     /// <summary>Encerramento do app: espera o monitor salvar o que der da partida em andamento.</summary>
-    public void ShutdownMonitor() => _monitor?.Dispose();
+    public void ShutdownMonitor()
+    {
+        _monitor?.Dispose();
+        // O GameEnded do monitor já restaura; isto cobre a partida que nem
+        // chegou a registrar início e fim por erro no meio.
+        RestoreGamingLeftovers();
+    }
+
+    // ---- modo Gaming (Automático / Manual) ----
+
+    private string _gamingStatus = "";
+
+    public GamingModeKind GamingMode => GamingPolicy.Parse(Ctx.Settings.GamingMode);
+
+    public IReadOnlyList<string> GamingAuthorized => Ctx.Settings.GamingAuthorized;
+
+    /// <summary>O que o modo Gaming fez por último (ou por que não fez nada).</summary>
+    public string GamingStatus
+    {
+        get => _gamingStatus;
+        private set => Set(ref _gamingStatus, value);
+    }
+
+    /// <summary>
+    /// Automático depende do monitor de partidas para saber quando o jogo abre
+    /// e fecha: ligar o Automático liga a medição automática junto (a tela diz isso).
+    /// </summary>
+    public void SetGamingMode(GamingModeKind mode)
+    {
+        if (mode == GamingMode)
+            return;
+        Ctx.Storage.SaveSettings(Ctx.Settings with { GamingMode = GamingPolicy.Serialize(mode) });
+        if (mode == GamingModeKind.Automatic && !AutoMeasure)
+            SetAutoMeasure(true);
+        // Voltar para o Manual no meio do jogo desfaz o temporário na hora:
+        // no Manual nada fica ligado sem a pessoa ter aplicado.
+        if (mode == GamingModeKind.Manual)
+            Task.Run(() =>
+            {
+                if (RestoreGamingLeftovers() > 0)
+                    OnUi(() => GamingStatus = "Modo Manual: as alterações temporárias do Automático foram desfeitas.");
+            });
+        Raise(nameof(GamingMode));
+    }
+
+    public void SetGamingAuthorized(string optimizationId, bool authorized)
+    {
+        var list = Ctx.Settings.GamingAuthorized.Where(id => !string.Equals(id, optimizationId, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (authorized)
+            list.Add(optimizationId);
+        Ctx.Storage.SaveSettings(Ctx.Settings with { GamingAuthorized = list });
+        Raise(nameof(GamingAuthorized));
+    }
+
+    private readonly object _gamingLock = new();
+
+    private void GamingStart(string gameName)
+    {
+        if (GamingMode != GamingModeKind.Automatic)
+            return;
+        try
+        {
+            lock (_gamingLock)
+            {
+                var outcome = GamingManager().Start(gameName, FreshScan(_ => { }), GamingModeKind.Automatic, GamingAuthorized, Ctx.TrialLimit());
+                if (outcome.Session is { } session)
+                    Ctx.RecordSession(session);
+                OnUi(() => GamingStatus = outcome.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Erro aqui não pode derrubar a medição nem deixar nada pela metade:
+            // o motor já desfez o que entrou, e o registro fica no log.
+            Dialogs.Log(ex);
+            OnUi(() => GamingStatus = $"{gameName}: o modo Automático não conseguiu aplicar ({ex.Message}). Nada ficou pela metade.");
+        }
+    }
+
+    private void GamingEnd()
+    {
+        var restored = RestoreGamingLeftovers();
+        if (restored > 0)
+            OnUi(() => GamingStatus = "Jogo fechado: as alterações temporárias do modo Automático foram desfeitas.");
+    }
+
+    /// <summary>Desfaz sessões temporárias que ainda estejam valendo. Roda ao fechar o jogo, ao abrir e ao fechar o app.</summary>
+    public int RestoreGamingLeftovers()
+    {
+        try
+        {
+            lock (_gamingLock)
+            {
+                var restored = GamingManager().Restore();
+                foreach (var s in restored)
+                    Ctx.RecordSession(s);
+                return restored.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            Dialogs.Log(ex);
+            OnUi(() => GamingStatus = "Não foi possível desfazer as alterações temporárias. Elas continuam no Histórico e podem ser desfeitas por lá.");
+            return 0;
+        }
+    }
+
+    private GamingSessionManager GamingManager() => new(new WindowsSystemAccess(Ctx.GameProfiles), Ctx.Store);
 
     // ---- vigia do PC e resumo da semana (bandeja) ----
     // Windows Update, driver e patch de jogo mudam configuração sem avisar. O

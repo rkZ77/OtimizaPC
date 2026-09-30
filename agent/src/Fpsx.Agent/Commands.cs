@@ -452,7 +452,11 @@ public static class Commands
         if (sessions.Count == 0)
             Ui.Muted("  Nenhuma partida ainda. Deixe o RKZFPS aberto e jogue: a medição é automática.");
         foreach (var s in sessions)
+        {
             Ui.Line($"  {s.StartedAt:dd/MM HH:mm}  {s.GameName,-18} {s.MeasuredSeconds / 60,5:0.#} min  {FormatStats(s.Stats)}");
+            var d = LimitAnalyzer.Diagnose(s);
+            Ui.Muted($"      {d.Title}: {d.Why}");
+        }
 
         var pivot = GameplayComparer.Pivots(ctx.Store.All()).FirstOrDefault();
         var game = args.Get("game") ?? sessions.FirstOrDefault()?.GameId;
@@ -472,6 +476,39 @@ public static class Commands
                 Ui.Muted("  " + w);
         }
 
+        return 0;
+    }
+
+    /// <summary>O que o Windows deixa ler neste PC agora (sem jogo, o processo medido é o próprio fpsx).</summary>
+    public static int Sensors()
+    {
+        var s = Fpsx.Windows.HealthProbe.Once(Environment.ProcessId);
+        Ui.Title("Sensores lidos pelo RKZFPS");
+        void Row(string name, double? v, string unit) =>
+            Ui.Line(v is { } x ? string.Format(System.Globalization.CultureInfo.InvariantCulture, "  {0,-26} {1,8:0.#} {2}", name, x, unit) : $"  {name,-26} não disponível");
+        Row("CPU total", s.Cpu, "%");
+        Row("Núcleo mais ocupado", s.CpuMaxCore, "%");
+        Row("Thread mais ocupada", s.GameThreadMax, "% de um núcleo");
+        Row("Clock CPU", s.CpuClockMhz, "MHz");
+        Row("Limite de desempenho CPU", s.CpuPerfLimit, "%");
+        Row("Zona térmica (placa)", s.CpuTempC, "°C");
+        Row("GPU 3D", s.Gpu, "%");
+        Row("Temperatura GPU", s.GpuTempC, "°C");
+        Row("Clock GPU", s.GpuClockMhz, "MHz");
+        Row("VRAM em uso", s.VramUsedMb, "MB");
+        Row("Memória compartilhada GPU", s.SharedGpuMb, "MB");
+        Row("RAM em uso", s.RamPercent, "%");
+        Row("Leituras do disco p/ RAM", s.HardFaultsPerSec, "páginas/s");
+        Row("Disco mais ocupado", s.DiskActivePercent, "%");
+
+        Ui.Title("Placas de vídeo (ordem de alto desempenho do Windows)");
+        var adapters = Fpsx.Windows.GpuAdapters.List();
+        if (adapters.Count == 0)
+            Ui.Muted("  Não foi possível listar as placas (DXGI indisponível).");
+        foreach (var a in adapters)
+            Ui.Line($"  {a.PreferenceOrder?.ToString() ?? "-",2}  {a.Name,-40} {a.Role,-10} {a.DedicatedMb,6} MB  {a.Luid}");
+        var best = Fpsx.Core.Benchmark.GpuSelector.HighPerformance(adapters);
+        Ui.Muted($"  Alto desempenho: {best?.Name ?? "não determinada"}");
         return 0;
     }
 

@@ -104,12 +104,12 @@ public static class Tutorial
         footer.Children.Add(buttons);
         footer.Children.Add(dots);
 
-        var root = new StackPanel { Margin = new Thickness(30) };
+        var root = new StackPanel { Margin = new Thickness(30, 0, 30, 30) };
         root.Children.Add(glyph);
         root.Children.Add(title);
         root.Children.Add(text);
         root.Children.Add(footer);
-        window.Content = root;
+        ThemedWindow.Apply(window, root);
         Render();
         window.ShowDialog();
     }
