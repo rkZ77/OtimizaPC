@@ -195,6 +195,23 @@ public class ProfileResolverTests
         Assert.Equal(Decision.Recommended, Item(scan2, "power-plan-leave-power-saver").Decision);
     }
 
+    [Fact]
+    public void Otimizar_este_jogo_respeita_quem_quer_manter_a_imagem()
+    {
+        var (quer, scanQ) = Run(Fraco(), Prefs(Goal.Balanced, GraphicsPreference.Quality));
+        var ids = GameTuning.ProposalIdsFor(scanQ, "cs2", quer);
+        Assert.DoesNotContain(ids, id => id.StartsWith("game-preset-low-end", StringComparison.Ordinal));
+        // A correção de latência (V-Sync) continua.
+        Assert.Contains(ids, id => id.StartsWith("game-settings-fix:cs2", StringComparison.Ordinal));
+
+        var (aceita, scanA) = Run(Fraco(), Prefs(Goal.MoreFps, GraphicsPreference.Performance));
+        Assert.Contains(GameTuning.ProposalIdsFor(scanA, "cs2", aceita), id => id.StartsWith("game-preset-low-end:cs2", StringComparison.Ordinal));
+
+        // Sem perfil (chamada antiga) ou usuário antigo: igual a antes.
+        var legacy = ProfileResolver.Resolve(null, Fraco(), "gaming");
+        Assert.Equal(GameTuning.ProposalIdsFor(scanQ, "cs2"), GameTuning.ProposalIdsFor(scanQ, "cs2", legacy));
+    }
+
     [Theory]
     [MemberData(nameof(Pc.Matrix), MemberType = typeof(Pc))]
     public void Preferencia_nunca_libera_bloqueado_nem_marca_selecao_automatica(string label, SystemSnapshot s)

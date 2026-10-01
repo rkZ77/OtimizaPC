@@ -54,18 +54,42 @@
                 <StackPanel>
                     <TextBlock Text="Perfil de otimização" Style="{StaticResource H2}" />
                     <TextBlock Style="{StaticResource MutedText}" Margin="0,0,0,10"
-                               Text="O perfil decide o que o botão Otimizar agora seleciona sozinho. Tudo continua disponível para escolha item a item." />
-                    <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding Profile}" Width="420" HorizontalAlignment="Left">
+                               Text="O RKZFPS junta o perfil com o seu hardware e os seus jogos para decidir o que recomendar. Tudo continua disponível para escolha item a item." />
+                    <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Choice}" Width="420" HorizontalAlignment="Left">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock TextTrimming="CharacterEllipsis">
-                                    <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" />
+                                    <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold" />
                                     <Run Text=": " />
                                     <Run Text="{Binding Description, Mode=OneWay}" Foreground="{DynamicResource Muted}" />
                                 </TextBlock>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
+                    <TextBlock Text="{Binding AdvancedNote}" Style="{StaticResource MutedText}" Margin="0,8,0,0"
+                               Visibility="{Binding AdvancedNote, Converter={StaticResource Visible}}" />
+                    <TextBlock Text="{Binding TuningSummary}" Margin="0,12,0,0" FontWeight="SemiBold"
+                               Visibility="{Binding TuningSummary, Converter={StaticResource Visible}}" />
+                    <TextBlock Text="{Binding TuningReasons}" Style="{StaticResource MutedText}" Margin="0,4,0,0" LineHeight="20"
+                               Visibility="{Binding TuningReasons, Converter={StaticResource Visible}}" />
+                    <Button Content="Responder as perguntas de novo" Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="-12,8,0,0" Command="{Binding AskAgainCommand}" />
+
+                    <StackPanel Margin="0,14,0,0" Visibility="{Binding Advanced, Converter={StaticResource Visible}}">
+                        <TextBlock Text="Perfis avançados" FontWeight="SemiBold" />
+                        <TextBlock Style="{StaticResource MutedText}" Margin="0,2,0,8"
+                                   Text="Os perfis internos do RKZFPS, como Streaming. Escolher um aqui troca o perfil principal acima." />
+                        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding AdvancedProfile}" Width="420" HorizontalAlignment="Left">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" />
+                                        <Run Text=": " />
+                                        <Run Text="{Binding Description, Mode=OneWay}" Foreground="{DynamicResource Muted}" />
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

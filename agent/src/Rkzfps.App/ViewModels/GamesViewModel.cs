@@ -71,7 +71,7 @@ public sealed class GamesViewModel : PageViewModel
         ScanCommand = new AsyncCommand(() => Busy(() => _host.RunScanAsync(Reporter, network: false)), () => !IsBusy);
         _host.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName is nameof(AppHost.Scan) or nameof(AppHost.License))
+            if (e.PropertyName is nameof(AppHost.Scan) or nameof(AppHost.License) or nameof(AppHost.Tuning))
                 Load();
         };
         Load();
@@ -105,7 +105,7 @@ public sealed class GamesViewModel : PageViewModel
     {
         if (_host.Scan is not { } scan)
             return;
-        var ids = GameTuning.ProposalIdsFor(scan, gameId);
+        var ids = GameTuning.ProposalIdsFor(scan, gameId, _host.Tuning);
         if (ids.Count > 0)
             await ApplyFlow.RunAsync(ids, Reporter);
         Load();
@@ -123,7 +123,7 @@ public sealed class GamesViewModel : PageViewModel
         {
             var measured = Rkzfps.Core.Benchmark.UpgradeEvidence.Games(_host.Ctx.Gameplay.All()).FirstOrDefault(g => g.GameId == card.GameId);
             var tier = _host.Scan is { } scan ? HardwareTierClassifier.Assess(scan.Snapshot).Label : "";
-            card.TipsText = await _host.Ctx.GameTipsAsync(card.Name, _host.Report?.Hardware ?? new Dictionary<string, string>(), tier, measured);
+            card.TipsText = await _host.Ctx.GameTipsAsync(card.Name, _host.Report?.Hardware ?? new Dictionary<string, string>(), tier, measured, _host.Tuning);
         }
         catch (Rkzfps.Client.ApiException ex)
         {
@@ -162,6 +162,8 @@ public sealed class GamesViewModel : PageViewModel
         TierTitle = tierFinding?.Title ?? "";
         TierDetail = tierFinding?.Detail ?? "";
         var tier = scan is null ? HardwareTier.Unknown : HardwareTierClassifier.Assess(scan.Snapshot).Tier;
+        var tuning = _host.Tuning;
+        var keepImage = tuning is { Legacy: false, GraphicsTradeoff: GraphicsTradeoff.None };
         var sessions = _host.Ctx.Store.All();
 
         // Só os jogos deste PC (instalados ou já jogados com o RKZFPS aberto):
@@ -182,7 +184,7 @@ public sealed class GamesViewModel : PageViewModel
                 : scan.Findings.Where(f => f.DiagnosticId == "game-settings" && f.Title.StartsWith(profile.Name, StringComparison.Ordinal))
                     .Select(f => new FindingItem(f, scan)).ToList();
             var tunable = profile.Config is not null && install?.Config.Count > 0;
-            var pending = scan is null || !tunable ? [] : GameTuning.ProposalIdsFor(scan, profile.Id);
+            var pending = scan is null || !tunable ? [] : GameTuning.ProposalIdsFor(scan, profile.Id, tuning);
             var applied = GameTuning.AppliedChanges(sessions, profile.Id);
             var changes = scan is null ? 0 : pending.Sum(id => scan.FindProposal(id)?.Proposal.Changes.Count ?? 0);
 
@@ -198,7 +200,9 @@ public sealed class GamesViewModel : PageViewModel
             {
                 title = applied.Count > 0 ? "Otimizado, com ajustes novos para aplicar" : "Pode ficar melhor neste PC";
                 detail = $"{changes} {(changes == 1 ? "opção" : "opções")} para ajustar: correções que tiram atraso"
-                         + (tier switch
+                         + (keepImage && tier is HardwareTier.Low or HardwareTier.Mid
+                             ? ". A imagem do jogo não muda, como você pediu."
+                             : tier switch
                          {
                              HardwareTier.Low => " e a configuração leve para PC de entrada.",
                              HardwareTier.Mid => " e a configuração equilibrada para PC intermediário.",

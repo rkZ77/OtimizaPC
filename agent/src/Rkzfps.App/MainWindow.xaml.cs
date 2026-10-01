@@ -19,8 +19,13 @@ public partial class MainWindow : Window
             // é detectar e analisar antes de oferecer qualquer alteração.
             if (_vm.AllPages[0] is DashboardViewModel dash && dash.ScanCommand.CanExecute(null))
                 dash.ScanCommand.Execute(null);
-            // Tutorial na primeira abertura, depois que a janela já apareceu.
-            if (!AppHost.Current.Ctx.Settings.TutorialDone)
+            // Instalação nova: perguntas rápidas enquanto o scan acima roda. O
+            // guia antigo fica em "Como usar o RKZFPS", para não somar duas
+            // janelas antes de usar. Quem já usava o app não vê nenhuma das duas.
+            var settings = AppHost.Current.Ctx.Settings;
+            if (settings.NeedsOnboarding)
+                OnboardingWindow.Show();
+            else if (!settings.TutorialDone)
                 Tutorial.Show();
             else
                 WhatsNew.ShowIfUpdated();

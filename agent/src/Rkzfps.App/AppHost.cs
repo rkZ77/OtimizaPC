@@ -32,11 +32,30 @@ public sealed class AppHost : ObservableObject
         private set
         {
             if (Set(ref _scan, value))
+            {
                 Raise(nameof(Report));
+                Raise(nameof(Tuning));
+            }
         }
     }
 
     public Report? Report => Scan is null ? null : ReportBuilder.Build(Scan);
+
+    /// <summary>O que o RKZFPS entendeu da preferência neste PC. null antes da primeira análise.</summary>
+    public OptimizationProfile? Tuning => Scan is null ? null : Ctx.Tuning(Scan.Snapshot);
+
+    /// <summary>
+    /// Grava a preferência e reavalia o último scan na hora, sem coletar de
+    /// novo: trocar de perfil não pode custar outra análise de 10 segundos.
+    /// </summary>
+    public void SetPreferences(UserPreferences prefs, string? advancedProfileId = null)
+    {
+        var s = Ctx.Settings;
+        Ctx.Storage.SaveSettings(s with { Preferences = prefs, Profile = advancedProfileId ?? s.Profile });
+        if (Scan is { } scan)
+            Scan = Ctx.Evaluate(scan.Snapshot, License.Plan);
+        Raise(nameof(Tuning));
+    }
 
     private LicenseState _license = LicenseState.Free();
 
@@ -162,7 +181,6 @@ public sealed class AppHost : ObservableObject
 
     public async Task<ScanResult> RunScanAsync(IProgress<string> progress, bool cpuTest = false, bool network = true)
     {
-        var settings = Ctx.Settings;
         var options = new CollectOptions { SampleSeconds = cpuTest ? 15 : 3, CpuStressTest = cpuTest, Network = network };
         // Drivers achados na última busca continuam valendo até a próxima busca:
         // uma análise comum (vigia, botão Analisar) não pergunta ao Windows Update.
@@ -171,7 +189,7 @@ public sealed class AppHost : ObservableObject
         var result = await Task.Run(() =>
         {
             var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(options, progress.Report) with { PendingDrivers = drivers, DriverKitFolder = kit };
-            return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, settings.Profile, License.Plan);
+            return Ctx.Evaluate(snapshot, License.Plan);
         });
         Scan = result;
         Ctx.RecordScan(result);
@@ -193,7 +211,7 @@ public sealed class AppHost : ObservableObject
         var last = Scan;
         var snapshot = new SnapshotCollector(Ctx.GameProfiles).Collect(new CollectOptions { SampleSeconds = 1, Network = false }, progress)
             with { PendingDrivers = last?.Snapshot.PendingDrivers ?? [], DriverKitFolder = last?.Snapshot.DriverKitFolder };
-        return new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(snapshot, Ctx.Settings.Profile, License.Plan);
+        return Ctx.Evaluate(snapshot, License.Plan);
     }
 
     public async Task<SessionRecord> ApplyAsync(IReadOnlyList<string> ids, bool allowExperimental, IProgress<string> progress)
@@ -222,7 +240,7 @@ public sealed class AppHost : ObservableObject
     {
         if (Scan is not { } scan)
             return;
-        Scan = new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(scan.Snapshot with { PendingDrivers = drivers }, Ctx.Settings.Profile, License.Plan);
+        Scan = Ctx.Evaluate(scan.Snapshot with { PendingDrivers = drivers }, License.Plan);
     }
 
     // ---- troca de peça e formatação ----
@@ -308,7 +326,7 @@ public sealed class AppHost : ObservableObject
         if (DriverBackup.Check(folder) is { } problem)
             return problem;
         if (Scan is { } scan)
-            Scan = new DecisionEngine(Ctx.Catalog, Ctx.GameProfiles).Evaluate(scan.Snapshot with { DriverKitFolder = folder }, Ctx.Settings.Profile, License.Plan);
+            Scan = Ctx.Evaluate(scan.Snapshot with { DriverKitFolder = folder }, License.Plan);
         return null;
     }
 

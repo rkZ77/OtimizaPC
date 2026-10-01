@@ -97,6 +97,24 @@ public sealed class AgentContext
 
     public ApiClient Api() => ApiClient.Create(Settings.ApiUrl);
 
+    /// <summary>Preferência da pessoa mais o hardware deste snapshot. Local, sem rede.</summary>
+    public OptimizationProfile Tuning(SystemSnapshot snapshot)
+    {
+        var s = Settings;
+        return ProfileResolver.Resolve(s.Preferences, snapshot, s.Profile);
+    }
+
+    /// <summary>
+    /// Único caminho de avaliação do app e do processo elevado: o mesmo perfil
+    /// interno e o mesmo ajuste de preferência nos dois lados, para a tela e a
+    /// aplicação nunca discordarem do que é recomendado.
+    /// </summary>
+    public ScanResult Evaluate(SystemSnapshot snapshot, string plan)
+    {
+        var tuning = Tuning(snapshot);
+        return tuning.ApplyTo(new DecisionEngine(Catalog, GameProfiles).Evaluate(snapshot, tuning.CatalogProfileId, plan));
+    }
+
     /// <summary>Login + ativação deste PC. Em limite de PCs, a ApiException traz a lista para o usuário escolher.</summary>
     public async Task<LicenseState> LoginAsync(string email, string password, int windowsBuild, CancellationToken ct = default)
     {
@@ -246,14 +264,31 @@ public sealed class AgentContext
         }, ct);
     }
 
-    /// <summary>Dicas de vídeo para um jogo, com o que foi medido nele (quando há).</summary>
+    /// <summary>
+    /// Dicas de vídeo para um jogo, com o que foi medido nele (quando há) e o
+    /// perfil já decidido aqui (objetivo, troca de imagem, latência, bateria).
+    /// A IA recebe a decisão pronta para escrever em cima dela, não para decidir.
+    /// </summary>
     public async Task<string> GameTipsAsync(string game, IReadOnlyDictionary<string, string> hardware, string tier,
-        Rkzfps.Core.Benchmark.GameEvidence? measured, CancellationToken ct = default)
+        Rkzfps.Core.Benchmark.GameEvidence? measured, OptimizationProfile? tuning = null, CancellationToken ct = default)
     {
         if (Storage.LoadToken() is not { } token)
             throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Entre na sua conta (tela Conta) para usar as dicas com IA.");
-        return await Api().GameTipsAsync(token, new { game, hardware, tier, measured = measured is null ? null : Evidence(measured) }, ct);
+        return await Api().GameTipsAsync(token, new
+        {
+            game, hardware, tier, measured = measured is null ? null : Evidence(measured),
+            profile = tuning is { Legacy: false } t ? AiProfile(t) : null,
+        }, ct);
     }
+
+    /// <summary>Só o que muda a dica: poucos valores fechados, para a mesma decisão virar a mesma chave de cache.</summary>
+    public static Dictionary<string, string> AiProfile(OptimizationProfile t) => new()
+    {
+        ["objective"] = t.Objective.ToString(),
+        ["graphics_tradeoff"] = t.GraphicsTradeoff.ToString(),
+        ["latency_priority"] = t.LatencyPriority.ToString(),
+        ["prefer_battery"] = t.PreferBattery ? "yes" : "no",
+    };
 
     private static object Evidence(Rkzfps.Core.Benchmark.GameEvidence g) => new
     {
