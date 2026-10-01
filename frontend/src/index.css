@@ -319,6 +319,20 @@
     to   { opacity: 1; transform: none; }
   }
 
+  /*
+   * Barra de progresso da aba ativa do tour de telas. Mostra quanto falta para
+   * a proxima tela trocar sozinha: sem ela a troca pegava a pessoa no meio da
+   * leitura. A duracao vem do componente (mesmo intervalo do setInterval).
+   */
+  .tour-progresso {
+    transform-origin: left;
+    animation: tour-progresso var(--tour-dur, 4500ms) linear both;
+  }
+  @keyframes tour-progresso {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
   .scrollbar-none {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -426,6 +440,27 @@
   .lista-longa > * {
     content-visibility: auto;
     contain-intrinsic-size: auto 260px;
+  }
+
+  /*
+   * Moldura do print do app. Os prints ja trazem a barra de titulo escura do
+   * proprio app, entao a moldura so' precisa separar a janela da pagina: um
+   * halo da cor da marca atras (discreto no tema claro, onde o alpha e' baixo
+   * contra o branco) e a borda forte em volta do print.
+   */
+  .tela-app {
+    @apply relative isolate;
+  }
+  .tela-app::before {
+    content: '';
+    /* No celular o halo sai so' 12px para os lados: o respiro da pagina e' 16px,
+       e passar disso criaria rolagem horizontal. */
+    @apply absolute -inset-x-3 -inset-y-6 sm:-inset-6 -z-10 rounded-[2rem] opacity-60 blur-2xl pointer-events-none;
+    background: radial-gradient(60% 55% at 50% 45%, rgb(var(--accent) / 0.22), transparent 70%);
+  }
+  .tela-app-img {
+    @apply w-full h-auto rounded-lg border border-line-strong;
+    box-shadow: var(--shadow-elev);
   }
 
   /* --- superficie --- */

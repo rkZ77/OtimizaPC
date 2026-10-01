@@ -18,7 +18,11 @@ export function Garantias({ className = '' }: { className?: string }) {
     <div className={`grid gap-6 sm:grid-cols-2 lg:grid-cols-4 ${className}`}>
       {GARANTIAS.map(({ icon: Icon, t, d }) => (
         <div key={t} className="flex gap-3">
-          <Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
+          {/* Icone num quadro da cor da marca: solto, ele sumia ao lado do titulo
+              e as quatro garantias liam como um paragrafo corrido. */}
+          <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-accent/30 bg-accent/10">
+            <Icon className="h-[18px] w-[18px] text-accent-ink" />
+          </span>
           <div><p className="font-semibold text-ink-1">{t}</p><p className="mt-1 text-sm text-ink-3">{d}</p></div>
         </div>
       ))}
