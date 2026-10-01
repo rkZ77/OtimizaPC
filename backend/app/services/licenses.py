@@ -97,6 +97,10 @@ def build_token_payload(user: dict, lic: dict | None, free_plan: dict, device_ha
         "issued_at": at.isoformat(),
         "expires_at": expires.isoformat() if expires else None,
         "valid_until": valid_until.isoformat(),
+        # O que acabou foi o teste gratis (nao um plano pago vencido): o app
+        # desfaz as correcoes do teste (Fpsx.Core TrialEnd). Teste que virou
+        # compra fica 'expired' no grant(), entao nunca chega aqui como trial.
+        "ended_trial": lic is None and ended is not None and ended["status"] == "trial",
     }
 
 

@@ -36,6 +36,22 @@ def test_renovar_antes_de_vencer_nao_perde_os_dias():
     assert licenses.extended_expiration(None, 30, NOW) == NOW + timedelta(days=30)
 
 
+def test_token_diz_quando_o_que_acabou_foi_o_teste():
+    # E' o sinal para o app desfazer as correcoes do teste: plano pago vencido
+    # e licenca bloqueada nunca podem ligar isso.
+    user = {"id": 7, "email": "a@b.com"}
+
+    def payload(lic_atual, ended):
+        return licenses.build_token_payload(user, lic_atual, {"key": "free"}, "d" * 64, 7, NOW, ended=ended)
+
+    assert payload(None, lic(status="trial", days=-1))["ended_trial"] is True
+    assert payload(None, lic(status="trial", days=-1))["status"] == "expired"
+    assert payload(None, lic(status="active", days=-1))["ended_trial"] is False
+    assert payload(None, lic(status="blocked", days=5))["ended_trial"] is False
+    assert payload(lic(status="trial", days=3), None)["ended_trial"] is False
+    assert payload(None, None)["ended_trial"] is False
+
+
 def test_token_limita_uso_offline_pela_carencia_e_pelo_vencimento():
     user = {"id": 7, "email": "a@b.com"}
     long = licenses.build_token_payload(user, lic(days=30), {"key": "free"}, "d" * 64, 7, NOW)

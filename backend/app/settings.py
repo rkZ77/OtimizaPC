@@ -44,9 +44,11 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 #: Endereco que recebe as respostas ("Responder" no e-mail). Opcional.
 EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "")
 
-#: Google Analytics 4 do site (G-XXXXXXXX). Vazio = sem Analytics, e o CSP
-#: continua fechado para o Google. Formato conferido: vai para o HTML e o CSP.
-GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "").strip()
+#: Google Analytics 4 do site. O ID nao e' segredo (fica publico em todo site
+#: com Analytics), por isso o da conta do dono e' o padrao; a variavel troca,
+#: e GA_MEASUREMENT_ID=off desliga. So' o dominio oficial recebe a tag
+#: (seo.render), e o script so' carrega depois do "Aceitar todos".
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-W8VDSCZRG7").strip()
 if not re.fullmatch(r"G-[A-Z0-9]{4,12}", GA_MEASUREMENT_ID):
     GA_MEASUREMENT_ID = ""
 
