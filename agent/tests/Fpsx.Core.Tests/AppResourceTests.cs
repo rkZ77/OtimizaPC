@@ -27,10 +27,39 @@ public class AppResourceTests
         var cs = Directory.EnumerateFiles(app, "*.cs", SearchOption.AllDirectories).Where(f => !f.Contains(Path.Combine("obj", ""))).ToList();
 
         var defined = xaml.SelectMany(f => Regex.Matches(File.ReadAllText(f), "x:Key=\"([^\"]+)\"").Select(m => m.Groups[1].Value)).ToHashSet();
-        var used = xaml.SelectMany(f => Regex.Matches(File.ReadAllText(f), @"StaticResource (\w+)\}").Select(m => (File: Path.GetFileName(f), Key: m.Groups[1].Value)))
+        var used = xaml.SelectMany(f => Regex.Matches(File.ReadAllText(f), @"(?:Static|Dynamic)Resource (\w+)\}").Select(m => (File: Path.GetFileName(f), Key: m.Groups[1].Value)))
             .Concat(cs.SelectMany(f => Regex.Matches(File.ReadAllText(f), @"(?:Resources\[""|FindResource\("")(\w+)""").Select(m => (File: Path.GetFileName(f), Key: m.Groups[1].Value))));
 
         var missing = used.Where(u => !defined.Contains(u.Key)).Select(u => $"{u.File}: {u.Key}").Distinct().ToList();
         Assert.True(missing.Count == 0, "Recursos sem definição: " + string.Join(", ", missing));
+    }
+
+    [Fact]
+    public void Tema_claro_e_escuro_tem_as_mesmas_cores()
+    {
+        // Cor que só existe num tema não quebra o build: some da tela quando a
+        // pessoa troca. As duas paletas precisam ter exatamente as mesmas chaves.
+        static HashSet<string> Keys(string file) =>
+            Regex.Matches(File.ReadAllText(file), "x:Key=\"([^\"]+)\"").Select(m => m.Groups[1].Value).ToHashSet();
+        var themes = Path.Combine(AppDir(), "Themes");
+        var dark = Keys(Path.Combine(themes, "Dark.xaml"));
+        var light = Keys(Path.Combine(themes, "Light.xaml"));
+        Assert.Empty(dark.Except(light));
+        Assert.Empty(light.Except(dark));
+        Assert.Contains("OnFill", dark);
+        Assert.Contains("AccentFill", dark);
+    }
+
+    [Fact]
+    public void Nenhuma_cor_solta_nas_telas()
+    {
+        // Regra do projeto: cor muda no token, nunca solta no componente. Cor
+        // solta não troca com o tema e fica ilegível no claro ou no escuro.
+        var app = AppDir();
+        var soltas = Directory.EnumerateFiles(app, "*.xaml", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.Combine("obj", "")) && !f.Contains(Path.Combine("Themes", "")))
+            .SelectMany(f => Regex.Matches(File.ReadAllText(f), "=\"#[0-9A-Fa-f]{6,8}\"").Select(m => $"{Path.GetFileName(f)}: {m.Value}"))
+            .ToList();
+        Assert.True(soltas.Count == 0, "Cor fora dos temas: " + string.Join(", ", soltas));
     }
 }

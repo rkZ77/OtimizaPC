@@ -14,7 +14,7 @@
                         <Button Content="Verificar agora" Command="{Binding CheckCommand}" />
                     </StackPanel>
                     <TextBlock DockPanel.Dock="Left" Text="&#xE895;" FontFamily="Segoe MDL2 Assets" FontSize="30"
-                               Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,16,0" />
+                               Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,16,0" />
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding StatusTitle}" Style="{StaticResource H2}" Margin="0" />
                         <TextBlock Text="{Binding StatusText}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" />

@@ -521,6 +521,31 @@ public sealed class AppHost : ObservableObject
         RestoreGamingLeftovers();
     }
 
+    /// <summary>
+    /// Troca de tema: as telas que montam cor em código (selos, diagnóstico)
+    /// recarregam pelo mesmo aviso de "análise mudou", sem análise nova.
+    /// </summary>
+    public void Repaint()
+    {
+        Raise(nameof(Scan));
+        Raise(nameof(GamingMode));
+        Raise(nameof(LivePoints));
+    }
+
+    // ---- meta de FPS por jogo ----
+
+    public int? FpsGoalOf(string gameId) =>
+        Ctx.Settings.FpsGoals.TryGetValue(gameId, out var g) && Fpsx.Core.Benchmark.FpsGoal.IsValid(g) ? g : null;
+
+    /// <summary>null apaga a meta do jogo.</summary>
+    public void SetFpsGoal(string gameId, int? goal)
+    {
+        var goals = Ctx.Settings.FpsGoals.Where(kv => kv.Key != gameId).ToDictionary(kv => kv.Key, kv => kv.Value);
+        if (goal is { } g && Fpsx.Core.Benchmark.FpsGoal.IsValid(g))
+            goals[gameId] = g;
+        Ctx.Storage.SaveSettings(Ctx.Settings with { FpsGoals = goals });
+    }
+
     // ---- modo Gaming (Automático / Manual) ----
 
     private string _gamingStatus = "";

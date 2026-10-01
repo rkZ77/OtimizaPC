@@ -9,23 +9,23 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="track" Width="64" Height="28" CornerRadius="14" Background="{StaticResource Surface2}"
-                                BorderBrush="{StaticResource Border}" BorderThickness="1">
+                        <Border x:Name="track" Width="64" Height="28" CornerRadius="14" Background="{DynamicResource Surface2}"
+                                BorderBrush="{DynamicResource Border}" BorderThickness="1">
                             <Grid>
-                                <TextBlock x:Name="label" Text="OFF" FontSize="11" FontWeight="Bold" Foreground="{StaticResource Muted}"
+                                <TextBlock x:Name="label" Text="OFF" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Muted}"
                                            VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,9,0" />
-                                <Ellipse x:Name="knob" Width="20" Height="20" Fill="{StaticResource Muted}" HorizontalAlignment="Left" Margin="4,0,0,0" />
+                                <Ellipse x:Name="knob" Width="20" Height="20" Fill="{DynamicResource Muted}" HorizontalAlignment="Left" Margin="4,0,0,0" />
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <DataTrigger Binding="{Binding IsOn}" Value="True">
-                                <Setter TargetName="track" Property="Background" Value="{StaticResource Accent}" />
-                                <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource Accent}" />
+                                <Setter TargetName="track" Property="Background" Value="{DynamicResource AccentFill}" />
+                                <Setter TargetName="track" Property="BorderBrush" Value="{DynamicResource AccentFill}" />
                                 <Setter TargetName="label" Property="Text" Value="ON" />
-                                <Setter TargetName="label" Property="Foreground" Value="#0E1116" />
+                                <Setter TargetName="label" Property="Foreground" Value="{DynamicResource OnAccent}" />
                                 <Setter TargetName="label" Property="HorizontalAlignment" Value="Left" />
                                 <Setter TargetName="label" Property="Margin" Value="10,0,0,0" />
-                                <Setter TargetName="knob" Property="Fill" Value="#0E1116" />
+                                <Setter TargetName="knob" Property="Fill" Value="{DynamicResource OnAccent}" />
                                 <Setter TargetName="knob" Property="HorizontalAlignment" Value="Right" />
                                 <Setter TargetName="knob" Property="Margin" Value="0,0,4,0" />
                             </DataTrigger>
@@ -39,10 +39,10 @@
         </Style>
     </UserControl.Resources>
     <DockPanel>
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="32,14">
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" Padding="32,14">
             <DockPanel>
                 <Button DockPanel.Dock="Right" Content="Aplicar os marcados" Style="{StaticResource Primary}" Command="{Binding ApplyCommand}" />
-                <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Progress}" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" />
             </DockPanel>
         </Border>
         <ScrollViewer>
@@ -63,7 +63,7 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <DockPanel>
-                            <Border DockPanel.Dock="Right" Background="{StaticResource Surface2}" CornerRadius="10" Padding="4" VerticalAlignment="Top">
+                            <Border DockPanel.Dock="Right" Background="{DynamicResource Surface2}" CornerRadius="10" Padding="4" VerticalAlignment="Top">
                                 <StackPanel Orientation="Horizontal">
                                     <RadioButton Style="{StaticResource Segment}" GroupName="gaming" Content="Automático" IsChecked="{Binding IsAuto}" />
                                     <RadioButton Style="{StaticResource Segment}" GroupName="gaming" Content="Manual" IsChecked="{Binding IsManual}" />
@@ -74,7 +74,7 @@
                                 <TextBlock Text="{Binding GamingModeText}" TextWrapping="Wrap" />
                             </StackPanel>
                         </DockPanel>
-                        <TextBlock Text="{Binding GamingStatus}" Foreground="{StaticResource Accent}" TextWrapping="Wrap" Margin="0,10,0,0"
+                        <TextBlock Text="{Binding GamingStatus}" Foreground="{DynamicResource Accent}" TextWrapping="Wrap" Margin="0,10,0,0"
                                    Visibility="{Binding GamingStatus, Converter={StaticResource Visible}}" />
                         <TextBlock Text="O que o Automático pode fazer" FontWeight="SemiBold" Margin="0,14,0,6" />
                         <TextBlock Style="{StaticResource MutedText}" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,8"
@@ -117,9 +117,9 @@
                                                 <StackPanel>
                                                     <DockPanel>
                                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                                                            <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                            <Border Style="{StaticResource Chip}" Background="{DynamicResource Surface2}" Margin="0,0,10,0" VerticalAlignment="Center"
                                                                     Visibility="{Binding IsLocked, Converter={StaticResource Visible}}">
-                                                                <TextBlock FontSize="11" FontWeight="Bold" Foreground="{StaticResource Warn}">
+                                                                <TextBlock FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Warn}">
                                                                     <Run Text="&#xE735;" FontFamily="Segoe MDL2 Assets" /><Run Text=" " /><Run Text="{Binding PlanBadge, Mode=OneWay}" />
                                                                 </TextBlock>
                                                             </Border>
@@ -136,7 +136,7 @@
                                                         <StackPanel>
                                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="15" />
                                                             <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,3,0,0" />
-                                                            <TextBlock Text="{Binding Warning, StringFormat=Atenção: {0}}" Foreground="{StaticResource Warn}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                            <TextBlock Text="{Binding Warning, StringFormat=Atenção: {0}}" Foreground="{DynamicResource Warn}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"
                                                                        Visibility="{Binding Warning, Converter={StaticResource Visible}}" />
                                                         </StackPanel>
                                                     </DockPanel>
@@ -164,11 +164,11 @@
                                         <ItemsControl ItemsSource="{Binding Items}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="0,8" ToolTip="{Binding Reason}">
+                                                    <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" Padding="0,8" ToolTip="{Binding Reason}">
                                                         <StackPanel>
                                                             <DockPanel>
                                                                 <Border DockPanel.Dock="Right" Style="{StaticResource Chip}" Background="{Binding DecisionBrush}">
-                                                                    <TextBlock Text="{Binding DecisionLabel}" FontSize="10" FontWeight="Bold" Foreground="#0E1116" />
+                                                                    <TextBlock Text="{Binding DecisionLabel}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource OnFill}" />
                                                                 </Border>
                                                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
                                                             </DockPanel>

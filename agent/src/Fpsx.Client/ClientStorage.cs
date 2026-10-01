@@ -47,6 +47,15 @@ public sealed record ClientSettings
     /// </summary>
     public string GamingMode { get; init; } = "manual";
 
+    /// <summary>Meta de FPS por jogo (id do jogo -> FPS). Sem entrada = sem meta.</summary>
+    public IReadOnlyDictionary<string, int> FpsGoals { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>Atalho Ctrl+Shift+F para o painel de FPS por cima do jogo. Desligável: pode colidir com atalho de algum jogo.</summary>
+    public bool OverlayHotkey { get; init; } = true;
+
+    /// <summary>Tema do app: "dark" (padrão) ou "light". Só muda quando a pessoa escolhe, igual ao site.</summary>
+    public string Theme { get; init; } = "dark";
+
     /// <summary>Otimizações que a pessoa autorizou para o modo Automático (ids do catálogo).</summary>
     public IReadOnlyList<string> GamingAuthorized { get; init; } = [];
 

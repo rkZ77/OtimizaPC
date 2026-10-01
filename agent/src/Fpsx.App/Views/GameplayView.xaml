@@ -5,9 +5,9 @@
     <UserControl.Resources>
         <!-- Legenda das duas linhas do gráfico -->
         <StackPanel x:Key="Legend" x:Shared="False" Orientation="Horizontal" Margin="0,8,0,0">
-            <Rectangle Width="12" Height="3" Fill="{StaticResource Accent}" VerticalAlignment="Center" />
+            <Rectangle Width="12" Height="3" Fill="{DynamicResource Accent}" VerticalAlignment="Center" />
             <TextBlock Text="FPS médio" Style="{StaticResource MutedText}" FontSize="12" Margin="6,0,18,0" />
-            <Rectangle Width="12" Height="3" Fill="{StaticResource Warn}" VerticalAlignment="Center" />
+            <Rectangle Width="12" Height="3" Fill="{DynamicResource Warn}" VerticalAlignment="Center" />
             <TextBlock Text="Pior quadro (os picos para baixo são as travadas)" Style="{StaticResource MutedText}" FontSize="12" Margin="6,0,0,0" />
         </StackPanel>
     </UserControl.Resources>
@@ -21,7 +21,7 @@
             <Border Style="{StaticResource Card}" Visibility="{Binding IsLive, Converter={StaticResource Visible}}">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <Ellipse Width="9" Height="9" Fill="{StaticResource Danger}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <Ellipse Width="9" Height="9" Fill="{DynamicResource Danger}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBlock Text="{Binding LiveTitle}" Style="{StaticResource H2}" Margin="0" />
                     </StackPanel>
                     <app:FpsChart Points="{Binding LivePoints}" />
@@ -44,11 +44,11 @@
                     <app:FpsChart Points="{Binding ChartPoints}" MonitorHz="{Binding ChartHz}" Drops="{Binding ChartDrops}" />
                     <ContentControl Content="{StaticResource Legend}" />
                     <TextBlock Text="{Binding ChartNote}" TextWrapping="Wrap" Margin="0,8,0,0" />
-                    <Border Background="{StaticResource Surface2}" CornerRadius="8" Padding="12,10" Margin="0,10,0,0"
+                    <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="12,10" Margin="0,10,0,0"
                             Visibility="{Binding ChartCauses, Converter={StaticResource Visible}}">
                         <TextBlock Text="{Binding ChartCauses}" TextWrapping="Wrap" FontWeight="SemiBold" />
                     </Border>
-                    <Border BorderBrush="{Binding HzBrush}" BorderThickness="3,0,0,0" Background="{StaticResource Surface2}" CornerRadius="4" Padding="12,10" Margin="0,10,0,0"
+                    <Border BorderBrush="{Binding HzBrush}" BorderThickness="3,0,0,0" Background="{DynamicResource Surface2}" CornerRadius="4" Padding="12,10" Margin="0,10,0,0"
                             Visibility="{Binding HzText, Converter={StaticResource Visible}}">
                         <TextBlock Text="{Binding HzText}" TextWrapping="Wrap" />
                     </Border>
@@ -61,7 +61,7 @@
             <Border Style="{StaticResource Card}" Visibility="{Binding Sessions.Count, Converter={StaticResource Visible}}">
                 <StackPanel>
                     <TextBlock Text="O que limitou esta partida" Style="{StaticResource H2}" />
-                    <Border BorderBrush="{Binding DiagBrush}" BorderThickness="3,0,0,0" Background="{StaticResource Surface2}" CornerRadius="4" Padding="12,10" Margin="0,4,0,0">
+                    <Border BorderBrush="{Binding DiagBrush}" BorderThickness="3,0,0,0" Background="{DynamicResource Surface2}" CornerRadius="4" Padding="12,10" Margin="0,4,0,0">
                         <StackPanel>
                             <TextBlock Text="{Binding DiagTitle}" FontWeight="Bold" Foreground="{Binding DiagBrush}" />
                             <TextBlock Text="{Binding DiagWhy}" TextWrapping="Wrap" Margin="0,4,0,0" />
@@ -122,7 +122,7 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="Medição automática" Style="{StaticResource H2}" />
-                    <TextBlock Text="{Binding MonitorStatus}" Foreground="{StaticResource Accent}" Margin="0,0,0,10" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding MonitorStatus}" Foreground="{DynamicResource Accent}" Margin="0,0,0,10" TextWrapping="Wrap" />
                     <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das minhas partidas automaticamente" />
                     <TextBlock Text="{Binding MeasuredGames}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="54,4,0,0" />
                     <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"
@@ -175,11 +175,31 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <DockPanel>
-                        <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding HistoryGames}" SelectedItem="{Binding HistoryGame}" MinWidth="200" VerticalAlignment="Top" />
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                            <Button Content="Exportar planilha" Command="{Binding ExportCommand}" Margin="0,0,8,0"
+                                    ToolTip="Salva as partidas da lista num arquivo que abre no Excel ou no Google Planilhas" />
+                            <ComboBox ItemsSource="{Binding HistoryGames}" SelectedItem="{Binding HistoryGame}" MinWidth="200" />
+                        </StackPanel>
                         <TextBlock Text="Partidas medidas" Style="{StaticResource H2}" />
                     </DockPanel>
                     <TextBlock Text="{Binding HistorySummary}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,6"
                                Visibility="{Binding HistorySummary, Converter={StaticResource Visible}}" />
+
+                    <!-- Meta de FPS do jogo escolhido no filtro -->
+                    <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="12,10" Margin="0,0,0,10"
+                            Visibility="{Binding HasGameSelected, Converter={StaticResource Visible}}">
+                        <StackPanel>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Salvar meta" Command="{Binding SaveGoalCommand}" VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Meta de FPS" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                    <TextBox Text="{Binding GoalText, UpdateSourceTrigger=PropertyChanged}" Width="90" VerticalAlignment="Center"
+                                             ToolTip="O FPS médio que você quer neste jogo. Vazio tira a meta." />
+                                </StackPanel>
+                            </DockPanel>
+                            <TextBlock Text="{Binding GoalResult}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
                     <TextBlock Text="Clique numa partida para ver o gráfico e o diagnóstico dela." Style="{StaticResource MutedText}" Margin="0,0,0,6"
                                Visibility="{Binding Sessions.Count, Converter={StaticResource Visible}}" />
                     <TextBlock Text="Nenhuma partida ainda." Style="{StaticResource MutedText}"

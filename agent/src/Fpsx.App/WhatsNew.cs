@@ -15,7 +15,10 @@ public static class WhatsNew
         "e o que não deu para ler aparece como não disponível, nunca inventado.\n\n" +
         "Placa de vídeo do jogo: em PC com vídeo integrado e placa dedicada, o RKZFPS avisa quando o jogo rodou na placa errada e mostra como corrigir.\n\n" +
         "Modo Gaming: no Automático, o RKZFPS aplica ao abrir o jogo só o que você autorizou e desfaz quando ele fecha. No Manual, nada muda sozinho. Escolha na tela FPS Boost.\n\n" +
-        "Histórico por jogo: filtre as partidas por jogo e veja médias, resolução e configuração usada.\n\n" +
+        "Histórico por jogo: filtre as partidas por jogo, defina uma meta de FPS e veja em quantas partidas ela foi batida. Exporte tudo em planilha.\n\n" +
+        "Painel por cima do jogo: Ctrl+Shift+F mostra FPS, pior quadro, CPU e GPU no canto da tela, sem mexer no jogo.\n\n" +
+        "Resumo da partida: quando o jogo fecha, o aviso traz o FPS, a meta e o que limitou.\n\n" +
+        "Tema claro: troque pelo sol ou pela lua no alto da janela, ou em Configurações.\n\n" +
         "Visual: chaves de ligar e desligar novas e avisos sem a barra branca do Windows.\n\n" +
         "Novidades e dicas no Instagram @rkzfps.br.";
 

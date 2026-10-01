@@ -27,6 +27,18 @@ public partial class MainWindow : Window
             WhatsNew.MarkSeen();
         };
         StateChanged += (_, _) => AjustarMaximizado();
+        MostrarTema();
+        ThemeManager.Changed += MostrarTema;
+        Closed += (_, _) => ThemeManager.Changed -= MostrarTema;
+    }
+
+    private void Theme_Click(object sender, RoutedEventArgs e) => ThemeManager.Toggle();
+
+    /// <summary>O ícone e a dica mostram para onde o botão leva, como no site.</summary>
+    private void MostrarTema()
+    {
+        ThemeButton.Tag = ThemeManager.IsLight ? ThemeManager.Light : ThemeManager.Dark;
+        ThemeButton.ToolTip = ThemeManager.IsLight ? "Tema escuro" : "Tema claro";
     }
 
     // ---- barra de título própria ----

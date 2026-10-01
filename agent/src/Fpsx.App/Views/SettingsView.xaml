@@ -6,6 +6,33 @@
             <TextBlock Text="Configurações" Style="{StaticResource H1}" Margin="0,0,0,18" />
 
             <Border Style="{StaticResource Card}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Right" Background="{DynamicResource Surface2}" CornerRadius="10" Padding="4" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Style="{StaticResource Segment}" GroupName="theme" Content="Escuro" IsChecked="{Binding IsDark}" />
+                            <RadioButton Style="{StaticResource Segment}" GroupName="theme" Content="Claro" IsChecked="{Binding IsLight}" />
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Margin="0,0,16,0">
+                        <TextBlock Text="Aparência" Style="{StaticResource H2}" />
+                        <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                   Text="Tema escuro ou claro, igual ao site. Também troca pelo sol ou pela lua no alto da janela. A escolha fica salva." />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Painel por cima do jogo" Style="{StaticResource H2}" />
+                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding OverlayHotkey}" Content="Abrir e fechar com Ctrl+Shift+F" />
+                    <TextBlock Style="{StaticResource MutedText}" Margin="54,4,0,0" TextWrapping="Wrap"
+                               Text="Mostra o FPS, o pior quadro e o uso de CPU e GPU no canto da tela enquanto você joga. Não mexe no jogo e não conflita com anti-cheat. Aparece com o jogo em janela sem borda; em tela cheia exclusiva o próprio jogo cobre o painel." />
+                    <TextBlock Text="{Binding OverlayStatus}" Foreground="{DynamicResource Warn}" TextWrapping="Wrap" Margin="54,6,0,0"
+                               Visibility="{Binding OverlayStatus, Converter={StaticResource Visible}}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="Modo de uso" Style="{StaticResource H2}" />
                     <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Advanced}" Content="Modo avançado" />
@@ -34,7 +61,7 @@
                                 <TextBlock TextTrimming="CharacterEllipsis">
                                     <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" />
                                     <Run Text=": " />
-                                    <Run Text="{Binding Description, Mode=OneWay}" Foreground="{StaticResource Muted}" />
+                                    <Run Text="{Binding Description, Mode=OneWay}" Foreground="{DynamicResource Muted}" />
                                 </TextBlock>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>

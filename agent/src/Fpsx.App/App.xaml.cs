@@ -75,6 +75,10 @@ public partial class App : Application
             return;
         }
 
+        // Tema antes da primeira janela (login, consentimento): ninguém vê o escuro piscar antes do claro.
+        ThemeManager.Apply(AppHost.Current.Ctx.Settings.Theme);
+        ThemeManager.Changed += AppHost.Current.Repaint;
+
         var startInTray = e.Args.Contains("--tray", StringComparer.OrdinalIgnoreCase);
         if (!startInTray)
         {
@@ -97,8 +101,13 @@ public partial class App : Application
         main.Closed += (_, _) => ExitApp();
 
         _tray = new Tray(ShowMain, ExitApp);
-        AppHost.Current.GameplayRecorded += s => _tray?.Notify($"{s.GameName}: partida registrada",
-            $"FPS médio {s.Stats.AvgFps:0}, 1% low {s.Stats.Low1Fps:0}. Veja o antes e depois em Partidas.");
+        ApplyOverlayHotkey();
+        // Resumo da partida ao fechar o jogo: FPS, meta (se houver) e o que limitou.
+        AppHost.Current.GameplayRecorded += s =>
+        {
+            var (title, text) = Fpsx.Core.Benchmark.PostMatchSummary.For(s, AppHost.Current.FpsGoalOf(s.GameId));
+            _tray?.Notify(title, text);
+        };
         AppHost.Current.UpdateFound += u => _tray?.Notify($"RKZFPS {u.Version} disponível",
             (string.IsNullOrWhiteSpace(u.Notes) ? "Uma versão nova do RKZFPS saiu." : u.Notes) + " Clique para abrir e atualizar com um clique.");
         // Plano perto de vencer: aviso na bandeja com o que o RKZFPS fez neste PC.
@@ -140,11 +149,28 @@ public partial class App : Application
         w.Activate();
     }
 
+    private OverlayHotkey? _hotkey;
+
+    /// <summary>
+    /// Liga ou desliga o Ctrl+Shift+F conforme Configurações. Devolve false
+    /// quando ligado mas outro programa já usa o atalho.
+    /// </summary>
+    public bool ApplyOverlayHotkey()
+    {
+        _hotkey?.Dispose();
+        _hotkey = null;
+        if (!AppHost.Current.Ctx.Settings.OverlayHotkey || MainWindow is null)
+            return true;
+        _hotkey = new OverlayHotkey(MainWindow);
+        return _hotkey.Registered;
+    }
+
     private void ExitApp()
     {
         if (_exiting)
             return;
         _exiting = true;
+        _hotkey?.Dispose();
         _tray?.Dispose();
         _tray = null;
         AppHost.Current.ShutdownMonitor();

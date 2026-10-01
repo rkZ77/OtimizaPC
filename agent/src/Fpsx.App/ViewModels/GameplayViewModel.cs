@@ -100,7 +100,8 @@ public sealed class GameplayViewModel : PageViewModel
                 Raise(nameof(AutoMeasure));
             }
 
-            if (e.PropertyName == nameof(AppHost.License))
+            // Scan: também o aviso de troca de tema (cores do diagnóstico montadas em código).
+            if (e.PropertyName is nameof(AppHost.License) or nameof(AppHost.Scan))
                 Load();
 
             if (e.PropertyName == nameof(AppHost.LiveHealth))
@@ -116,6 +117,8 @@ public sealed class GameplayViewModel : PageViewModel
         };
         ShareCommand = new AsyncCommand(Share, () => _selected?.HasChart == true);
         GpuFixCommand = new RelayCommand(_ => ShowGpuFix());
+        SaveGoalCommand = new RelayCommand(_ => SaveGoal());
+        ExportCommand = new RelayCommand(_ => Export(), _ => Sessions.Count > 0);
         SelectSessionCommand = new RelayCommand(p =>
         {
             if (p is GameplayItem item)
@@ -345,11 +348,92 @@ public sealed class GameplayViewModel : PageViewModel
         }
     }
 
+    // ---- meta de FPS do jogo escolhido ----
+
+    private string _goalText = "";
+
+    private string? HistoryGameId => _historyGame == AllGames ? null : _all.FirstOrDefault(i => i.Session.GameName == _historyGame)?.Session.GameId;
+
+    public bool HasGameSelected => HistoryGameId is not null;
+
+    /// <summary>A meta digitada (texto, para aceitar o campo vazio = sem meta).</summary>
+    public string GoalText
+    {
+        get => _goalText;
+        set => Set(ref _goalText, value);
+    }
+
+    public string GoalResult
+    {
+        get
+        {
+            if (HistoryGameId is not { } id || _host.FpsGoalOf(id) is not { } goal)
+                return HasGameSelected ? "Sem meta para este jogo. Digite o FPS que você quer e salve." : "";
+            return FpsGoal.Evaluate(_all.Where(i => i.Session.GameId == id).Select(i => i.Session), goal).Text;
+        }
+    }
+
+    public System.Windows.Input.ICommand SaveGoalCommand { get; }
+
+    private void SaveGoal()
+    {
+        if (HistoryGameId is not { } id)
+            return;
+        var text = _goalText.Trim();
+        var goal = FpsGoal.Parse(text);
+        if (text.Length > 0 && goal is null)
+        {
+            Dialogs.Info("Meta inválida", $"Digite um número inteiro de FPS entre {FpsGoal.Min} e {FpsGoal.Max}, ou deixe vazio para tirar a meta.");
+            return;
+        }
+
+        _host.SetFpsGoal(id, goal);
+        Raise(nameof(GoalResult));
+    }
+
+    private void LoadGoal()
+    {
+        GoalText = HistoryGameId is { } id && _host.FpsGoalOf(id) is { } g ? g.ToString(Pt) : "";
+        Raise(nameof(HasGameSelected));
+        Raise(nameof(GoalResult));
+    }
+
+    // ---- planilha ----
+
+    public System.Windows.Input.ICommand ExportCommand { get; }
+
+    /// <summary>Exporta as partidas da lista (o filtro de jogo vale) numa planilha que o Excel abre direto.</summary>
+    private void Export()
+    {
+        var list = Sessions.Select(i => i.Session).ToList();
+        if (list.Count == 0)
+            return;
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Exportar partidas",
+            Filter = "Planilha (*.csv)|*.csv",
+            FileName = $"RKZFPS partidas {(_historyGame == AllGames ? "" : _historyGame + " ")}{DateTime.Now:yyyy-MM-dd}.csv",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+        try
+        {
+            GameplayCsv.Save(dialog.FileName, list);
+            Dialogs.Info("Planilha salva", $"{list.Count} partida(s) exportada(s) para {dialog.FileName}. Abre direto no Excel ou no Google Planilhas.");
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+        {
+            Dialogs.Info("Não deu para salvar", "O Windows não aceitou o arquivo nessa pasta (pode estar aberto no Excel): " + ex.Message);
+        }
+    }
+
     private void FillHistory()
     {
         Sessions.Clear();
         foreach (var i in _all.Where(i => _historyGame == AllGames || i.Session.GameName == _historyGame))
             Sessions.Add(i);
+        LoadGoal();
         Raise(nameof(HistorySummary));
         if (_selected is null || !Sessions.Contains(_selected))
             SelectedSession = Sessions.FirstOrDefault(i => i.HasChart) ?? Sessions.FirstOrDefault();

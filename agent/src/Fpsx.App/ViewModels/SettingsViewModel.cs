@@ -19,6 +19,52 @@ public sealed class SettingsViewModel : PageViewModel
         OpenDataCommand = new RelayCommand(() => Process.Start(new ProcessStartInfo(_host.Ctx.DataDir) { UseShellExecute = true }));
         PrivacyCommand = new RelayCommand(() => AppHost.OpenUrl(_host.SiteUrl + "/privacidade"));
         InstagramCommand = new RelayCommand(() => AppHost.OpenUrl(AppHost.InstagramUrl));
+        // O botão da barra de título também troca: o seletor aqui acompanha.
+        ThemeManager.Changed += () =>
+        {
+            Raise(nameof(IsDark));
+            Raise(nameof(IsLight));
+        };
+    }
+
+    private string _overlayStatus = "";
+
+    public bool OverlayHotkey
+    {
+        get => _host.Ctx.Settings.OverlayHotkey;
+        set
+        {
+            Save(s => s with { OverlayHotkey = value });
+            var ok = ((App)System.Windows.Application.Current).ApplyOverlayHotkey();
+            OverlayStatus = ok ? "" : "Outro programa já usa o Ctrl+Shift+F. Feche o programa que usa esse atalho e ligue de novo.";
+            Raise();
+        }
+    }
+
+    public string OverlayStatus
+    {
+        get => _overlayStatus;
+        private set => Set(ref _overlayStatus, value);
+    }
+
+    public bool IsDark
+    {
+        get => !ThemeManager.IsLight;
+        set
+        {
+            if (value)
+                ThemeManager.Set(ThemeManager.Dark);
+        }
+    }
+
+    public bool IsLight
+    {
+        get => ThemeManager.IsLight;
+        set
+        {
+            if (value)
+                ThemeManager.Set(ThemeManager.Light);
+        }
     }
 
     public override string Title => "Configurações";

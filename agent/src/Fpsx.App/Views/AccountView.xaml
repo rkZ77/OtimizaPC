@@ -17,7 +17,7 @@
                     <PasswordBox x:Name="Pwd" Margin="0,0,0,14" />
                     <Button Content="Entrar e ativar este PC" Style="{StaticResource Primary}" CommandParameter="{Binding ElementName=Pwd}"
                             Command="{Binding LoginCommand}" IsDefault="True" />
-                    <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" Margin="0,10,0,0"
+                    <TextBlock Text="{Binding Progress}" Foreground="{DynamicResource Accent}" Margin="0,10,0,0"
                                Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <Button Content="Criar conta grátis" Style="{StaticResource Ghost}" Command="{Binding SignupCommand}" Margin="0,0,8,0" />
@@ -41,8 +41,8 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource Card}" Background="{StaticResource Surface2}" Visibility="{Binding License.Notice, Converter={StaticResource Visible}}">
-                <TextBlock Text="{Binding License.Notice}" Foreground="{StaticResource Warn}" />
+            <Border Style="{StaticResource Card}" Background="{DynamicResource Surface2}" Visibility="{Binding License.Notice, Converter={StaticResource Visible}}">
+                <TextBlock Text="{Binding License.Notice}" Foreground="{DynamicResource Warn}" />
             </Border>
 
             <Border Style="{StaticResource Card}">
@@ -61,11 +61,11 @@
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
                                                 <Setter Property="Text" Value="—" />
-                                                <Setter Property="Foreground" Value="{StaticResource Muted}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource Muted}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Included}" Value="True">
                                                         <Setter Property="Text" Value="✓" />
-                                                        <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource Accent}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>

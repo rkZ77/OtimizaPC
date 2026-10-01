@@ -53,6 +53,9 @@ public sealed class FpsChart : FrameworkElement
     {
         Height = 190;
         Cursor = Cursors.Cross;
+        // Desenho feito na mão lê as cores na hora de desenhar: na troca de tema, redesenha.
+        Loaded += (_, _) => ThemeManager.Changed += InvalidateVisual;
+        Unloaded += (_, _) => ThemeManager.Changed -= InvalidateVisual;
     }
 
     private Brush Res(string key) => TryFindResource(key) as Brush ?? Brushes.Gray;

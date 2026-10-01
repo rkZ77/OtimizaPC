@@ -25,7 +25,7 @@
                     <ItemsControl ItemsSource="{Binding Drivers}" Margin="0,12,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="0,12">
+                                <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" Padding="0,12">
                                     <DockPanel>
                                         <Button DockPanel.Dock="Right" Content="Instalar" Style="{StaticResource Secondary}" VerticalAlignment="Center" Margin="16,0,0,0"
                                                 CommandParameter="{Binding}"
@@ -42,7 +42,7 @@
 
                     <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,0"
                                Text="O driver vem do próprio Windows Update, assinado pela Microsoft. Antes de instalar, o RKZFPS cria um ponto de restauração do Windows. Para voltar ao driver anterior: Gerenciador de Dispositivos, Propriedades do aparelho, Reverter driver." />
-                    <TextBlock Text="{Binding Progress}" Foreground="{StaticResource Accent}" TextWrapping="Wrap" Margin="0,8,0,0"
+                    <TextBlock Text="{Binding Progress}" Foreground="{DynamicResource Accent}" TextWrapping="Wrap" Margin="0,8,0,0"
                                Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
                 </StackPanel>
             </Border>
@@ -75,7 +75,7 @@
                                Text="O RKZFPS nota quando uma peça muda e diz se precisa formatar. Antes de formatar, salve os drivers deste PC num pendrive; depois, o app reinstala todos, inclusive o de rede, sem internet." />
 
                     <!-- Peças trocadas desde a última análise -->
-                    <Border Background="{StaticResource Surface2}" CornerRadius="8" Padding="14" Margin="0,12,0,0"
+                    <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="14" Margin="0,12,0,0"
                             Visibility="{Binding HasHardwareChanges, Converter={StaticResource Visible}}">
                         <StackPanel>
                             <ItemsControl ItemsSource="{Binding HardwareChanges}">
@@ -85,7 +85,7 @@
                                             <TextBlock FontWeight="SemiBold" TextWrapping="Wrap">
                                                 <Run Text="{Binding Part, Mode=OneWay}" /><Run Text=": " /><Run Text="{Binding To, Mode=OneWay}" />
                                             </TextBlock>
-                                            <TextBlock Text="Formatar é o recomendado" Foreground="{StaticResource Warn}" FontWeight="SemiBold" Margin="0,2,0,0"
+                                            <TextBlock Text="Formatar é o recomendado" Foreground="{DynamicResource Warn}" FontWeight="SemiBold" Margin="0,2,0,0"
                                                        Visibility="{Binding FormatRecommended, Converter={StaticResource Visible}}" />
                                             <TextBlock Text="{Binding Steps}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,2,0,0" />
                                         </StackPanel>

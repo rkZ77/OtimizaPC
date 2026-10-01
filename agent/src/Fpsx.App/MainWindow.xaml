@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:Fpsx.App.ViewModels"
         xmlns:v="clr-namespace:Fpsx.App.Views"
         Title="RKZFPS" Width="1180" Height="780" MinWidth="960" MinHeight="620"
-        Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Bg}" WindowStartupLocation="CenterScreen"
         Icon="Assets/fpsx.ico">
     <!-- Barra de titulo propria (a do Windows e' branca e destoava do app).
          WindowChrome mantem arrastar, redimensionar e o encaixe do Windows. -->
@@ -37,8 +37,84 @@
                     <ColumnDefinition Width="232" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,1,0" />
+                <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,1,0" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <!-- Tema claro/escuro, igual ao botão do site: o ícone mostra o tema PARA ONDE
+                         se vai (sol no escuro, lua no claro), e os dois trocam por giro e opacidade.
+                         Desenhos do lucide (Sun e Moon), os mesmos do site. -->
+                    <Button x:Name="ThemeButton" Style="{StaticResource CaptionButton}" Click="Theme_Click" Tag="dark"
+                            AutomationProperties.Name="Trocar tema">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="bg" Background="Transparent">
+                                    <Grid Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Viewbox x:Name="sun" RenderTransformOrigin="0.5,0.5" Opacity="1">
+                                            <Viewbox.RenderTransform>
+                                                <TransformGroup>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                                    <RotateTransform Angle="0" />
+                                                </TransformGroup>
+                                            </Viewbox.RenderTransform>
+                                            <Canvas Width="24" Height="24">
+                                                <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                      Data="M12,2 V4 M12,20 V22 M4.93,4.93 L6.34,6.34 M17.66,17.66 L19.07,19.07 M2,12 H4 M20,12 H22 M6.34,17.66 L4.93,19.07 M19.07,4.93 L17.66,6.34" />
+                                                <Ellipse Canvas.Left="8" Canvas.Top="8" Width="8" Height="8" Stroke="{TemplateBinding Foreground}" StrokeThickness="2" />
+                                            </Canvas>
+                                        </Viewbox>
+                                        <Viewbox x:Name="moon" RenderTransformOrigin="0.5,0.5" Opacity="0">
+                                            <Viewbox.RenderTransform>
+                                                <TransformGroup>
+                                                    <ScaleTransform ScaleX="0.5" ScaleY="0.5" />
+                                                    <RotateTransform Angle="90" />
+                                                </TransformGroup>
+                                            </Viewbox.RenderTransform>
+                                            <Canvas Width="24" Height="24">
+                                                <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="2" StrokeLineJoin="Round"
+                                                      Data="M12,3 A6,6 0 0 0 21,12 A9,9 0 1 1 12,3 Z" />
+                                            </Canvas>
+                                        </Viewbox>
+                                    </Grid>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="bg" Property="Background" Value="{DynamicResource Surface2}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Text}" />
+                                    </Trigger>
+                                    <!-- 240 ms com a mesma curva do site (ease-smooth). -->
+                                    <Trigger Property="Tag" Value="light">
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleX" To="0.5" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleY" To="0.5" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="RenderTransform.Children[1].Angle" To="-90" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleX" To="1" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleY" To="1" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="RenderTransform.Children[1].Angle" To="0" Duration="0:0:0.24" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleX" To="1" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleY" To="1" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="sun" Storyboard.TargetProperty="RenderTransform.Children[1].Angle" To="0" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleX" To="0.5" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="RenderTransform.Children[0].ScaleY" To="0.5" Duration="0:0:0.24" />
+                                                    <DoubleAnimation Storyboard.TargetName="moon" Storyboard.TargetProperty="RenderTransform.Children[1].Angle" To="90" Duration="0:0:0.24" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                     <Button Style="{StaticResource CaptionButton}" Content="&#xE921;" ToolTip="Minimizar" Click="Minimize_Click" />
                     <Button x:Name="MaxButton" Style="{StaticResource CaptionButton}" Content="&#xE922;" ToolTip="Maximizar" Click="Maximize_Click" />
                     <Button Style="{StaticResource CloseCaptionButton}" Content="&#xE8BB;" ToolTip="Fechar" Click="Close_Click" />
@@ -52,30 +128,30 @@
             </Grid.ColumnDefinitions>
 
             <!-- Barra lateral -->
-            <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,1,0">
+            <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,1,0">
                 <DockPanel Margin="14,20">
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,26">
                         <Image Source="Assets/fpsx.ico" Width="30" Height="30" />
                         <TextBlock FontSize="22" FontWeight="Black" FontStyle="Italic" Margin="10,0,0,0" VerticalAlignment="Center">
-                            <Run Text="RKZ" /><Run Text="FPS" Foreground="{StaticResource Accent}" />
+                            <Run Text="RKZ" /><Run Text="FPS" Foreground="{DynamicResource Accent}" />
                         </TextBlock>
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Bottom" Margin="8,0">
                         <Button Style="{StaticResource Ghost}" HorizontalAlignment="Left" Margin="-6,0,0,12" Command="{Binding TutorialCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Info}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                                <TextBlock Text="Como usar o RKZFPS" Foreground="{StaticResource Info}" />
+                                <TextBlock Text="&#xE897;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Info}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Como usar o RKZFPS" Foreground="{DynamicResource Info}" />
                             </StackPanel>
                         </Button>
                         <!-- Modo Gaming ativo, visível em qualquer tela -->
-                        <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,6" ToolTip="Troque na tela FPS Boost">
+                        <Border Style="{StaticResource Chip}" Background="{DynamicResource Surface2}" Margin="0,0,0,6" ToolTip="Troque na tela FPS Boost">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{Binding GamingDot}" VerticalAlignment="Center" Margin="0,0,6,0" />
                                 <TextBlock Text="{Binding GamingLabel}" FontSize="13" />
                             </StackPanel>
                         </Border>
-                        <Border Style="{StaticResource Chip}" Background="{StaticResource Surface2}" Margin="0,0,0,10">
+                        <Border Style="{StaticResource Chip}" Background="{DynamicResource Surface2}" Margin="0,0,0,10">
                             <TextBlock Text="{Binding PlanLabel, StringFormat=Plano {0}}" FontSize="13" />
                         </Border>
                         <!-- Sem aviso de "sem administrador": o app pede a permissão do
@@ -106,19 +182,19 @@
 
             <!-- Conteúdo -->
             <DockPanel Grid.Column="1">
-                <Border DockPanel.Dock="Top" Background="{StaticResource Info}" Padding="16,8"
+                <Border DockPanel.Dock="Top" Background="{DynamicResource Info}" Padding="16,8"
                         Visibility="{Binding UpdateAvailable, Converter={StaticResource Visible}}">
                     <DockPanel>
                         <Button DockPanel.Dock="Right" Content="{Binding UpdateButton}" Command="{Binding UpdateCommand}" Padding="14,6" Margin="12,0,0,0" />
-                        <TextBlock Text="{Binding UpdateAvailable}" Foreground="#06121F" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding UpdateAvailable}" Foreground="{DynamicResource OnFill}" VerticalAlignment="Center" />
                     </DockPanel>
                 </Border>
                 <!-- FPS ao vivo: aparece sozinho quando um jogo abre, em qualquer tela. -->
-                <Border DockPanel.Dock="Top" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1" Padding="20,10"
+                <Border DockPanel.Dock="Top" Background="{DynamicResource Surface2}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1" Padding="20,10"
                         Visibility="{Binding LiveFps, Converter={StaticResource Visible}}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource Accent}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <TextBlock Text="{Binding LiveFps}" FontWeight="SemiBold" FontSize="15" Foreground="{StaticResource Accent}" />
+                        <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Accent}" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBlock Text="{Binding LiveFps}" FontWeight="SemiBold" FontSize="15" Foreground="{DynamicResource Accent}" />
                     </StackPanel>
                 </Border>
                 <ContentControl Content="{Binding Current}" />
