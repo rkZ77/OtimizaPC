@@ -21,6 +21,8 @@ dez perguntas da seção 51 do spec (estão no campo `justification` do catálog
 - Nunca: desativar Defender, Firewall ou Windows Update; prioridade Realtime; desligar serviços em
   massa; fechar processo à força. A `SafetyPolicy` bloqueia, e o teste garante.
 - Desfazer é liberado em todos os planos. Não colocar rollback atrás de plano pago.
+- Teste grátis que termina sem assinatura: o app desfaz sozinho as correções do teste (`Engine.TrialEnd`,
+  sinal `ended_trial` da licença assinada). Plano pago vencido NÃO desfaz nada. Decisão do dono, 01/10/2026.
 - Comentários em português explicando o **porquê**.
 - Texto de tela 100% pt-BR, sem emoji, sem travessão e sem ponto do meio; ícones do `lucide-react` no site.
 - Cor muda no token (`:root` no site, `Theme.xaml` no app), nunca solta no componente.

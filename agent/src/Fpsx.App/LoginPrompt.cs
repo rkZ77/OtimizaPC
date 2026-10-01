@@ -92,7 +92,7 @@ public static class LoginPrompt
         root.Children.Add(new TextBlock { Text = "Entre na sua conta", Style = (Style)res["H2"] });
         root.Children.Add(new TextBlock
         {
-            Text = "Use o mesmo e-mail do site. Conta nova ganha dias de teste do plano Pro, sem cartão.",
+            Text = "Use o mesmo e-mail do site. Conta nova ganha dias de teste do plano Pro, sem cartão. Sem assinatura, o RKZFPS desfaz as correções do teste quando ele terminar.",
             Style = (Style)res["MutedText"], TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 18),
         });
         root.Children.Add(new TextBlock { Text = "E-mail", FontSize = 13, Margin = new Thickness(0, 0, 0, 4) });

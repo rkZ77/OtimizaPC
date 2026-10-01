@@ -90,12 +90,12 @@ public static class ApplyFlow
         var max = TrialQuota.MaxOptimizations;
         if (fits.Count == 0)
         {
-            Upsell.Offer("pro", left, $"Seu teste grátis já aplicou as {max} correções que ele libera. As que ele fez continuam no PC e podem ser desfeitas no Histórico.");
+            Upsell.Offer("pro", left, $"Seu teste grátis já aplicou as {max} correções que ele libera. As que ele fez ficam no PC até o fim do teste: sem assinatura, o RKZFPS desfaz quando ele terminar.");
             return false;
         }
 
         var choice = Dialogs.Show("Teste grátis",
-            $"No teste grátis o RKZFPS aplica até {max} correções diferentes, e ainda cabe {trial.Remaining}. Das escolhidas, ele aplica agora as que cabem, na ordem da lista.\n\nAssine para aplicar todas.",
+            $"No teste grátis o RKZFPS aplica até {max} correções diferentes, e ainda cabe {trial.Remaining}. Das escolhidas, ele aplica agora as que cabem, na ordem da lista.\n\nSem assinatura, o RKZFPS desfaz as correções do teste quando ele terminar. Assine para aplicar todas e manter.",
             $"Aplicar {trial.Remaining}", Upsell.ButtonLabel("pro"), "Cancelar");
         if (choice == 1)
             Upsell.Go("pro", left);

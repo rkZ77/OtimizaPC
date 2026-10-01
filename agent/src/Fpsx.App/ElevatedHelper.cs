@@ -87,6 +87,20 @@ public static class ElevatedHelper
             var manager = new RollbackManager(system, ctx.Store);
             session = request.ChangeId is null ? manager.RollbackSession(sid, request.Force) : manager.RollbackChange(sid, request.ChangeId, request.Force);
         }
+        else if (request.Action == "rollback-many")
+        {
+            // Fim do teste grátis: várias sessões com alteração de sistema numa
+            // permissão só do Windows, em vez de um UAC por sessão.
+            var manager = new RollbackManager(system, ctx.Store);
+            foreach (var id in request.Ids)
+            {
+                if (ctx.Store.Load(id) is not { } s)
+                    continue;
+                ctx.RecordSession(manager.RollbackSession(s, request.Force));
+            }
+            File.WriteAllText(full + ".result", "ok");
+            return 0;
+        }
         else if (request.Action == "export-drivers" && request.Folder is { } target)
         {
             // Copia drivers para a pasta escolhida: não muda nada no Windows.

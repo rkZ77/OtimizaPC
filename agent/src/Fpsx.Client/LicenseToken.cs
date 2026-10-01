@@ -35,6 +35,9 @@ public sealed record LicensePayload
     public DateTimeOffset IssuedAt { get; init; }
     public DateTimeOffset? ExpiresAt { get; init; }
     public DateTimeOffset ValidUntil { get; init; }
+
+    /// <summary>O plano que acabou era o teste grátis (e não um plano pago vencido).</summary>
+    public bool EndedTrial { get; init; }
 }
 
 /// <summary>
@@ -107,6 +110,12 @@ public sealed record LicenseState
     /// <summary>Plano que existiu e venceu: o app caiu para Free, e o resumo do que foi feito aparece.</summary>
     public bool Expired => Status == "expired";
 
+    /// <summary>
+    /// O teste grátis acabou sem assinatura, confirmado pelo servidor. É o
+    /// sinal para desfazer as correções do teste (Engine.TrialEnd).
+    /// </summary>
+    public bool TrialEnded { get; init; }
+
     /// <summary>Dias que faltam (arredondado para cima), ou null sem vencimento.</summary>
     public int? DaysLeft(DateTimeOffset now) =>
         ExpiresAt is { } e ? Math.Max(0, (int)Math.Ceiling((e - now).TotalDays)) : null;
@@ -133,7 +142,13 @@ public sealed record LicenseState
         if (p.ValidUntil <= now)
             return new LicenseState { Email = p.Email, Notice = "Conecte à internet para revalidar sua licença. Enquanto isso o RKZFPS funciona no plano Free." };
         if (p.Status is "expired" or "blocked")
-            return new LicenseState { Email = p.Email, Status = p.Status, Notice = p.Status == "blocked" ? "Licença bloqueada. Fale com o suporte." : "Sua assinatura venceu." };
+            return new LicenseState
+            {
+                Email = p.Email, Status = p.Status,
+                TrialEnded = p.Status == "expired" && p.EndedTrial,
+                Notice = p.Status == "blocked" ? "Licença bloqueada. Fale com o suporte."
+                    : p.EndedTrial ? "Seu teste grátis terminou." : "Sua assinatura venceu.",
+            };
 
         return new LicenseState { Plan = p.Plan, Status = p.Status, Email = p.Email, ExpiresAt = p.ExpiresAt, ValidUntil = p.ValidUntil };
     }

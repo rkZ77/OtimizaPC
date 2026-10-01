@@ -164,7 +164,7 @@ public sealed class DashboardViewModel : PageViewModel
         HeroState.CanFix => TrialRemaining is { } left
             ? left == 0
                 ? $"Seu teste grátis já aplicou as {Fpsx.Core.Engine.TrialQuota.MaxOptimizations} correções que ele libera. Assine para o RKZFPS corrigir o resto, com backup."
-                : $"No teste grátis o RKZFPS aplica até {Fpsx.Core.Engine.TrialQuota.MaxOptimizations} correções, e ainda cabe {left}. Tudo pode ser desfeito."
+                : $"No teste grátis o RKZFPS aplica até {Fpsx.Core.Engine.TrialQuota.MaxOptimizations} correções, e ainda cabe {left}. Sem assinatura, elas são desfeitas no fim do teste."
             : "O RKZFPS guarda como estava antes de mudar qualquer coisa. Tudo pode ser desfeito.",
         HeroState.NeedsPlan => _host.License.Expired
             ? "Seu plano venceu, mas o RKZFPS continua analisando. Veja abaixo o que cada uma resolve e renove para ele corrigir."
@@ -297,20 +297,22 @@ public sealed class DashboardViewModel : PageViewModel
         {
             var l = _host.License;
             if (l.Expired)
-                return "Seu plano venceu";
+                return l.TrialEnded ? "Seu teste grátis terminou" : "Seu plano venceu";
             var days = l.DaysLeft(DateTimeOffset.Now) ?? 0;
             var quando = days switch { 0 => "hoje", 1 => "amanhã", _ => $"em {days} dias" };
             return l.Status == "trial" ? $"Seu teste grátis termina {quando}" : $"Seu plano vence {quando}";
         }
     }
 
-    public string PlanCardText => _host.License.Expired
+    public string PlanCardText => _host.License.TrialEnded
+        ? "As correções do teste foram desfeitas e o PC voltou como estava. Assine para o RKZFPS aplicar de novo, corrigir o que aparecer, ajustar seus jogos e comparar suas partidas."
+        : _host.License.Expired
         ? "As correções continuam no seu PC e o desfazer segue liberado. Para o RKZFPS corrigir o que aparecer de novo, ajustar seus jogos e comparar suas partidas, renove."
         : _host.License.Status == "trial"
-            ? "As correções feitas no teste continuam no PC. Atualização do Windows, driver novo e patch de jogo mudam configuração e criam problema novo: com um plano, o RKZFPS confere a cada abertura e corrige de novo, e ajusta os seus jogos."
+            ? "No fim do teste, as correções feitas nele são desfeitas e o PC volta como estava. Assine para manter: com um plano, o RKZFPS confere a cada abertura, corrige de novo o que o Windows, o driver ou o jogo mudarem, e ajusta os seus jogos."
             : "Renove antes de vencer para não perder as correções novas e a comparação das partidas. Os dias novos somam aos que faltam.";
 
-    public string PlanCardButton => _host.License.Expired ? "Renovar plano" : "Renovar agora";
+    public string PlanCardButton => _host.License.TrialEnded ? "Assinar" : _host.License.Expired ? "Renovar plano" : "Renovar agora";
 
     /// <summary>O que o RKZFPS fez neste PC, em frases curtas. Vazio quando ainda não fez nada.</summary>
     public IReadOnlyList<string> RecapLines => ShowPlanCard ? _host.Recap().Lines() : [];

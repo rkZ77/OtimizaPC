@@ -47,6 +47,37 @@ public class LicenseTests
     }
 
     [Fact]
+    public void Fim_do_teste_so_e_reconhecido_quando_o_servidor_assina()
+    {
+        using var s = new TestSigner();
+        var fimDoTeste = new
+        {
+            v = 1, uid = 7, email = "cliente@fpsx.app", plan = "free", plan_key = "free", status = "expired", device = Device,
+            issued_at = Now, expires_at = Now.AddDays(-1), valid_until = Now.AddDays(7), ended_trial = true,
+        };
+        var state = LicenseState.From(s.Sign(fimDoTeste), Device, Now, s.PublicPem);
+        Assert.True(state.TrialEnded);
+        Assert.Equal("free", state.Plan);
+        Assert.Equal("Seu teste grátis terminou.", state.Notice);
+
+        // Plano pago vencido: sem o sinal, nada é desfeito.
+        var pagoVencido = LicenseState.From(s.Sign(Payload("free", "expired")), Device, Now, s.PublicPem);
+        Assert.True(pagoVencido.Expired);
+        Assert.False(pagoVencido.TrialEnded);
+
+        // Teste ainda valendo, mesmo com o campo: não desfaz.
+        var ativo = LicenseState.From(s.Sign(new
+        {
+            v = 1, uid = 7, email = "cliente@fpsx.app", plan = "pro", plan_key = "pro", status = "trial", device = Device,
+            issued_at = Now, expires_at = Now.AddDays(3), valid_until = Now.AddDays(3), ended_trial = true,
+        }), Device, Now, s.PublicPem);
+        Assert.False(ativo.TrialEnded);
+
+        // Token de outro PC nunca dispara o desfazer.
+        Assert.False(LicenseState.From(s.Sign(fimDoTeste), "outro-pc", Now, s.PublicPem).TrialEnded);
+    }
+
+    [Fact]
     public void Token_adulterado_cai_para_free()
     {
         using var s = new TestSigner();

@@ -69,6 +69,65 @@ public sealed class AppHost : ObservableObject
     {
         License = Ctx.License();
         CheckRenewal();
+        if (License.TrialEnded && !_trialEndHandled)
+        {
+            _trialEndHandled = true;
+            OnUi(() => _ = UndoTrialAsync());
+        }
+    }
+
+    private bool _trialEndHandled;
+
+    /// <summary>
+    /// Teste grátis acabou sem assinatura (confirmado pela licença assinada):
+    /// desfaz o que o teste aplicou e o PC volta como estava. Decisão do dono
+    /// (01/10/2026), avisada no começo do teste, no site e nos termos.
+    ///
+    /// Uma vez por abertura do app. Quem escolhe "Assinar para manter" vai ao
+    /// pagamento e nada é desfeito agora; se não assinar, a próxima abertura
+    /// desfaz. Alteração de sistema pede UMA permissão do Windows para todas
+    /// as sessões; recusada, fica para a próxima abertura.
+    /// </summary>
+    private async Task UndoTrialAsync()
+    {
+        try
+        {
+            var pending = TrialEnd.Pending(Ctx.Store.All());
+            if (pending.Count == 0)
+                return;
+            var n = TrialEnd.Count(pending);
+            var itens = n == 1 ? "a correção" : $"as {n} correções";
+            var escolha = Dialogs.Show("Seu teste grátis terminou",
+                $"Como avisado no começo do teste, o RKZFPS vai desfazer {itens} que aplicou nele, e o PC volta como estava. " +
+                "O que você mudou depois por conta própria fica como está.\n\n" +
+                "Quer manter? Assine um plano: as correções ficam e o RKZFPS segue conferindo e corrigindo a cada abertura.",
+                "Desfazer agora", "Assinar para manter");
+            if (escolha == 1)
+            {
+                OpenUrl(Upsell.CheckoutUrl("pro", n));
+                return;
+            }
+
+            // Alteração do usuário (HKCU, plano de energia, arquivo de jogo) volta
+            // aqui mesmo; a de sistema vai junta pelo processo elevado.
+            foreach (var s in pending.Where(s => IsElevated || !TrialEnd.NeedsAdmin(s)))
+                await RollbackAsync(s.Id, null, force: false);
+            List<string> sistema = IsElevated ? [] : pending.Where(TrialEnd.NeedsAdmin).Select(s => s.Id).ToList();
+            var sistemaOk = sistema.Count == 0
+                || await ElevatedHelper.RunAsync(Ctx, new ElevatedRequest { Action = "rollback-many", Ids = sistema }) is not null;
+
+            await RunScanAsync(new Progress<string>(_ => { }), network: false);
+            Raise(nameof(License));
+            if (sistemaOk)
+                Dialogs.Info("Correções do teste desfeitas", "O PC voltou como estava antes do teste. Quando assinar, é só aplicar de novo pelo RKZFPS.");
+            else
+                Dialogs.Info("Faltou a permissão do Windows", "As correções do seu usuário foram desfeitas. As de sistema continuam até você permitir: o RKZFPS pede de novo na próxima vez que abrir.");
+        }
+        catch (Exception ex)
+        {
+            // Falha aqui nunca derruba o app: o desfazer manual continua no Histórico.
+            Dialogs.Log(ex);
+        }
     }
 
     /// <summary>Plano ou teste perto de vencer: título e texto para o aviso da bandeja.</summary>
@@ -92,7 +151,7 @@ public sealed class AppHost : ObservableObject
         var titulo = License.Status == "trial" ? $"Seu teste grátis termina {quando}" : $"Seu plano vence {quando}";
         var recap = Recap().Lines().FirstOrDefault();
         var chamada = License.Status == "trial"
-            ? "Windows, driver e jogo mudam com as atualizações: assine para o RKZFPS seguir conferindo e corrigindo de novo."
+            ? "No fim do teste, as correções feitas nele são desfeitas e o PC volta como estava. Assine para manter e para o RKZFPS seguir corrigindo."
             : "Renove para o RKZFPS seguir corrigindo e medindo. Os dias novos somam aos que faltam.";
         RenewalDue.Invoke(titulo, (recap is null ? "" : recap + " ") + chamada);
     }

@@ -57,7 +57,9 @@ O que o RKZFPS NAO faz, de proposito: desligar antivirus, firewall ou Windows Up
 servicos; prioridade tempo real; limpador de RAM; fechar programa a forca; overclock.
 
 Regras comerciais: cada plano vale para 1 PC. O diagnostico e' gratuito. Desfazer funciona em todos os planos,
-mesmo depois de cancelar. Pagamento por PIX ou cartao pelo Mercado Pago. 7 dias para desistir e pedir
+mesmo depois de cancelar. Teste gratis do Pro: se terminar sem assinatura, o app desfaz sozinho as correcoes
+aplicadas no teste e o PC volta como estava; assinando, elas ficam. Correcoes de plano pago continuam no PC
+depois que o plano vence. Pagamento por PIX ou cartao pelo Mercado Pago. 7 dias para desistir e pedir
 reembolso (Codigo de Defesa do Consumidor). O app recebe atualizacoes sem custo a mais para quem assina.
 """
 
