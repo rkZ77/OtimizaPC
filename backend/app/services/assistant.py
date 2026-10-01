@@ -6,15 +6,17 @@ ATUAIS do banco (preco nunca e' escrito no prompt a mao, igual ao site).
 
 Limites, porque cada pergunta custa: mensagem curta, historico curto,
 resposta curta, teto por visitante e teto global por hora. Sem chave
-configurada, a rota responde 503 e o site esconde o chat.
+configurada, a rota responde 503 e o site esconde o chat. Pergunta com o
+mesmo contexto canonico sai do cache (ai_cache) e nao conta no teto global.
 """
+import re
 import threading
 import time
 
 import httpx
 
 from app import settings
-from app.services import plans
+from app.services import ai_cache, plans
 
 OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 MAX_MESSAGES = 10
@@ -120,21 +122,34 @@ def _take_global_slot() -> None:
         _global.append(now)
 
 
-def ask(messages: list[dict]) -> str:
+def _complete(kind: str, messages: list[dict], max_tokens: int, timeout: int, no_key: str, failed: str) -> str:
+    """Unica saida para a OpenAI. Procura no cache antes; o teto global so'
+    conta chamada de verdade, porque resposta do cache nao custa nada."""
     if not settings.OPENAI_API_KEY:
-        raise AssistantUnavailable("Assistente indisponivel.")
-    history = clean(messages)
+        raise AssistantUnavailable(no_key)
+    cache_key = ai_cache.key(kind, settings.OPENAI_MODEL, max_tokens, messages)
+    if (cached := ai_cache.get(kind, cache_key)) is not None:
+        return cached
     _take_global_slot()
     r = httpx.post(
         OPENAI_URL,
         headers={"Authorization": f"Bearer {settings.OPENAI_API_KEY}"},
-        json={"model": settings.OPENAI_MODEL, "max_completion_tokens": MAX_REPLY_TOKENS,
-              "messages": [{"role": "system", "content": system_prompt()}, *history]},
-        timeout=30,
+        json={"model": settings.OPENAI_MODEL, "max_completion_tokens": max_tokens, "messages": messages},
+        timeout=timeout,
     )
     if r.status_code != 200:
-        raise AssistantUnavailable("O assistente nao conseguiu responder agora. Tente de novo.")
-    return r.json()["choices"][0]["message"]["content"].strip()
+        raise AssistantUnavailable(failed)
+    text = r.json()["choices"][0]["message"]["content"].strip()
+    ai_cache.put(kind, cache_key, text)
+    return text
+
+
+def ask(messages: list[dict]) -> str:
+    if not settings.OPENAI_API_KEY:
+        raise AssistantUnavailable("Assistente indisponivel.")
+    history = clean(messages)
+    return _complete("site_chat", [{"role": "system", "content": system_prompt()}, *history], MAX_REPLY_TOKENS, 30,
+                     "Assistente indisponivel.", "O assistente nao conseguiu responder agora. Tente de novo.")
 
 
 EXPLICAR = """
@@ -153,25 +168,14 @@ aberto para medir o FPS. Nao use emoji, nem o travessao (—), nem o caractere p
 def explain(hardware: dict, findings: list[dict]) -> str:
     """Diagnostico do app em palavras simples. Recebe so' titulo, estado e recomendacao de cada item
     (nada de nome de programa, arquivo ou pasta) e o resumo do hardware."""
-    if not settings.OPENAI_API_KEY:
-        raise AssistantUnavailable("Explicacao com IA indisponivel agora.")
-    hw = ", ".join(f"{k}: {str(v)[:80]}" for k, v in list(hardware.items())[:10])
+    hw = _hardware_txt(hardware, _HW_JOGO)
     items = "\n".join(
-        f"- [{str(f.get('status', ''))[:12]}] {str(f.get('title', ''))[:160]}. {str(f.get('recommendation') or '')[:300]}"
-        f"{' (efeito: ' + str(f['impact'])[:40] + ')' if f.get('impact') else ''}"
+        f"- [{_texto(f.get('status'), 12)}] {_texto(f.get('title'), 160)}. {_texto(f.get('recommendation'), 300)}"
+        f"{' (efeito: ' + _texto(f['impact'], 40) + ')' if f.get('impact') else ''}"
         for f in findings[:12])
-    _take_global_slot()
-    r = httpx.post(
-        OPENAI_URL,
-        headers={"Authorization": f"Bearer {settings.OPENAI_API_KEY}"},
-        json={"model": settings.OPENAI_MODEL, "max_completion_tokens": 500,
-              "messages": [{"role": "system", "content": EXPLICAR},
-                           {"role": "user", "content": f"HARDWARE: {hw}\n\nDIAGNOSTICO:\n{items or '(nada a corrigir)'}"}]},
-        timeout=40,
-    )
-    if r.status_code != 200:
-        raise AssistantUnavailable("A IA nao conseguiu responder agora. Tente de novo.")
-    return r.json()["choices"][0]["message"]["content"].strip()
+    return _complete("explain", [{"role": "system", "content": EXPLICAR},
+                                 {"role": "user", "content": f"HARDWARE: {hw}\n\nDIAGNOSTICO:\n{items or '(nada a corrigir)'}"}],
+                     500, 40, "Explicacao com IA indisponivel agora.", "A IA nao conseguiu responder agora. Tente de novo.")
 
 
 UPGRADE = """
@@ -205,42 +209,63 @@ def _texto(v, n: int) -> str:
     return str(v if v is not None else "")[:n]
 
 
-def _hardware_txt(hardware: dict) -> str:
-    return ", ".join(f"{_texto(k, 40)}: {_texto(v, 80)}" for k, v in list(hardware.items())[:12])
+# ─── contexto canonico ───────────────────────────────────────────────────
+# O texto que vai para a IA e' tambem a chave do cache. Por isso ele leva so'
+# o que muda a resposta: BIOS, build do Windows e letra do disco fariam cada
+# PC ter uma chave so' dele sem mudar em nada a dica. A placa-mae fica so' na
+# troca de peca, onde soquete e chipset importam.
+_HW_JOGO = ("CPU", "GPU", "RAM", "Armazenamento", "Tipo")
+_HW_UPGRADE = ("CPU", "GPU", "RAM", "Placa-mãe", "Armazenamento", "Tipo")
+_MARCAS = re.compile(r"\((?:R|TM)\)|[®™]", re.IGNORECASE)
+_RAM = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*GB\s*$", re.IGNORECASE)
+
+
+def _valor_hw(campo: str, v) -> str:
+    s = " ".join(_MARCAS.sub("", _texto(v, 120)).split())
+    # Memoria reservada pela placa integrada faz 32 GB aparecerem como 31,9.
+    if campo == "RAM" and (m := _RAM.match(s)):
+        s = f"{round(float(m.group(1).replace(',', '.')))} GB"
+    if campo == "Armazenamento":
+        s = re.sub(r"^[A-Z]:\s*", "", s)
+    return s[:80]
+
+
+def _hardware_txt(hardware: dict, campos: tuple[str, ...]) -> str:
+    return ", ".join(f"{c}: {_valor_hw(c, hardware[c])}" for c in campos if hardware.get(c) not in (None, ""))
+
+
+# FPS e uso em % chegam com casas decimais e quase nunca se repetem entre
+# duas pessoas. Arredondar a 5 nao muda o conselho e deixa a resposta reutilizavel.
+_ARREDONDA_5 = {"avg_fps", "low1_fps", "avg_cpu", "avg_gpu"}
+
+
+def _numero(c: str, v) -> str:
+    if c in _ARREDONDA_5 and isinstance(v, (int, float)) and not isinstance(v, bool):
+        return str(int(round(v / 5.0) * 5))
+    return _texto(v, 60)
 
 
 def _jogo_txt(g: dict) -> str:
     campos = ("game", "matches", "avg_fps", "low1_fps", "display_hz", "avg_cpu", "avg_gpu", "drops", "gpu_drops", "cpu_drops", "app_drops")
-    return ", ".join(f"{c}={_texto(g.get(c), 60)}" for c in campos if c in g)
+    return ", ".join(f"{c}={_numero(c, g.get(c))}" for c in campos if c in g)
 
 
-def _chat(system: str, user: str, max_tokens: int) -> str:
-    if not settings.OPENAI_API_KEY:
-        raise AssistantUnavailable("A IA esta' indisponivel agora.")
-    _take_global_slot()
-    r = httpx.post(
-        OPENAI_URL,
-        headers={"Authorization": f"Bearer {settings.OPENAI_API_KEY}"},
-        json={"model": settings.OPENAI_MODEL, "max_completion_tokens": max_tokens,
-              "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]},
-        timeout=40,
-    )
-    if r.status_code != 200:
-        raise AssistantUnavailable("A IA nao conseguiu responder agora. Tente de novo.")
-    return r.json()["choices"][0]["message"]["content"].strip()
+def _chat(kind: str, system: str, user: str, max_tokens: int) -> str:
+    return _complete(kind, [{"role": "system", "content": system}, {"role": "user", "content": user}], max_tokens, 40,
+                     "A IA esta' indisponivel agora.", "A IA nao conseguiu responder agora. Tente de novo.")
 
 
 def upgrade(hardware: dict, setup: list, games: list, verdict: str, verdict_text: str) -> str:
     """Qual peca trocar primeiro. O veredito vem calculado do app (medicao), a IA so' escreve."""
     montagem = "\n".join(f"- {_texto(t, 160)}" for t in setup[:8]) or "(nada encontrado)"
     jogos = "\n".join(f"- {_jogo_txt(g)}" for g in games[:6] if isinstance(g, dict)) or "(nenhuma partida medida)"
-    user = (f"HARDWARE: {_hardware_txt(hardware)}\n\nMONTAGEM:\n{montagem}\n\nPARTIDAS MEDIDAS:\n{jogos}\n\n"
+    user = (f"HARDWARE: {_hardware_txt(hardware, _HW_UPGRADE)}\n\nMONTAGEM:\n{montagem}\n\nPARTIDAS MEDIDAS:\n{jogos}\n\n"
             f"VEREDITO: {_texto(verdict, 12)}. {_texto(verdict_text, 240)}")
-    return _chat(UPGRADE, user, 550)
+    return _chat("upgrade", UPGRADE, user, 550)
 
 
 def game_tips(game: str, hardware: dict, tier: str, measured: dict | None) -> str:
     """O que ajustar primeiro no menu de video do jogo, para este PC."""
     medido = _jogo_txt(measured) if isinstance(measured, dict) else "(sem partida medida deste jogo)"
-    user = f"JOGO: {_texto(game, 60)}\nNIVEL DO PC: {_texto(tier, 40)}\nHARDWARE: {_hardware_txt(hardware)}\nMEDICAO: {medido}"
-    return _chat(GAME_TIPS, user, 450)
+    user = f"JOGO: {_texto(game, 60)}\nNIVEL DO PC: {_texto(tier, 40)}\nHARDWARE: {_hardware_txt(hardware, _HW_JOGO)}\nMEDICAO: {medido}"
+    return _chat("game_tips", GAME_TIPS, user, 450)
