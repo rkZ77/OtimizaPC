@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
 import { ArrowRight, BadgeCheck, CircleSlash, Download, UserPlus } from 'lucide-react'
 import api from '../services/api'
 import PageShell from '../components/PageShell'
@@ -10,7 +9,6 @@ import BarraCelular from '../components/BarraCelular'
 import { Faq, Garantias, PERGUNTAS } from '../components/Confianca'
 import { Button } from '../components/ui'
 import { GAMES, GameGrid, Row, ScreenTour } from '../components/Vitrine'
-import { useAuth } from '../context/AuthContext'
 import { usePlanos } from '../hooks/usePlanos'
 import { instalaAqui } from '../lib/dispositivo'
 import { date } from '../lib/format'
@@ -59,13 +57,9 @@ export default function Home() {
     stats?.matches != null && { v: inteiro(stats.matches), t: 'partidas medidas com o app aberto' },
     stats?.hours != null && { v: `${inteiro(stats.hours)} h`, t: 'de jogo medidas, antes e depois' },
   ].filter((p): p is { v: string; t: string } => Boolean(p))
-  const { user } = useAuth()
-  const { hash } = useLocation()
+  // Logado continua vendo a Home: o painel e' so' pelo "Minha conta" do topo.
+  // Mandar "/" direto para o painel tirava da pessoa a pagina inicial do site.
   const aqui = instalaAqui()
-
-  // Logado, o "inicio" e' o painel da conta, nao a pagina de venda. Com ancora
-  // (/#faq, vindo do menu) a pessoa quer a secao, entao a Home continua.
-  if (user && !hash) return <Navigate to="/painel" replace />
 
   return (
     <PageShell nav={<SiteHeader />} width="wide" mainClassName="!max-w-none !px-0 !py-0" revelacao={false}>
