@@ -1,8 +1,9 @@
 """Area do cliente no site: licenca, PCs, pagamentos, benchmarks e historico."""
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 
 from app import auth
-from app.services import gameplay, licenses, payments, plans, referrals, telemetry
+from app.services import gameplay, licenses, payments, plans, referrals, telemetry, users
 
 router = APIRouter(prefix="/api/account", tags=["account"])
 
@@ -37,6 +38,21 @@ def overview(user: dict = Depends(auth.current_user)):
         "plan_name": plan["name"] if plan else "Free",
         "devices": licenses.active_devices(user["id"]),
     }
+
+
+class ProfileIn(BaseModel):
+    # So' o nome: e-mail e' o login no app (trocar quebraria o PC ativado) e a
+    # senha tem o proprio fluxo, com codigo por e-mail.
+    name: str = Field(max_length=80)
+
+
+@router.patch("/profile")
+def update_profile(body: ProfileIn, user: dict = Depends(auth.current_user)):
+    name = " ".join(body.name.split())
+    updated = users.set_name(user["id"], name)
+    if updated is None:
+        raise HTTPException(404, "Conta não encontrada.")
+    return {"user": updated}
 
 
 @router.post("/devices/{device_id}/deactivate")

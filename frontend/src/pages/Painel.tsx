@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, Crown, Download, Gamepad2, Headphones, Laptop, LogIn, Receipt, Sparkles } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
+import {
+  ArrowRight, Check, Crown, Download, Gamepad2, Headphones, KeyRound, Laptop, LogIn, Pencil, Receipt, Sparkles, UserRound,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import api, { errorMessage, type Overview } from '../services/api'
+import api, { errorMessage, type Overview, type User } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 import PageShell from '../components/PageShell'
 import AreaConta from '../components/AreaConta'
 import MandarParaPC from '../components/MandarParaPC'
+import { Avatar } from '../components/MenuUsuario'
 import { Indique, OQueFoiFeito } from '../components/ResumoPlano'
-import { Alert, Button, ErrorState, PlanBadge, SkeletonRows } from '../components/ui'
+import { Alert, Badge, Button, ErrorState, Input, Modal, ModalFooter, PlanBadge, SkeletonRows } from '../components/ui'
 import { instalaAqui } from '../lib/dispositivo'
 import { SUPPORT_IS_EXTERNAL, SUPPORT_URL } from '../lib/support'
 import { cn } from '../lib/cn'
@@ -35,10 +40,15 @@ function diasRestantes(expires: string | null): number | null {
 type Passo = { t: string; d: string; feito: boolean; acao?: React.ReactNode }
 
 export default function Painel() {
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
+  const { atualizar } = useAuth()
   const [data, setData] = useState<Overview | null>(null)
   const [recap, setRecap] = useState<Recap | null>(null)
   const [error, setError] = useState('')
+  const [perfil, setPerfil] = useState(false)
+  const [nomeEditado, setNomeEditado] = useState('')
+  const [salvando, setSalvando] = useState(false)
+  const [erroPerfil, setErroPerfil] = useState('')
   const aqui = instalaAqui()
 
   const load = () => {
@@ -48,18 +58,42 @@ export default function Painel() {
   }
   useEffect(load, [])
 
-  const nome = data?.user.name?.trim().split(' ')[0]
-  const bar = { title: nome ? `Olá, ${nome}` : 'Sua conta', sub: data?.user.email }
+  // Editar perfil abre aqui, pelo botao do cartao ou pelo item do menu do topo (?perfil=1).
+  useEffect(() => {
+    if (params.get('perfil') === '1' && data) { setNomeEditado(data.user.name ?? ''); setPerfil(true) }
+  }, [params, data])
+
+  const salvarPerfil = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSalvando(true)
+    setErroPerfil('')
+    try {
+      const { data: r } = await api.patch<{ user: User }>('/account/profile', { name: nomeEditado })
+      atualizar(r.user)
+      setData((d) => (d ? { ...d, user: r.user } : d))
+      fecharPerfil()
+    } catch (err) {
+      setErroPerfil(errorMessage(err))
+    } finally {
+      setSalvando(false)
+    }
+  }
+  const abrirPerfil = () => { setNomeEditado(data?.user.name ?? ''); setErroPerfil(''); setPerfil(true) }
+  const fecharPerfil = () => {
+    setPerfil(false)
+    if (params.get('perfil')) { params.delete('perfil'); setParams(params, { replace: true }) }
+  }
 
   if (!data) {
     return (
-      <PageShell title="Início da conta" noindex width="wide" bar={bar} beforeMain={<AreaConta />}>
+      <PageShell title="Início da conta" noindex width="wide" beforeMain={<AreaConta />}>
         {error ? <ErrorState description={error} onRetry={load} /> : <SkeletonRows rows={4} />}
       </PageShell>
     )
   }
 
   const lic = data.license
+  const primeiroNome = data.user.name?.trim().split(/\s+/)[0] || data.user.email.split('@')[0]
   const tier = lic.tier === 'custom' ? 'ultimate' : lic.tier
   const dias = diasRestantes(lic.expires_at)
   const pago = lic.status === 'active' && tier !== 'free'
@@ -115,7 +149,21 @@ export default function Painel() {
   ]
 
   return (
-    <PageShell title="Início da conta" noindex width="wide" bar={bar} beforeMain={<AreaConta />}>
+    <PageShell title="Início da conta" noindex width="wide" beforeMain={<AreaConta />}>
+      {/* Quem esta' logado, como na PickIA: avatar, nome, selo e editar perfil.
+          ADMIN so' aparece para admin. */}
+      <div className="card mb-4 flex flex-wrap items-center gap-4 p-5 sm:p-6">
+        <Avatar nome={data.user.name} email={data.user.email} className="h-14 w-14 text-lg" />
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-2">
+            <span className="font-display text-xl font-bold text-ink-1">Olá, {primeiroNome}!</span>
+            {data.user.role === 'admin' && <Badge tone="purple">ADMIN</Badge>}
+          </p>
+          <p className="truncate text-sm text-ink-3">{data.user.email}</p>
+        </div>
+        <Button variant="ghost" size="sm" Icon={Pencil} onClick={abrirPerfil}>Editar perfil</Button>
+      </div>
+
       <div className="mb-6 space-y-3">
         {pagamento === 'aprovado' && <Alert tone="ok">Pagamento aprovado. Seu plano já está ativo: no app, abra Conta e toque em Sincronizar.</Alert>}
         {pagamento === 'pendente' && <Alert tone="warn">Pagamento em processamento. Assim que o Mercado Pago confirmar, seu plano é ativado sozinho.</Alert>}
@@ -203,6 +251,29 @@ export default function Painel() {
           Se o teste acabar sem assinatura, o app desfaz sozinho as correções do teste e o PC volta como estava.
         </p>
       )}
+
+      <AnimatePresence>
+        {perfil && (
+          <Modal onClose={fecharPerfil} title="Editar perfil" width="sm">
+            <form onSubmit={salvarPerfil} className="space-y-4">
+              {erroPerfil && <Alert>{erroPerfil}</Alert>}
+              <Input label="Como quer ser chamado" name="name" Icon={UserRound} autoComplete="given-name" maxLength={80}
+                     value={nomeEditado} onChange={(e) => setNomeEditado(e.target.value)} />
+              <div>
+                <p className="text-sm font-semibold text-ink-2">E-mail</p>
+                <p className="mt-1 text-sm text-ink-3">{data.user.email}. É com ele que você entra no app, por isso não muda aqui.</p>
+              </div>
+              <Link to={`/esqueci-senha?email=${encodeURIComponent(data.user.email)}`} className="inline-flex items-center gap-2 text-sm font-semibold text-accent-ink">
+                <KeyRound className="h-4 w-4" aria-hidden />Trocar a senha
+              </Link>
+              <ModalFooter>
+                <Button variant="ghost" onClick={fecharPerfil}>Cancelar</Button>
+                <Button type="submit" loading={salvando}>Salvar</Button>
+              </ModalFooter>
+            </form>
+          </Modal>
+        )}
+      </AnimatePresence>
     </PageShell>
   )
 }
