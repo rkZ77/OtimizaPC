@@ -257,7 +257,7 @@ public static class ProfileResolver
             Objective.Smoothness => $"Perfeito. Vamos priorizar um jogo sem travadas{sem}, sem aplicar alterações desnecessárias ao seu PC.",
             Objective.LowLatency => $"Perfeito. Vamos priorizar a menor latência{sem}, sem aplicar alterações desnecessárias ao seu PC.",
             Objective.Quality => "Perfeito. Vamos manter a qualidade de imagem e corrigir só o que atrapalha o jogo.",
-            _ => "Vamos usar um perfil equilibrado e seguro para o seu PC. Dá para mudar quando quiser em Configurações.",
+            _ => "Vamos usar um perfil equilibrado e seguro para o seu PC.",
         };
     }
 }

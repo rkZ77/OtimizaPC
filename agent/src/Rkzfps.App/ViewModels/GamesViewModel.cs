@@ -92,6 +92,9 @@ public sealed class GamesViewModel : PageViewModel
 
     public string OtherGames { get; private set; } = "";
 
+    /// <summary>Uma linha na tela; a lista dos nomes fica na dica.</summary>
+    public string OtherGamesTitle { get; private set; } = "";
+
     /// <summary>Nível do PC vindo do diagnóstico, para a pessoa entender o que cada jogo recebe.</summary>
     public string TierTitle { get; private set; } = "";
     public string TierDetail { get; private set; } = "";
@@ -174,6 +177,7 @@ public sealed class GamesViewModel : PageViewModel
             .ToList();
         var others = _host.Ctx.GameProfiles.Except(mine).Select(p => p.Name).ToList();
         OtherGames = others.Count == 0 ? "" : "O RKZFPS também reconhece e mede o FPS de: " + string.Join(", ", others) + ". Eles aparecem aqui quando forem instalados ou jogados com o RKZFPS aberto.";
+        OtherGamesTitle = others.Count == 1 ? "Mais 1 jogo reconhecido" : $"Mais {others.Count} jogos reconhecidos";
 
         var res = System.Windows.Application.Current.Resources;
         foreach (var profile in mine)
@@ -249,7 +253,7 @@ public sealed class GamesViewModel : PageViewModel
             });
         }
 
-        foreach (var n in new[] { nameof(CanFix), nameof(PlanNote), nameof(TierTitle), nameof(TierDetail), nameof(OtherGames) })
+        foreach (var n in new[] { nameof(CanFix), nameof(PlanNote), nameof(TierTitle), nameof(TierDetail), nameof(OtherGames), nameof(OtherGamesTitle) })
             Raise(n);
     }
 }

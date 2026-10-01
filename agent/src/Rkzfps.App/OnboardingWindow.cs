@@ -143,6 +143,9 @@ public static class OnboardingWindow
             var tuning = host.Tuning;
             title.Text = "Tudo pronto";
             subtitle.Text = tuning?.Summary ?? "";
+            // No fim a frase é a resposta para a pessoa: texto normal, não legenda.
+            subtitle.SetResourceReference(TextBlock.ForegroundProperty, "Text");
+            subtitle.FontSize = 15;
             question.Visibility = Visibility.Collapsed;
             options.Visibility = Visibility.Collapsed;
             reasons.Children.Clear();

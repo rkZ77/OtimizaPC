@@ -13,9 +13,11 @@
     </UserControl.Resources>
     <ScrollViewer>
         <StackPanel Margin="32,28">
-            <TextBlock Text="Partidas" Style="{StaticResource H1}" />
-            <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,18"
-                       Text="O RKZFPS mede o FPS de cada partida sozinho, com o jogo aberto, e mostra se ele mudou depois de uma otimização. Só entram os minutos com o jogo em primeiro plano, depois do carregamento. Nada no jogo é alterado para medir." />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                <TextBlock Text="Partidas" Style="{StaticResource H1}" />
+                <TextBlock Style="{StaticResource InfoTip}" FontSize="16" Margin="10,6,0,0"
+                           ToolTip="O RKZFPS mede o FPS de cada partida sozinho, com o jogo aberto, e mostra se ele mudou depois de uma otimização. Só entram os minutos com o jogo em primeiro plano, depois do carregamento. Nada no jogo é alterado para medir." />
+            </StackPanel>
 
             <!-- Ao vivo, enquanto o jogo roda -->
             <Border Style="{StaticResource Card}" Visibility="{Binding IsLive, Converter={StaticResource Visible}}">
@@ -97,7 +99,9 @@
                                 Visibility="{Binding GpuFixable, Converter={StaticResource Visible}}" />
                     </StackPanel>
 
-                    <TextBlock Text="Dados usados no diagnóstico" FontWeight="SemiBold" Margin="0,14,0,6" />
+                    <ToggleButton x:Name="evidence" Style="{StaticResource Disclosure}" Content="Dados usados no diagnóstico" Margin="0,14,0,0"
+                                  ToolTip="Nenhuma conclusão sai de uma métrica só: cada categoria exige dois sinais que concordam. Medido é lido direto do Windows ou do driver; calculado é conta feita sobre o que foi medido." />
+                    <StackPanel Margin="18,6,0,0" Visibility="{Binding IsChecked, ElementName=evidence, Converter={StaticResource Visible}}">
                     <ItemsControl ItemsSource="{Binding Evidence}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -114,8 +118,7 @@
                     </ItemsControl>
                     <TextBlock Text="Configuração do jogo" FontWeight="SemiBold" Margin="0,14,0,4" />
                     <TextBlock Text="{Binding SettingsText}" TextWrapping="Wrap" Style="{StaticResource MutedText}" FontSize="13" />
-                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0"
-                               Text="Nenhuma conclusão sai de uma métrica só: cada categoria exige dois sinais que concordam. Medido é lido direto do Windows ou do driver; calculado é conta feita sobre o que foi medido." />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -123,12 +126,16 @@
                 <StackPanel>
                     <TextBlock Text="Medição automática" Style="{StaticResource H2}" />
                     <TextBlock Text="{Binding MonitorStatus}" Foreground="{DynamicResource Accent}" Margin="0,0,0,10" TextWrapping="Wrap" />
-                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das minhas partidas automaticamente" />
-                    <TextBlock Text="{Binding MeasuredGames}" Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="54,4,0,0" />
-                    <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding StartWithWindows}" Margin="0,8,0,0"
-                              Content="Iniciar com o Windows, na bandeja, para medir sempre que eu jogar" />
-                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="54,4,0,0"
-                               Text="Fechar a janela deixa o RKZFPS na bandeja, perto do relógio. Para encerrar de vez, clique com o botão direito no ícone e escolha Sair." />
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding AutoMeasure}" Content="Medir o FPS das minhas partidas automaticamente" />
+                        <TextBlock Style="{StaticResource InfoTip}" ToolTip="{Binding MeasuredGames}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding StartWithWindows}"
+                                  Content="Iniciar com o Windows, na bandeja, para medir sempre que eu jogar" />
+                        <TextBlock Style="{StaticResource InfoTip}"
+                                   ToolTip="Fechar a janela deixa o RKZFPS na bandeja, perto do relógio. Para encerrar de vez, clique com o botão direito no ícone e escolha Sair." />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
