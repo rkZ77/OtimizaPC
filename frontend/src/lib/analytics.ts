@@ -1,7 +1,7 @@
 /*
  * Google Analytics 4, so' com consentimento (LGPD).
  *
- * O codigo G-XXXX nao fica no build: o servidor poe numa <meta name="fpsx-ga">
+ * O codigo G-XXXX nao fica no build: o servidor poe numa <meta name="rkzfps-ga">
  * quando a variavel GA_MEASUREMENT_ID existe no Railway (ver app/seo.py). Sem
  * a variavel, nada aqui roda e o aviso de cookies continua o de antes.
  *
@@ -25,7 +25,7 @@ export type Consentimento = 'todos' | 'essenciais' | '1' | null
 let iniciado = false
 
 export function gaId(): string | null {
-  const id = document.querySelector<HTMLMetaElement>('meta[name="fpsx-ga"]')?.content ?? ''
+  const id = document.querySelector<HTMLMetaElement>('meta[name="rkzfps-ga"]')?.content ?? ''
   return /^G-[A-Z0-9]{4,12}$/.test(id) ? id : null
 }
 

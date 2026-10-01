@@ -8,7 +8,7 @@ from app.main import app
 from app.services import emails, password_reset, users
 
 NOW = datetime(2026, 9, 26, 15, 0, tzinfo=timezone.utc)
-USER = {"id": 7, "email": "cliente@fpsx.app", "name": "Ana Souza", "role": "user", "active": True}
+USER = {"id": 7, "email": "cliente@rkzfps.app", "name": "Ana Souza", "role": "user", "active": True}
 
 
 @pytest.fixture
@@ -122,7 +122,7 @@ def test_aviso_repetido_nao_sai_de_novo(monkeypatch, log):
 
 def test_falha_do_resend_vira_registro_e_nao_excecao(monkeypatch, log):
     monkeypatch.setattr(settings, "RESEND_API_KEY", "re_x")
-    monkeypatch.setattr(settings, "RESEND_FROM", "FPSX <a@b.com>")
+    monkeypatch.setattr(settings, "RESEND_FROM", "RKZFPS <a@b.com>")
 
     def boom(*a):
         raise RuntimeError("Resend respondeu 403: domain not verified")
@@ -134,7 +134,7 @@ def test_falha_do_resend_vira_registro_e_nao_excecao(monkeypatch, log):
 
 def test_envio_ok(monkeypatch, log):
     monkeypatch.setattr(settings, "RESEND_API_KEY", "re_x")
-    monkeypatch.setattr(settings, "RESEND_FROM", "FPSX <a@b.com>")
+    monkeypatch.setattr(settings, "RESEND_FROM", "RKZFPS <a@b.com>")
     monkeypatch.setattr(emails, "_post", lambda *a: "msg_1")
     assert emails.send("welcome", "a@b.com", email_templates.teste("u")) == "sent"
     assert log["end"] == [("sent", "msg_1")]
@@ -175,7 +175,7 @@ def test_token_anterior_a_troca_de_senha_nao_vale():
 def test_esqueci_a_senha_responde_igual_com_ou_sem_conta(client, monkeypatch, sent):
     monkeypatch.setattr(users, "get_by_email", lambda e: USER if e == USER["email"] else None)
     monkeypatch.setattr(password_reset, "create", lambda uid: "042913")
-    a = client.post("/api/auth/forgot-password", json={"email": "ninguem@fpsx.app"})
+    a = client.post("/api/auth/forgot-password", json={"email": "ninguem@rkzfps.app"})
     b = client.post("/api/auth/forgot-password", json={"email": USER["email"]})
     assert a.status_code == b.status_code == 200 and a.json() == b.json()
     assert [(k, to) for k, to, *_ in sent] == [("password_reset", USER["email"])]

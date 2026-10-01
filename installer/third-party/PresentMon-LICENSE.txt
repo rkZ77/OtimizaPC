@@ -1,5 +1,5 @@
 PresentMon 2.5.1 - https://github.com/GameTechDev/PresentMon
-Incluido no FPSX sem modificacoes, para medir o FPS das partidas.
+Incluido no RKZFPS sem modificacoes, para medir o FPS das partidas.
 
 Copyright (C) 2017-2024 Intel Corporation
 

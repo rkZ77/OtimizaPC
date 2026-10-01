@@ -19,7 +19,7 @@ from urllib.parse import quote_plus
 from app import database, settings
 from app.services import licenses, plans, referrals
 
-logger = logging.getLogger("fpsx.payments")
+logger = logging.getLogger("rkzfps.payments")
 
 
 @dataclass(frozen=True)

@@ -12,7 +12,7 @@ from app.routers import account, admin, agent, auth, payments, public
 from app.security_headers import SecurityHeaders
 from app.services import emails
 
-logger = logging.getLogger("fpsx")
+logger = logging.getLogger("rkzfps")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
 

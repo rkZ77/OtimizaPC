@@ -1,7 +1,7 @@
 <Project>
   <!-- Configuracao comum a todos os projetos do Agent. Nullable e warnings como
        erro de proposito: um null esquecido num leitor de registro vira um
-       "otimizado" falso no relatorio, e isso e' exatamente o que o FPSX promete
+       "otimizado" falso no relatorio, e isso e' exatamente o que o RKZFPS promete
        nao fazer. -->
   <PropertyGroup>
     <LangVersion>12</LangVersion>

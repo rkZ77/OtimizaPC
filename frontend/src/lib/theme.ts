@@ -15,7 +15,10 @@
 export type Tema = 'dark' | 'light'
 
 /** Mesma chave lida pelo script inline do index.html. Mudar aqui exige mudar la'. */
-export const CHAVE_TEMA = 'fpsx_theme'
+export const CHAVE_TEMA = 'rkzfps_theme'
+
+/** Chave de quando o projeto se chamava FPSX: lida uma vez e trocada pela nova. */
+const CHAVE_TEMA_ANTIGA = 'fpsx_theme'
 
 /* A cor da barra do navegador no celular (e da splash do PWA). Sao os mesmos
    valores de --surface-0 nos dois temas · quando divergirem, e' aqui que se
@@ -27,7 +30,12 @@ const THEME_COLOR: Record<Tema, string> = {
 
 function lerArmazenado(): Tema | null {
   try {
-    const v = localStorage.getItem(CHAVE_TEMA)
+    let v = localStorage.getItem(CHAVE_TEMA)
+    const antiga = localStorage.getItem(CHAVE_TEMA_ANTIGA)
+    if (antiga !== null) {
+      if (v === null) { v = antiga; localStorage.setItem(CHAVE_TEMA, antiga) }
+      localStorage.removeItem(CHAVE_TEMA_ANTIGA)
+    }
     return v === 'light' || v === 'dark' ? v : null
   } catch {
     /* Safari em aba privada, ou site data bloqueado: o tema so' nao persiste. */

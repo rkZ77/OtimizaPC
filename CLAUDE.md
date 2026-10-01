@@ -1,8 +1,8 @@
-# FPSX: diretrizes do projeto
+# RKZFPS: diretrizes do projeto
 
 ## Princípio que manda em tudo
 
-O FPSX é produto de engenharia, não coleção de tweaks. Nenhuma otimização entra sem responder às
+O RKZFPS é produto de engenharia, não coleção de tweaks. Nenhuma otimização entra sem responder às
 dez perguntas da seção 51 do spec (estão no campo `justification` do catálogo). Na dúvida,
 **diagnosticar em vez de alterar**. Nunca prometer número de ganho: número só sai de medição.
 
@@ -16,7 +16,7 @@ dez perguntas da seção 51 do spec (estão no campo `justification` do catálog
 
 ## Regras de código
 
-- Otimização nova: handler em `Fpsx.Core/Optimizations` + entrada no catálogo com justificativa
+- Otimização nova: handler em `Rkzfps.Core/Optimizations` + entrada no catálogo com justificativa
   completa + teste. Alteração nova só pelos tipos fechados de `Model/Changes.cs`, com regra na `SafetyPolicy`.
 - Nunca: desativar Defender, Firewall ou Windows Update; prioridade Realtime; desligar serviços em
   massa; fechar processo à força. A `SafetyPolicy` bloqueia, e o teste garante.
@@ -27,7 +27,7 @@ dez perguntas da seção 51 do spec (estão no campo `justification` do catálog
 - Texto de tela 100% pt-BR, sem emoji, sem travessão e sem ponto do meio; ícones do `lucide-react` no site.
 - Cor muda no token (`:root` no site, `Theme.xaml` no app), nunca solta no componente.
 - Preço vem sempre de `/api/public/plans`; o front não escreve nem calcula preço.
-- **Nenhum teste toca banco**, exceto `test_integration_db.py` com `FPSX_TEST_DATABASE_URL` local.
+- **Nenhum teste toca banco**, exceto `test_integration_db.py` com `RKZFPS_TEST_DATABASE_URL` local.
 
 ## Fluxo
 

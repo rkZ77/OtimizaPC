@@ -1,10 +1,10 @@
 """Fluxos completos contra um PostgreSQL DESCARTAVEL.
 
-So' roda com FPSX_TEST_DATABASE_URL definida, e recusa qualquer URL que nao
+So' roda com RKZFPS_TEST_DATABASE_URL definida, e recusa qualquer URL que nao
 seja localhost: a trava do conftest continua valendo para o resto da suite, e
 este arquivo nunca consegue apontar para o Supabase por engano.
 
-    FPSX_TEST_DATABASE_URL=postgresql://fpsx@localhost:54329/fpsx_test pytest tests/test_integration_db.py
+    RKZFPS_TEST_DATABASE_URL=postgresql://rkzfps@localhost:54329/rkzfps_test pytest tests/test_integration_db.py
 """
 import logging
 import os
@@ -13,8 +13,8 @@ from urllib.parse import urlparse
 import pytest
 from fastapi.testclient import TestClient
 
-URL = os.getenv("FPSX_TEST_DATABASE_URL", "")
-pytestmark = pytest.mark.skipif(not URL, reason="FPSX_TEST_DATABASE_URL não definida")
+URL = os.getenv("RKZFPS_TEST_DATABASE_URL", "")
+pytestmark = pytest.mark.skipif(not URL, reason="RKZFPS_TEST_DATABASE_URL não definida")
 
 H1, H2, H3 = "1" * 64, "2" * 64, "3" * 64
 
@@ -73,8 +73,8 @@ def test_ciclo_completo_trial_compra_dispositivos_telemetria(api, db):
     from app.services import payments
 
     # Cadastro cria trial PRO de 7 dias.
-    alice = _register(api, "alice@fpsx.app")
-    assert api.post("/api/auth/register", json={"email": "ALICE@fpsx.app", "password": "outra-senha-1"}).status_code == 409
+    alice = _register(api, "alice@rkzfps.app")
+    assert api.post("/api/auth/register", json={"email": "ALICE@rkzfps.app", "password": "outra-senha-1"}).status_code == 409
     overview = api.get("/api/account/overview", headers=alice).json()
     assert overview["license"]["status"] == "trial" and overview["license"]["tier"] == "pro"
 
@@ -85,7 +85,7 @@ def test_ciclo_completo_trial_compra_dispositivos_telemetria(api, db):
     assert signing.verify(token)["status"] == "trial"
 
     # Outra conta no MESMO PC nao ganha outro trial.
-    bob = _register(api, "bob@fpsx.app")
+    bob = _register(api, "bob@rkzfps.app")
     assert _activate(api, bob, H1).status_code == 403
 
     # Trial vale para 1 PC.
@@ -148,21 +148,21 @@ def test_ciclo_completo_trial_compra_dispositivos_telemetria(api, db):
 def test_admin_quebra_da_base_financeiro_funil_e_ficha(api, db):
     from app.services import payments
 
-    admin = _register(api, "dono@fpsx.app")
-    db.execute("UPDATE users SET role = 'admin' WHERE email = 'dono@fpsx.app'")
+    admin = _register(api, "dono@rkzfps.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'dono@rkzfps.app'")
 
     # Um de cada segmento.
-    _register(api, "teste@fpsx.app")                      # trial (cadastro ganha trial)
-    free = _register(api, "free@fpsx.app")
-    db.execute("DELETE FROM licenses WHERE user_id = (SELECT id FROM users WHERE email = 'free@fpsx.app')")
-    assinante = _register(api, "assinante@fpsx.app")
+    _register(api, "teste@rkzfps.app")                      # trial (cadastro ganha trial)
+    free = _register(api, "free@rkzfps.app")
+    db.execute("DELETE FROM licenses WHERE user_id = (SELECT id FROM users WHERE email = 'free@rkzfps.app')")
+    assinante = _register(api, "assinante@rkzfps.app")
     uid = api.get("/api/auth/me", headers=assinante).json()["user"]["id"]
     payments.apply_approved_payment(payments.NormalizedPayment("mercadopago", "mp-9", "approved", 2990, f"{uid}:pro:"), "teste")
     _activate(api, assinante, H1)
-    _register(api, "vencido@fpsx.app")
-    db.execute("UPDATE licenses SET expires_at = now() - interval '2 days' WHERE user_id = (SELECT id FROM users WHERE email = 'vencido@fpsx.app')")
-    _register(api, "bloqueado@fpsx.app")
-    db.execute("UPDATE users SET active = FALSE WHERE email = 'bloqueado@fpsx.app'")
+    _register(api, "vencido@rkzfps.app")
+    db.execute("UPDATE licenses SET expires_at = now() - interval '2 days' WHERE user_id = (SELECT id FROM users WHERE email = 'vencido@rkzfps.app')")
+    _register(api, "bloqueado@rkzfps.app")
+    db.execute("UPDATE users SET active = FALSE WHERE email = 'bloqueado@rkzfps.app'")
     assert free
 
     stats = api.get("/api/admin/users/stats", headers=admin).json()
@@ -170,7 +170,7 @@ def test_admin_quebra_da_base_financeiro_funil_e_ficha(api, db):
     assert stats["subscribers_by_tier"] == [{"tier": "pro", "n": 1}]
 
     subs = api.get("/api/admin/users?segment=subscriber", headers=admin).json()
-    assert subs["total"] == 1 and subs["users"][0]["email"] == "assinante@fpsx.app"
+    assert subs["total"] == 1 and subs["users"][0]["email"] == "assinante@rkzfps.app"
     assert subs["users"][0]["devices"] == 1
     assert api.get("/api/admin/users?q=venc", headers=admin).json()["users"][0]["segment"] == "expired"
 
@@ -198,8 +198,8 @@ def test_admin_quebra_da_base_financeiro_funil_e_ficha(api, db):
 def test_admin_planos_config_catalogo_e_auditoria(api, db):
     from app import signing
 
-    admin = _register(api, "admin@fpsx.app")
-    db.execute("UPDATE users SET role = 'admin' WHERE email = 'admin@fpsx.app'")
+    admin = _register(api, "admin@rkzfps.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'admin@rkzfps.app'")
 
     assert api.get("/api/admin/metrics", headers=admin).json()["users"] == 1
 
@@ -233,7 +233,7 @@ def test_admin_planos_config_catalogo_e_auditoria(api, db):
     overrides = signing.verify(signed)["overrides"]
     assert overrides == [{"kind": "optimization", "id": "power-plan-high-performance", "enabled": False}]
 
-    assert api.post("/api/admin/releases", headers=admin, json={"component": "agent", "version": "0.2.0", "url": "https://cdn.fpsx.app/FPSX-Setup-0.2.0.exe", "sha256": "a" * 64}).status_code == 200
+    assert api.post("/api/admin/releases", headers=admin, json={"component": "agent", "version": "0.2.0", "url": "https://cdn.rkzfps.app/RKZFPS-Setup-0.2.0.exe", "sha256": "a" * 64}).status_code == 200
     assert api.get("/api/public/releases").json()["releases"][0]["version"] == "0.2.0"
 
     actions = [e["action"] for e in api.get("/api/admin/audit", headers=admin).json()["entries"]]
@@ -243,11 +243,11 @@ def test_admin_planos_config_catalogo_e_auditoria(api, db):
 def test_redefinir_senha_registro_de_email_e_avisos_de_plano(api, db, monkeypatch):
     from app.services import emails, password_reset
 
-    headers = _register(api, "reset@fpsx.app")
+    headers = _register(api, "reset@rkzfps.app")
     monkeypatch.setattr(password_reset, "new_code", lambda: "111111")
 
-    assert api.post("/api/auth/forgot-password", json={"email": "reset@fpsx.app"}).status_code == 200
-    body = {"email": "reset@fpsx.app", "code": "222222", "password": "senha-nova-1"}
+    assert api.post("/api/auth/forgot-password", json={"email": "reset@rkzfps.app"}).status_code == 200
+    body = {"email": "reset@rkzfps.app", "code": "222222", "password": "senha-nova-1"}
     assert api.post("/api/auth/reset-password", json=body).status_code == 400
     assert api.post("/api/auth/reset-password", json={**body, "code": "111111"}).status_code == 200
     # Codigo usado nao vale de novo.
@@ -256,11 +256,11 @@ def test_redefinir_senha_registro_de_email_e_avisos_de_plano(api, db, monkeypatc
     # Sessao de antes da troca cai; a senha nova entra.
     db.execute("UPDATE users SET password_changed_at = password_changed_at + interval '2 seconds'")
     assert api.get("/api/auth/me", headers=headers).status_code == 401
-    assert api.post("/api/auth/login", json={"email": "reset@fpsx.app", "password": "senha-forte-1"}).status_code == 401
-    assert api.post("/api/auth/login", json={"email": "reset@fpsx.app", "password": "senha-nova-1"}).status_code == 200
+    assert api.post("/api/auth/login", json={"email": "reset@rkzfps.app", "password": "senha-forte-1"}).status_code == 401
+    assert api.post("/api/auth/login", json={"email": "reset@rkzfps.app", "password": "senha-nova-1"}).status_code == 200
 
     # Cinco chutes errados travam o codigo, mesmo que o sexto seja o certo.
-    api.post("/api/auth/forgot-password", json={"email": "reset@fpsx.app"})
+    api.post("/api/auth/forgot-password", json={"email": "reset@rkzfps.app"})
     for _ in range(password_reset.MAX_ATTEMPTS):
         assert api.post("/api/auth/reset-password", json={**body, "code": "999999"}).status_code == 400
     assert api.post("/api/auth/reset-password", json={**body, "code": "111111"}).status_code == 400
@@ -274,21 +274,21 @@ def test_redefinir_senha_registro_de_email_e_avisos_de_plano(api, db, monkeypatc
     assert emails.run_expiry_notices() == {"duplicate": 1}
 
     # Quem ja' tem outra licenca mais longa nao recebe "vai vencer".
-    other = _register(api, "renovou@fpsx.app")
+    other = _register(api, "renovou@rkzfps.app")
     assert other
-    db.execute("UPDATE licenses SET expires_at = now() + interval '1 day' WHERE user_id = (SELECT id FROM users WHERE email = 'renovou@fpsx.app')")
+    db.execute("UPDATE licenses SET expires_at = now() + interval '1 day' WHERE user_id = (SELECT id FROM users WHERE email = 'renovou@rkzfps.app')")
     db.execute("""INSERT INTO licenses (user_id, plan_key, tier, status, max_devices, expires_at)
-                  SELECT id, 'pro', 'pro', 'active', 3, now() + interval '30 days' FROM users WHERE email = 'renovou@fpsx.app'""")
-    assert [c["email"] for c in emails.expiry_candidates()] == ["reset@fpsx.app"]
+                  SELECT id, 'pro', 'pro', 'active', 3, now() + interval '30 days' FROM users WHERE email = 'renovou@rkzfps.app'""")
+    assert [c["email"] for c in emails.expiry_candidates()] == ["reset@rkzfps.app"]
 
 def test_ataques_com_banco_real_idor_e_sql_injection(api, db):
     """IDOR: a conta B tenta mexer no PC da conta A. SQL injection: texto de
     ataque na busca do admin e no nome do cadastro vira texto, nunca SQL."""
-    a = _register(api, "vitima@fpsx.app")
+    a = _register(api, "vitima@rkzfps.app")
     assert _activate(api, a, H1).status_code == 200
     pc_a = api.get("/api/account/overview", headers=a).json()["devices"][0]["id"]
 
-    b = _register(api, "atacante@fpsx.app")
+    b = _register(api, "atacante@rkzfps.app")
     r = api.post(f"/api/account/devices/{pc_a}/deactivate", headers=b)
     assert r.status_code in (403, 404)
     assert api.get("/api/account/overview", headers=a).json()["devices"][0]["id"] == pc_a  # continua ativo
@@ -298,12 +298,12 @@ def test_ataques_com_banco_real_idor_e_sql_injection(api, db):
 
     # SQL injection no nome: fica gravado como texto.
     evil = "Robert'); DROP TABLE users; --"
-    r = api.post("/api/auth/register", json={"email": "bobby@fpsx.app", "password": "senha-forte-1", "name": evil})
+    r = api.post("/api/auth/register", json={"email": "bobby@rkzfps.app", "password": "senha-forte-1", "name": evil})
     assert r.status_code == 200 and r.json()["user"]["name"] == evil
     assert db.fetch_one("SELECT count(*) AS n FROM users")["n"] == 3
 
     # SQL injection na busca do admin: nenhum resultado a mais, nenhuma tabela a menos.
-    db.execute("UPDATE users SET role = 'admin' WHERE email = 'vitima@fpsx.app'")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'vitima@rkzfps.app'")
     for q in ["' OR '1'='1", "%' OR 1=1 --", "'; DELETE FROM users; --"]:
         found = api.get("/api/admin/users", params={"q": q}, headers=a).json()["users"]
         assert found == [], q
@@ -312,7 +312,7 @@ def test_ataques_com_banco_real_idor_e_sql_injection(api, db):
     # XSS no nome: a API devolve o texto como veio; quem escapa e' o React
     # (nenhum dangerouslySetInnerHTML no site, conferido no teste do front).
     xss = "<img src=x onerror=alert(1)>"
-    r = api.post("/api/auth/register", json={"email": "xss@fpsx.app", "password": "senha-forte-1", "name": xss})
+    r = api.post("/api/auth/register", json={"email": "xss@rkzfps.app", "password": "senha-forte-1", "name": xss})
     assert r.json()["user"]["name"] == xss
 
 
@@ -333,8 +333,8 @@ def test_botao_baixar_conta_o_clique_e_aparece_no_funil(api, db):
     api.get("/api/public/download", follow_redirects=False, headers={"User-Agent": "WhatsApp/2.23"})
     assert db.fetch_one("SELECT n FROM download_clicks WHERE version = '9.9.9'")["n"] == 3
 
-    admin = _register(api, "dono@fpsx.app")
-    db.execute("UPDATE users SET role = 'admin' WHERE email = 'dono@fpsx.app'")
+    admin = _register(api, "dono@rkzfps.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'dono@rkzfps.app'")
     assert api.get("/api/admin/funnel?days=7", headers=admin).json()["downloads"] == 3
 
 
@@ -357,7 +357,7 @@ def test_partidas_sobem_comparam_com_pcs_parecidos_e_aparecem_no_admin(api, db):
     }
     tokens = []
     for i in range(7):
-        headers = _register(api, f"jogador{i}@fpsx.app")
+        headers = _register(api, f"jogador{i}@rkzfps.app")
         h = format(i + 4, "x") * 64
         tokens.append(_activate(api, headers, h).json()["token"])
     start = datetime(2026, 9, 27, 20, 0, tzinfo=timezone.utc)
@@ -381,9 +381,9 @@ def test_partidas_sobem_comparam_com_pcs_parecidos_e_aparecem_no_admin(api, db):
     peers = api.get("/api/agent/gameplay/peers?game_id=cs2", headers={"X-Device-Token": tokens[6]}).json()
     assert peers["scope"] == "tier" and peers["devices"] == 6
 
-    _register(api, "analista@fpsx.app")
-    db.execute("UPDATE users SET role = 'admin' WHERE email = 'analista@fpsx.app'")
-    r = api.post("/api/auth/login", json={"email": "analista@fpsx.app", "password": "senha-forte-1"})
+    _register(api, "analista@rkzfps.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'analista@rkzfps.app'")
+    r = api.post("/api/auth/login", json={"email": "analista@rkzfps.app", "password": "senha-forte-1"})
     admin = {"Authorization": f"Bearer {r.json()['access_token']}"}
     summary = api.get("/api/admin/gameplay/summary", headers=admin).json()
     assert summary["by_game"][0]["matches"] == 7 and summary["by_game"][0]["devices"] == 7
@@ -393,4 +393,4 @@ def test_partidas_sobem_comparam_com_pcs_parecidos_e_aparecem_no_admin(api, db):
     tl = api.get(f"/api/admin/gameplay/{recent[0]['id']}/timeline", headers=admin).json()
     assert tl["timeline"] == [[100, 170.0, 150.0], [102, 168.0, 20.0]]
     # Usuário comum não vê o painel.
-    assert api.get("/api/admin/gameplay/summary", headers=_register(api, "curioso@fpsx.app")).status_code == 403
+    assert api.get("/api/admin/gameplay/summary", headers=_register(api, "curioso@rkzfps.app")).status_code == 403

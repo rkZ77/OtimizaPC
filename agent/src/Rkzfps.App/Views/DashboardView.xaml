@@ -1,0 +1,299 @@
+<UserControl x:Class="Rkzfps.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer>
+        <StackPanel Margin="32,28">
+            <!-- Cartão principal: a situação em uma frase e um botão (todo usuário) -->
+            <Border Style="{StaticResource Card}" Padding="26,24" Margin="0,0,0,16">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="{Binding HeroButton}" Style="{StaticResource Primary}" Command="{Binding HeroCommand}"
+                            FontSize="16" Padding="26,13" VerticalAlignment="Center" Margin="20,0,0,0" />
+                    <Border Width="58" Height="58" CornerRadius="29" Background="{DynamicResource Surface2}" VerticalAlignment="Center" Margin="0,0,18,0">
+                        <TextBlock Text="{Binding HeroGlyph}" FontFamily="Segoe MDL2 Assets" FontSize="26" Foreground="{Binding HeroBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding HeroTitle}" FontSize="22" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding HeroText}" Style="{StaticResource MutedText}" FontSize="14" Margin="0,6,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Atalhos -->
+            <UniformGrid Columns="3" Margin="0,0,0,6">
+                <Button Command="{Binding GoGamesCommand}" Margin="0,0,8,12" Padding="16,14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <StackPanel>
+                            <TextBlock Text="Meus jogos" FontWeight="SemiBold" />
+                            <TextBlock Text="Ajuste de cada jogo" Style="{StaticResource MutedText}" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding GoGameplayCommand}" Margin="4,0,4,12" Padding="16,14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xEC4A;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <StackPanel>
+                            <TextBlock Text="FPS das partidas" FontWeight="SemiBold" />
+                            <TextBlock Text="Antes e depois" Style="{StaticResource MutedText}" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding GoHistoryCommand}" Margin="8,0,0,12" Padding="16,14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE7A7;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <StackPanel>
+                            <TextBlock Text="Desfazer" FontWeight="SemiBold" />
+                            <TextBlock Text="Voltar como estava" Style="{StaticResource MutedText}" FontSize="12" />
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <!-- Peça trocada desde a análise anterior: diz se precisa formatar e leva à página com o passo a passo. -->
+            <Border Style="{StaticResource Card}" BorderBrush="{DynamicResource Warn}" BorderThickness="1"
+                    Visibility="{Binding HasHardwareChanges, Converter={StaticResource Visible}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Ver o que fazer" Style="{StaticResource Secondary}"
+                            Command="{Binding GoDriversCommand}" VerticalAlignment="Top" Margin="16,0,0,0" />
+                    <StackPanel>
+                        <TextBlock Text="{Binding HardwareTitle}" Style="{StaticResource H2}" Margin="0" />
+                        <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" Text="{Binding HardwareText}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Plano perto de vencer ou vencido: o que o RKZFPS fez aqui e o convite para renovar.
+                 Nada é desfeito sozinho quando o plano acaba. -->
+            <Border Style="{StaticResource Card}" BorderBrush="{DynamicResource Accent}" BorderThickness="1"
+                    Visibility="{Binding ShowPlanCard, Converter={StaticResource Visible}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="{Binding PlanCardButton}" Style="{StaticResource Primary}"
+                            Command="{Binding RenewCommand}" VerticalAlignment="Top" Margin="16,0,0,0" />
+                    <StackPanel>
+                        <TextBlock Text="{Binding PlanCardTitle}" Style="{StaticResource H2}" Margin="0" />
+                        <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" Text="{Binding PlanCardText}" />
+                        <ItemsControl ItemsSource="{Binding RecapLines}" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,4,0,0">
+                                        <TextBlock DockPanel.Dock="Left" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Accent}" Margin="0,3,8,0" />
+                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Drivers: onde atualizar cada um, sempre pela fonte oficial. O app não baixa driver. -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding HasScan, Converter={StaticResource Visible}}">
+                <StackPanel>
+                    <TextBlock Text="Drivers do PC" Style="{StaticResource H2}" Margin="0" />
+                    <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Text="O de vídeo é o que mais pesa nos jogos. Na página Drivers e reparo o RKZFPS procura driver novo no Windows Update e instala com ponto de restauração antes; os botões abaixo abrem o site oficial do fabricante." />
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="Procurar drivers novos" Style="{StaticResource Secondary}" Command="{Binding DriverSearchCommand}" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding DriverLinks}" Margin="0,8,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Label}" Margin="0,6,8,0" CommandParameter="{Binding Target}"
+                                        Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Qual peça trocar: o veredito medido sempre à vista, e a recomendação da IA a pedido -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Sugestão com IA" Style="{StaticResource Secondary}" Command="{Binding UpgradeCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <StackPanel>
+                            <TextBlock Text="Qual peça trocar para ganhar mais FPS" Style="{StaticResource H2}" Margin="0" />
+                            <TextBlock Text="{Binding UpgradeVerdict}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
+                                       Text="A IA usa o seu hardware e o que foi medido nas suas partidas: primeiro o que resolve sem gastar, depois a peça e o que conferir antes de comprar. Sem promessa de número." />
+                        </StackPanel>
+                    </DockPanel>
+                    <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="14,12" Margin="0,12,0,0"
+                            Visibility="{Binding UpgradeText, Converter={StaticResource Visible}}">
+                        <TextBlock Text="{Binding UpgradeText}" TextWrapping="Wrap" LineHeight="21" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Abertos agora e pesando (todo usuário): o que fechar antes de jogar -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding OpenApps.Count, Converter={StaticResource Visible}}">
+                <StackPanel>
+                    <TextBlock Text="Abertos agora e pesando" Style="{StaticResource H2}" Margin="0" />
+                    <TextBlock Text="Programas e jogos abertos que disputam o PC com o jogo. Fechar o que você não está usando libera processador e memória." Style="{StaticResource MutedText}" Margin="0,4,0,8" />
+                    <ItemsControl ItemsSource="{Binding OpenApps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" Padding="0,10">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="Fechar" VerticalAlignment="Center" Margin="12,0,0,0" CommandParameter="{Binding}"
+                                                Command="{Binding DataContext.CloseAppCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                Visibility="{Binding CanClose, Converter={StaticResource Visible}}" />
+                                        <ContentControl DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource GameBadge}" VerticalAlignment="Center" Margin="0,0,12,0" Focusable="False" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock>
+                                                <Run Text="{Binding Name, Mode=OneWay}" FontWeight="SemiBold" />
+                                                <Run Text="{Binding Kind, Mode=OneWay}" Foreground="{DynamicResource Muted}" FontSize="12" />
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" />
+                                            <TextBlock Text="{Binding Hint}" Style="{StaticResource MutedText}" FontSize="12"
+                                                       Visibility="{Binding Hint, Converter={StaticResource Visible}}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Modo avançado: ferramentas e números -->
+            <DockPanel Margin="0,0,0,12" Visibility="{Binding IsAdvanced, Converter={StaticResource Visible}}">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="Teste de CPU" Command="{Binding CpuTestCommand}" Margin="0,0,8,0"
+                            ToolTip="Coloca a CPU em carga por 15 s para detectar limitação térmica" />
+                    <Button Content="Analisar de novo" Command="{Binding ScanCommand}" />
+                </StackPanel>
+                <TextBlock Text="{Binding ScanInfo}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <!-- Resumo -->
+            <UniformGrid Columns="3" Margin="0,0,0,4" Visibility="{Binding IsAdvanced, Converter={StaticResource Visible}}">
+                <Border Style="{StaticResource Card}" Margin="0,0,10,14">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ProblemCount}" Style="{StaticResource Stat}" Foreground="{DynamicResource Warn}" />
+                        <TextBlock Text="Pontos de atenção" Style="{StaticResource MutedText}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Margin="5,0,5,14">
+                    <StackPanel>
+                        <TextBlock Text="{Binding RecommendedCount}" Style="{StaticResource Stat}" Foreground="{DynamicResource Info}" />
+                        <TextBlock Text="Otimizações recomendadas" Style="{StaticResource MutedText}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Margin="10,0,0,14">
+                    <StackPanel>
+                        <TextBlock Text="{Binding OptimalCount}" Style="{StaticResource Stat}" Foreground="{DynamicResource Accent}" />
+                        <TextBlock Text="Já otimizado" Style="{StaticResource MutedText}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Problemas com botão Resolver -->
+            <Border Style="{StaticResource Card}" Visibility="{Binding Problems.Count, Converter={StaticResource Visible}}">
+                <StackPanel>
+                    <TextBlock Text="O que encontramos" Style="{StaticResource H2}" />
+                    <ItemsControl ItemsSource="{Binding Problems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" Padding="0,12">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Top" Margin="16,0,0,0">
+                                            <Button Content="{Binding FixLabel}" Style="{StaticResource Secondary}"
+                                                    CommandParameter="{Binding}"
+                                                    Command="{Binding DataContext.FixCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Visibility="{Binding HasFix, Converter={StaticResource Visible}}" />
+                                            <ItemsControl ItemsSource="{Binding Actions}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Content="{Binding Label}" Margin="0,6,0,0" HorizontalAlignment="Stretch"
+                                                                CommandParameter="{Binding Target}"
+                                                                Command="{Binding DataContext.OpenUrlCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Style="{StaticResource Chip}" Background="{Binding StatusBrush}">
+                                                    <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource OnFill}" />
+                                                </Border>
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding ImpactText}" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" FontSize="13" Margin="0,4,0,0"
+                                                       Visibility="{Binding ImpactText, Converter={StaticResource Visible}}" />
+                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                                            <TextBlock Text="{Binding Recommendation}" Foreground="{DynamicResource Info}" FontSize="13" Margin="0,4,0,0"
+                                                       Visibility="{Binding Recommendation, Converter={StaticResource Visible}}" />
+                                            <TextBlock Text="{Binding FixBlockedReason}" Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                                                       Visibility="{Binding FixBlockedReason, Converter={StaticResource Visible}}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Grid Visibility="{Binding IsAdvanced, Converter={StaticResource Visible}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Como está cada parte do PC" Style="{StaticResource H2}" />
+                        <ItemsControl ItemsSource="{Binding Readiness}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="96" />
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Style="{StaticResource Chip}" Background="{Binding StatusBrush}">
+                                            <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource OnFill}" />
+                                        </Border>
+                                        <TextBlock Grid.Column="1" Text="{Binding Area}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Summary}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="Hardware" Style="{StaticResource H2}" />
+                        <ItemsControl ItemsSource="{Binding Hardware}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,5">
+                                        <TextBlock Text="{Binding Key}" Style="{StaticResource MutedText}" FontSize="12" />
+                                        <TextBlock Text="{Binding Value}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="Processadores e BIOS compatíveis" Margin="0,10,0,0" HorizontalAlignment="Left"
+                                ToolTip="Abre o site do fabricante da placa-mãe: a lista oficial de processadores compatíveis e as versões de BIOS"
+                                CommandParameter="{Binding BoardSupportUrl}" Command="{Binding OpenUrlCommand}"
+                                Visibility="{Binding BoardSupportUrl, Converter={StaticResource Visible}}" />
+                        <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   Visibility="{Binding BoardSupportUrl, Converter={StaticResource Visible}}"
+                                   Text="Antes de trocar o processador, confira a revisão impressa na placa (REV) e a BIOS exigida pelo fabricante." />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

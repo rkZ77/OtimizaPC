@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Rkzfps.Core\Rkzfps.Core.csproj" />
+  </ItemGroup>
+  <!-- Os testes leem o catalogo REAL, nao uma copia: um catalogo publicado com
+       id sem handler precisa quebrar o CI, nao so' o Agent na maquina do cliente. -->
+  <ItemGroup>
+    <None Include="..\..\..\optimization-engine\catalog\*.json" LinkBase="catalog" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\..\game-profiles\*.json" LinkBase="game-profiles" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

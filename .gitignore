@@ -18,7 +18,7 @@ __pycache__/
 .venv/
 
 # Dados locais do Agent em desenvolvimento (sessoes, backups, benchmarks)
-.fpsx-data/
+.rkzfps-data/
 
 # Saida do instalador (vai para o GitHub Releases, nao para o repo)
 installer/out/

@@ -35,7 +35,7 @@ MERCADOPAGO_WEBHOOK_SECRET = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "")
 #: marca 'skipped': o staging aponta para o banco de producao e, sem chave
 #: la', nunca manda e-mail para cliente real por engano.
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-#: Remetente de dominio verificado no Resend, ex.: "RKZFPS <nao-responda@fpsx.com.br>".
+#: Remetente de dominio verificado no Resend, ex.: "RKZFPS <nao-responda@rkzfps.com.br>".
 RESEND_FROM = os.getenv("RESEND_FROM", "")
 
 #: Assistente do site (OpenAI). Sem chave, o chat some do site.

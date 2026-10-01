@@ -8,7 +8,7 @@ import time
 
 from app import database
 
-#: Mesma ordem do Agent (Fpsx.Core.Engine.Plans.Order).
+#: Mesma ordem do Agent (Rkzfps.Core.Engine.Plans.Order).
 TIER_ORDER = ["free", "starter", "pro", "ultimate"]
 
 

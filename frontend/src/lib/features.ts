@@ -1,5 +1,5 @@
 /*
- * Espelho de agent/src/Fpsx.Core/Engine/PlanFeatures.cs: o que cada plano
+ * Espelho de agent/src/Rkzfps.Core/Engine/PlanFeatures.cs: o que cada plano
  * libera no app. Se mudar la', muda aqui. O app e' quem aplica a regra (com a
  * licenca assinada); esta tabela so' explica ao visitante.
  */

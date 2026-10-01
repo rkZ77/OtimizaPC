@@ -13,14 +13,14 @@ Supabase: projeto `qntwjeeximnztzxwnejj`, região **us-west-2**, Postgres 17. Po
 `aws-0-us-west-2.pooler.supabase.com` (6543 transação para a API, 5432 sessão para as migrations),
 usuário `postgres.qntwjeeximnztzxwnejj`. Produção e staging usam o mesmo banco, como o `noprod` do Pickia.
 
-As chaves da API REST (publishable/secret) não são usadas pelo FPSX. A migration `0003_rls.sql` liga
+As chaves da API REST (publishable/secret) não são usadas pelo RKZFPS. A migration `0003_rls.sql` liga
 RLS em todas as tabelas: pela API REST pública do Supabase, nenhuma tabela é legível (401).
 Tabela nova precisa de `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` na própria migration.
 
 ## Desenvolvimento local
 
 ```powershell
-./scripts/dev-db.ps1        # Postgres portátil na porta 54329 (bancos fpsx e fpsx_test), sem Docker
+./scripts/dev-db.ps1        # Postgres portátil na porta 54329 (bancos rkzfps e rkzfps_test), sem Docker
 ```
 
 O `.env` da raiz (fora do git) já aponta para esse banco, com `APP_ENV=development`.
@@ -35,8 +35,8 @@ O `.env` da raiz (fora do git) já aponta para esse banco, com `APP_ENV=developm
 
 ## 2. Chave de assinatura de licença
 
-A chave privada que já foi gerada fica **fora do repositório**, em `C:\Users\rkZ\.fpsx-keys\license_private.pem`.
-A pública correspondente está embutida no app (`agent/src/Fpsx.Client/LicenseToken.cs`).
+A chave privada que já foi gerada fica **fora do repositório**, em `C:\Users\rkZ\.fpsx-keys\license_private.pem` (pasta criada quando o projeto ainda se chamava FPSX; renomear exige mudar o `LICENSE_PRIVATE_KEY_FILE` do `.env` junto).
+A pública correspondente está embutida no app (`agent/src/Rkzfps.Client/LicenseToken.cs`).
 
 - Cole o conteúdo do PEM na variável `LICENSE_PRIVATE_KEY_PEM` do Railway.
 - Guarde uma cópia desse arquivo num lugar seguro (gerenciador de senhas). Perder a chave obriga a
@@ -52,7 +52,7 @@ A pública correspondente está embutida no app (`agent/src/Fpsx.Client/LicenseT
    `MIGRATIONS_DATABASE_URL`, `DB_SSLMODE=require`, `LICENSE_PRIVATE_KEY_PEM`,
    `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`.
 4. **Settings > Networking > Generate Domain** (ou domínio próprio). Atualize `PUBLIC_URL` e
-   `CORS_ORIGINS` com ele, e `ClientSettings.ProductionApiUrl` em `agent/src/Fpsx.Client/ClientStorage.cs`.
+   `CORS_ORIGINS` com ele, e `ClientSettings.ProductionApiUrl` em `agent/src/Rkzfps.Client/ClientStorage.cs`.
 
 ## 4. Primeiro admin
 
@@ -71,15 +71,15 @@ cd backend
 
 ## 5b. E-mail (Resend)
 
-O FPSX manda boas-vindas, código de redefinir senha, aviso de senha alterada, pagamento aprovado
+O RKZFPS manda boas-vindas, código de redefinir senha, aviso de senha alterada, pagamento aprovado
 e avisos de plano (3 dias antes de vencer e logo depois de vencer), pelo Resend, como o Pickia.
 
-1. Crie a conta em resend.com. Em **Domains**, adicione o domínio (ex.: `fpsx.com.br`) e cadastre
+1. Crie a conta em resend.com. Em **Domains**, adicione o domínio (ex.: `rkzfps.com.br`) e cadastre
    no DNS os registros que ele mostrar (SPF, DKIM). Sem domínio verificado o Resend só entrega
    para o próprio dono da conta.
 2. Em **API Keys**, crie uma chave com permissão de envio.
 3. No Railway, **só no serviço de produção**: `RESEND_API_KEY`, `RESEND_FROM`
-   (ex.: `FPSX <nao-responda@fpsx.com.br>`) e, se quiser receber respostas, `EMAIL_REPLY_TO`.
+   (ex.: `RKZFPS <nao-responda@rkzfps.com.br>`) e, se quiser receber respostas, `EMAIL_REPLY_TO`.
    O staging usa o mesmo banco: deixe-o sem chave para ele nunca mandar e-mail a cliente real.
 4. No site, **Admin > E-mails > Enviar e-mail de teste para mim**. A aba mostra cada envio e o
    motivo quando o Resend recusa.
@@ -92,10 +92,10 @@ Sem a chave nada quebra: cadastro, senha e pagamento funcionam, e o registro mar
 ./installer/publish.ps1 -Installer
 ```
 
-Suba o `FPSX-Setup-<versão>.exe` num armazenamento com HTTPS (ex.: GitHub Releases do repositório)
+Suba o `RKZFPS-Setup-<versão>.exe` num armazenamento com HTTPS (ex.: GitHub Releases do repositório)
 e publique em **Admin > Atualizações** com a URL e o SHA-256 que o script imprime. A página
 /download e o aviso de atualização do app passam a apontar para ela.
 
 > Sem certificado de assinatura de código, o Windows SmartScreen mostra "Editor desconhecido" no
-> primeiro download. Para produção, assine o instalador e o `FPSX.exe` com um certificado de
+> primeiro download. Para produção, assine o instalador e o `RKZFPS.exe` com um certificado de
 > Code Signing (OV ou EV) antes de publicar.

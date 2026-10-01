@@ -7,13 +7,13 @@ from pydantic import BaseModel, Field
 
 from app import auth, database, settings, signing
 
-logger = logging.getLogger("fpsx")
+logger = logging.getLogger("rkzfps")
 from app.services import app_settings, assistant, catalog, gameplay, plans
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
 
-#: Limite do teste gratis no app (Fpsx.Core TrialQuota.MaxOptimizations). O
+#: Limite do teste gratis no app (Rkzfps.Core TrialQuota.MaxOptimizations). O
 #: app garante o limite; aqui so' vai o numero para o site descrever o teste.
 TRIAL_MAX_FIXES = 2
 

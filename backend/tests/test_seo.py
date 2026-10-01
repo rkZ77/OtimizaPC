@@ -81,7 +81,7 @@ def test_rota_inexistente_e_404_e_tela_privada_fica_fora_do_indice():
 
 
 def test_fora_do_dominio_oficial_nada_e_indexado():
-    assert seo.indexable_host("rkzfps.com.br") and not seo.indexable_host("fpsx-noprod.up.railway.app")
+    assert seo.indexable_host("rkzfps.com.br") and not seo.indexable_host("rkzfps-noprod.up.railway.app")
     html = seo.render(INDEX, seo.page_for("/planos", PLANOS), indexable=False, planos=PLANOS)
     assert "noindex" in html and "canonical" not in html
     assert seo.robots_txt(False) == "User-agent: *\nDisallow: /\n"
@@ -116,7 +116,7 @@ def test_analytics_so_no_dominio_oficial_e_csp_so_abre_com_ele(monkeypatch):
     monkeypatch.setattr(settings, "GOOGLE_SITE_VERIFICATION", "codigo-de-verificacao-123")
     oficial = seo.render(INDEX, seo.page_for("/download"), indexable=True)
     staging = seo.render(INDEX, seo.page_for("/download"), indexable=False)
-    assert '<meta name="fpsx-ga" content="G-ABC1234" />' in oficial and "fpsx-ga" not in staging
+    assert '<meta name="rkzfps-ga" content="G-ABC1234" />' in oficial and "rkzfps-ga" not in staging
     assert 'name="google-site-verification" content="codigo-de-verificacao-123"' in oficial
     assert "googletagmanager" not in build_csp([]) and "googletagmanager" in build_csp([], analytics=True)
     # O Google entra no script-src por dominio, nunca liberando script inline.

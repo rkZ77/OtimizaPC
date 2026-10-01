@@ -1,0 +1,30 @@
+<Application x:Class="Rkzfps.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Rkzfps.App"
+             ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Cores primeiro (a posição 0 é a que o ThemeManager troca), estilos depois. -->
+                <ResourceDictionary Source="Themes/Dark.xaml" />
+                <ResourceDictionary Source="Theme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <local:BoolToVisibility x:Key="Visible" />
+            <local:BoolToVisibility x:Key="Hidden" Invert="True" />
+
+            <!-- Ícone do jogo (tirado do .exe instalado) ou as iniciais enquanto ele não foi visto -->
+            <DataTemplate x:Key="GameBadge">
+                <Grid Width="40" Height="40">
+                    <Border CornerRadius="10" Background="{DynamicResource Surface2}" BorderBrush="{DynamicResource Border}" BorderThickness="1"
+                            Visibility="{Binding Icon, Converter={StaticResource Hidden}}">
+                        <TextBlock Text="{Binding Initials}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Accent}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Image Source="{Binding Icon}" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality"
+                           Visibility="{Binding Icon, Converter={StaticResource Visible}}" />
+                </Grid>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

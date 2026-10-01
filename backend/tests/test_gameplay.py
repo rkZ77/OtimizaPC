@@ -8,7 +8,7 @@ from app.main import app
 from app.routers import agent as agent_router
 from app.services import gameplay, licenses, telemetry
 
-USER = {"id": 7, "email": "cliente@fpsx.app", "name": "Cliente", "role": "user", "active": True}
+USER = {"id": 7, "email": "cliente@rkzfps.app", "name": "Cliente", "role": "user", "active": True}
 DEVICE = {"id": 3, "agent_version": "0.4.2", "windows_build": "26200"}
 HASH = "a" * 64
 

@@ -15,7 +15,10 @@ from app import settings
 
 ALGORITHM = "HS256"
 ACCESS_HOURS = 12
-COOKIE_NAME = "fpsx_session"
+COOKIE_NAME = "rkzfps_session"
+#: Nome do cookie quando o projeto se chamava FPSX. Ainda e' lido para quem
+#: entrou antes da troca nao cair da conta; dura no maximo ACCESS_HOURS.
+LEGACY_COOKIE_NAME = "fpsx_session"
 
 
 def hash_password(password: str) -> str:
@@ -60,13 +63,14 @@ def set_session_cookie(response, token: str) -> None:
 
 def clear_session_cookie(response) -> None:
     response.delete_cookie(COOKIE_NAME, path="/")
+    response.delete_cookie(LEGACY_COOKIE_NAME, path="/")
 
 
 def _token_from(request: Request) -> str | None:
     header = request.headers.get("authorization", "")
     if header.lower().startswith("bearer "):
         return header[7:].strip()
-    return request.cookies.get(COOKIE_NAME)
+    return request.cookies.get(COOKIE_NAME) or request.cookies.get(LEGACY_COOKIE_NAME)
 
 
 def current_user(request: Request) -> dict:

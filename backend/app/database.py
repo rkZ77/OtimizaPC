@@ -30,7 +30,7 @@ def _parametros() -> dict:
         )
     return dict(
         host=os.getenv("DB_HOST", "localhost"), port=os.getenv("DB_PORT", "5432"),
-        dbname=os.getenv("DB_NAME", "fpsx"), user=os.getenv("DB_USER", "fpsx"),
+        dbname=os.getenv("DB_NAME", "rkzfps"), user=os.getenv("DB_USER", "rkzfps"),
         password=os.getenv("DB_PASS", ""), sslmode=os.getenv("DB_SSLMODE", "prefer"),
         cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=10, client_encoding="UTF8",
     )

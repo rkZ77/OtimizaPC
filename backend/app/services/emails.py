@@ -18,7 +18,7 @@ import httpx
 from app import database, email_templates, settings
 from app.email_templates import Email
 
-logger = logging.getLogger("fpsx.emails")
+logger = logging.getLogger("rkzfps.emails")
 
 RESEND_URL = "https://api.resend.com/emails"
 BRT = ZoneInfo("America/Sao_Paulo")

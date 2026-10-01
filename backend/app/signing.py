@@ -76,7 +76,7 @@ def public_key_pem() -> str:
 
 if __name__ == "__main__":
     # Gera um par novo. A privada vai para o secret do deploy; a publica e'
-    # embutida no Agent (agent/src/Fpsx.Client/LicenseKeys.cs).
+    # embutida no Agent (agent/src/Rkzfps.Client/LicenseKeys.cs).
     key = ec.generate_private_key(ec.SECP256R1())
     print(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
                             serialization.NoEncryption()).decode())

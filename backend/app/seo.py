@@ -341,7 +341,7 @@ def render(index_html: str, page: Page, indexable: bool = True, planos: list[dic
     # Analytics so' no dominio oficial: visita ao staging nao entra nos numeros.
     # O script so' carrega depois do "Aceitar todos" (frontend/src/lib/analytics.ts).
     if indexable and settings.GA_MEASUREMENT_ID:
-        head.append(f'<meta name="fpsx-ga" content="{escape(settings.GA_MEASUREMENT_ID, quote=True)}" />')
+        head.append(f'<meta name="rkzfps-ga" content="{escape(settings.GA_MEASUREMENT_ID, quote=True)}" />')
     if indexable and settings.GOOGLE_SITE_VERIFICATION:
         head.append(f'<meta name="google-site-verification" content="{escape(settings.GOOGLE_SITE_VERIFICATION, quote=True)}" />')
     if index:

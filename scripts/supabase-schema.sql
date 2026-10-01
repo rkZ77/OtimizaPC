@@ -1,4 +1,4 @@
--- FPSX: schema completo para colar no SQL Editor do Supabase (uma vez so').
+-- RKZFPS: schema completo para colar no SQL Editor do Supabase (uma vez so').
 -- Gerado de backend/app/migrations. Registra cada migration em schema_migrations,
 -- para a API nao reaplicar quando conectar. Seguro de rodar num banco vazio.
 
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 -- ===== 0001_schema.sql =====
 
--- Schema inicial do FPSX.
+-- Schema inicial do RKZFPS.
 -- Nenhuma tabela guarda dado pessoal alem de e-mail e nome da conta: o PC e'
 -- identificado por um hash (device_hash), nunca por serial, MAC ou usuario.
 
@@ -193,7 +193,7 @@ INSERT INTO plans (key, name, tier, description, price_cents, days, max_devices,
   ('starter',  'Starter',  'starter',  'Otimizações básicas e histórico.',          1490, 30,   1,
      '["Tudo do Free", "Programas de inicialização", "Plano de energia", "Ferramentas de troubleshooting", "Histórico"]', 1),
   ('pro',      'Pro',      'pro',      'Todas as otimizações, benchmark e rollback.', 2490, 30, 2,
-     '["Tudo do Starter", "Perfis de jogo (CS2)", "FPSX Benchmark", "Rollback completo", "Relatórios", "2 PCs"]', 2),
+     '["Tudo do Starter", "Perfis de jogo (CS2)", "RKZFPS Benchmark", "Rollback completo", "Relatórios", "2 PCs"]', 2),
   ('ultimate', 'Ultimate', 'ultimate', 'Recursos experimentais e suporte premium.',  3990, 30,   5,
      '["Tudo do Pro", "Otimizações experimentais", "Suporte premium", "5 PCs"]', 3)
 ON CONFLICT (key) DO NOTHING;
@@ -218,8 +218,8 @@ INSERT INTO schema_migrations (name) VALUES ('0002_seed.sql') ON CONFLICT DO NOT
 -- hash de senha), licenses e payments pela internet.
 --
 -- RLS ligado e NENHUMA policy = ninguem acessa pela API REST. O backend do
--- FPSX conecta como dono das tabelas (usuario postgres), que nao e' afetado
--- por RLS sem FORCE, entao nada muda para a API do FPSX.
+-- RKZFPS conecta como dono das tabelas (usuario postgres), que nao e' afetado
+-- por RLS sem FORCE, entao nada muda para a API do RKZFPS.
 --
 -- Em Postgres comum (dev local, CI) os papeis anon/authenticated nao existem:
 -- o bloco so' revoga quando eles existem, e o ENABLE RLS e' inofensivo.
@@ -266,7 +266,7 @@ CREATE INDEX password_resets_user ON password_resets (user_id, created_at DESC);
 -- roubado que motivou a troca nao continua logado).
 ALTER TABLE users ADD COLUMN password_changed_at TIMESTAMPTZ;
 
--- Todo e-mail que o FPSX tenta mandar. `dedupe_key` e' o que impede o aviso
+-- Todo e-mail que o RKZFPS tenta mandar. `dedupe_key` e' o que impede o aviso
 -- de vencimento sair duas vezes quando ha' mais de um worker, ou quando o
 -- staging (mesmo banco) tambem roda o agendador.
 CREATE TABLE email_log (
@@ -343,7 +343,7 @@ WHERE key = 'starter';
 
 UPDATE plans SET price_cents = 2990, max_devices = 1,
     description = 'Para quem joga: ajuste dos jogos e prova de resultado.',
-    features = '["Tudo do Starter", "Perfis de jogo: CS2, Fortnite e Minecraft", "Configuração leve para PC fraco", "Antes e depois do FPS nas suas partidas", "FPSX Benchmark e relatórios"]'
+    features = '["Tudo do Starter", "Perfis de jogo: CS2, Fortnite e Minecraft", "Configuração leve para PC fraco", "Antes e depois do FPS nas suas partidas", "RKZFPS Benchmark e relatórios"]'
 WHERE key = 'pro';
 
 UPDATE plans SET price_cents = 3990, max_devices = 1,

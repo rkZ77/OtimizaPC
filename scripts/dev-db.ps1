@@ -3,8 +3,8 @@
   Sobe um PostgreSQL local para desenvolvimento, sem Docker e sem instalar servico.
 
 .DESCRIPTION
-  Baixa os binarios portateis oficiais (EDB) uma vez para %LOCALAPPDATA%\FPSX-dev,
-  cria o banco `fpsx` (dev) e `fpsx_test` (integracao) e liga na porta 54329.
+  Baixa os binarios portateis oficiais (EDB) uma vez para %LOCALAPPDATA%\RKZFPS-dev,
+  cria o banco `rkzfps` (dev) e `rkzfps_test` (integracao) e liga na porta 54329.
   O backend/.env de desenvolvimento ja' aponta para ca'.
 
 .EXAMPLE
@@ -14,12 +14,26 @@
 param([switch]$Stop)
 
 $ErrorActionPreference = "Stop"
-$base = Join-Path $env:LOCALAPPDATA "FPSX-dev"
+$base = Join-Path $env:LOCALAPPDATA "RKZFPS-dev"
 $pg = Join-Path $base "pgsql"
 $data = Join-Path $base "pgdata"
 $log = Join-Path $base "postgres.log"
 $port = 54329
 $bin = Join-Path $pg "bin"
+
+# Quando o projeto se chamava FPSX, tudo isto ficava em FPSX-dev, com o
+# usuario e os bancos `fpsx`. Renomeia uma vez, sem baixar de novo nem perder
+# os dados de desenvolvimento.
+$legacy = Join-Path $env:LOCALAPPDATA "FPSX-dev"
+$migrated = $false
+if ((Test-Path $legacy) -and -not (Test-Path $base)) {
+    $legacyBin = Join-Path $legacy "pgsql\bin"
+    if (Test-Path (Join-Path $legacy "pgdata\postmaster.pid")) {
+        & (Join-Path $legacyBin "pg_ctl.exe") -D (Join-Path $legacy "pgdata") stop -m fast | Out-Null
+    }
+    Rename-Item $legacy $base
+    $migrated = $true
+}
 
 if ($Stop) {
     & (Join-Path $bin "pg_ctl.exe") -D $data stop -m fast
@@ -38,7 +52,7 @@ if (-not (Test-Path (Join-Path $bin "postgres.exe"))) {
 
 if (-not (Test-Path (Join-Path $data "PG_VERSION"))) {
     # trust so' em localhost: e' um banco de desenvolvimento, sem dado real.
-    & (Join-Path $bin "initdb.exe") -D $data -U fpsx -A trust -E UTF8 --no-locale | Out-Null
+    & (Join-Path $bin "initdb.exe") -D $data -U rkzfps -A trust -E UTF8 --no-locale | Out-Null
 }
 
 & (Join-Path $bin "pg_isready.exe") -h localhost -p $port | Out-Null
@@ -52,11 +66,24 @@ if ($LASTEXITCODE -ne 0) {
     }
 }
 
-foreach ($db in "fpsx", "fpsx_test") {
-    $exists = & (Join-Path $bin "psql.exe") -h localhost -p $port -U fpsx -d postgres -tAc "select 1 from pg_database where datname='$db'"
-    if ($exists -ne "1") {
-        & (Join-Path $bin "psql.exe") -h localhost -p $port -U fpsx -d postgres -c "create database $db" | Out-Null
+$psql = Join-Path $bin "psql.exe"
+if ($migrated) {
+    # O cluster antigo foi criado com o superusuario `fpsx`, que nao pode ser
+    # renomeado (e' o dono do bootstrap). Cria `rkzfps` ao lado e renomeia os bancos.
+    & $psql -h localhost -p $port -U fpsx -d postgres -c "CREATE ROLE rkzfps SUPERUSER LOGIN" | Out-Null
+    foreach ($db in "fpsx", "fpsx_test") {
+        $exists = & $psql -h localhost -p $port -U rkzfps -d postgres -tAc "select 1 from pg_database where datname='$db'"
+        if ($exists -eq "1") {
+            & $psql -h localhost -p $port -U rkzfps -d postgres -c "ALTER DATABASE $db RENAME TO $($db.Replace('fpsx', 'rkzfps'))" | Out-Null
+        }
     }
 }
 
-Write-Host "PostgreSQL pronto em localhost:$port (bancos: fpsx, fpsx_test)"
+foreach ($db in "rkzfps", "rkzfps_test") {
+    $exists = & $psql -h localhost -p $port -U rkzfps -d postgres -tAc "select 1 from pg_database where datname='$db'"
+    if ($exists -ne "1") {
+        & $psql -h localhost -p $port -U rkzfps -d postgres -c "create database $db" | Out-Null
+    }
+}
+
+Write-Host "PostgreSQL pronto em localhost:$port (bancos: rkzfps, rkzfps_test)"

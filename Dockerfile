@@ -22,8 +22,8 @@ ENV CATALOG_FILE=/app/catalog/optimizations.json \
     PYTHONUNBUFFERED=1
 
 # Usuario sem privilegio: a API nao precisa de root para nada.
-RUN useradd --create-home fpsx && chown -R fpsx /app
-USER fpsx
+RUN useradd --create-home rkzfps && chown -R rkzfps /app
+USER rkzfps
 
 EXPOSE 8000
 # --app-dir /app: licao do Pickia com mais de um worker (ver Dockerfile de la').

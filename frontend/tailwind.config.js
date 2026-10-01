@@ -47,7 +47,7 @@ export default {
         // texto por cima de preenchimento semantico solido · ver --on-fill
         'on-fill': token('on-fill'),
 
-        // Papeis do FPSX (atencao, problema, informacao) em cima da escala do
+        // Papeis do RKZFPS (atencao, problema, informacao) em cima da escala do
         // Pickia: mudam de tom com o tema sem ninguem precisar lembrar disso.
         warn: token('c-amber-400'),
         danger: token('c-red-400'),
@@ -82,7 +82,7 @@ export default {
         green: {
           300: token('c-green-300'),
           400: token('c-green-400'),
-          // verde-menta do FPSX (preenchimento, igual nos dois temas)
+          // verde-menta do RKZFPS (preenchimento, igual nos dois temas)
           500: '#3DDC97',
           600: '#28BE7D',
           900: token('c-green-900'),

@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-  Publica o app FPSX e (opcional) gera o instalador.
+  Publica o app RKZFPS e (opcional) gera o instalador.
 
 .EXAMPLE
   ./installer/publish.ps1                      # so' publica em installer/out/app
-  ./installer/publish.ps1 -Installer           # publica e gera FPSX-Setup-<versao>.exe
+  ./installer/publish.ps1 -Installer           # publica e gera RKZFPS-Setup-<versao>.exe
 #>
 param(
     [string]$Configuration = "Release",
@@ -26,7 +26,7 @@ if (Test-Path $appOut) { Remove-Item $appOut -Recurse -Force }
 # Self-contained: o cliente nao precisa instalar .NET. Arquivo unico com as
 # DLLs nativas embutidas; catalogo e perfis de jogo ficam soltos ao lado do
 # .exe porque o admin publica versoes deles sem recompilar o app.
-dotnet publish (Join-Path $root "agent/src/Fpsx.App/Fpsx.App.csproj") `
+dotnet publish (Join-Path $root "agent/src/Rkzfps.App/Rkzfps.App.csproj") `
     -c $Configuration -r win-x64 --self-contained true `
     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true `
     -p:DebugType=none -o $appOut
@@ -37,7 +37,7 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish falhou" }
 # gente saber. Para atualizar, troque versao e hash juntos.
 $pmVersion = "2.5.1"
 $pmSha256 = "9bec3083069f58f911e6a512f4806db51a27bd096103087bc1d05ef54c80a191"
-$pmCache = Join-Path $env:LOCALAPPDATA "FPSX-dev\tools\PresentMon-$pmVersion-x64.exe"
+$pmCache = Join-Path $env:LOCALAPPDATA "RKZFPS-dev\tools\PresentMon-$pmVersion-x64.exe"
 if (-not (Test-Path $pmCache)) {
     New-Item -ItemType Directory -Force (Split-Path $pmCache) | Out-Null
     Invoke-WebRequest "https://github.com/GameTechDev/PresentMon/releases/download/v$pmVersion/PresentMon-$pmVersion-x64.exe" -OutFile $pmCache -UseBasicParsing
@@ -61,7 +61,7 @@ $iscc = @(
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $iscc) { throw "Inno Setup 6 nao encontrado. Instale com: winget install JRSoftware.InnoSetup" }
 
-& $iscc "/DAppVersion=$version" "/DSourceDir=$appOut" "/O$out" (Join-Path $PSScriptRoot "fpsx.iss")
+& $iscc "/DAppVersion=$version" "/DSourceDir=$appOut" "/O$out" (Join-Path $PSScriptRoot "rkzfps.iss")
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup falhou" }
 
 $setup = Join-Path $out "RKZFPS-Setup-$version.exe"

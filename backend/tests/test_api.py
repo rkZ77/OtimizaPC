@@ -8,7 +8,7 @@ from app.main import app
 from app.routers import agent as agent_router
 from app.services import licenses
 
-USER = {"id": 7, "email": "cliente@fpsx.app", "name": "Cliente", "role": "user", "active": True}
+USER = {"id": 7, "email": "cliente@rkzfps.app", "name": "Cliente", "role": "user", "active": True}
 ADMIN = {**USER, "id": 1, "role": "admin"}
 HASH = "a" * 64
 
@@ -121,7 +121,7 @@ def test_login_limita_tentativas(client, monkeypatch):
 
 def test_versao_do_app_vai_assinada_para_o_atualizador(client, monkeypatch):
     from app.services import catalog
-    row = {"component": "agent", "version": "0.4.0", "url": "https://github.com/rkZ77/OtimizaPC/releases/download/v0.4.0/FPSX-Setup-0.4.0.exe",
+    row = {"component": "agent", "version": "0.4.0", "url": "https://github.com/rkZ77/OtimizaPC/releases/download/v0.4.0/RKZFPS-Setup-0.4.0.exe",
            "sha256": "a" * 64, "notes": "Novidades", "published_at": None}
     monkeypatch.setattr(catalog, "latest_releases", lambda: [row])
     body = client.get("/api/agent/releases").json()

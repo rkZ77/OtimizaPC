@@ -38,7 +38,7 @@ def test_admin_le_o_catalogo_real_com_comentarios():
 
 def test_release_so_por_https():
     with pytest.raises(ValueError):
-        catalog.publish_release({"component": "agent", "version": "1.0", "url": "http://x/fpsx.exe"})
+        catalog.publish_release({"component": "agent", "version": "1.0", "url": "http://x/rkzfps.exe"})
 
 
 def test_migrations_em_ordem_e_sem_drop():

@@ -1,7 +1,7 @@
-# FPSX
+# RKZFPS
 
 Otimização de PC Windows com **diagnóstico, otimização compatível, medição e transparência**.
-O FPSX analisa o PC, aplica só o que faz sentido para aquele PC (com backup e desfazer),
+O RKZFPS analisa o PC, aplica só o que faz sentido para aquele PC (com backup e desfazer),
 e mede antes e depois. Quando nada precisa mudar, ele diz isso.
 
 ## Partes
@@ -22,8 +22,8 @@ e mede antes e depois. Quando nada precisa mudar, ele diz isso.
 # Agent: testes e app
 cd agent
 dotnet test
-dotnet run --project src/Fpsx.App          # o app desktop
-dotnet run --project src/Fpsx.Agent -- scan # o CLI
+dotnet run --project src/Rkzfps.App          # o app desktop
+dotnet run --project src/Rkzfps.Agent -- scan # o CLI
 
 # API (precisa de um Postgres; ver docs/DEPLOY.md)
 cd backend
@@ -40,7 +40,7 @@ npm run dev                                  # http://localhost:5173 (proxy /api
 ## Gerar o instalador
 
 ```powershell
-./installer/publish.ps1 -Installer   # installer/out/FPSX-Setup-<versão>.exe + SHA-256
+./installer/publish.ps1 -Installer   # installer/out/RKZFPS-Setup-<versão>.exe + SHA-256
 ```
 
 ## Fluxo de branches

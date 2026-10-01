@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- O Core nao conhece Windows: so' regras, modelos e o motor de decisao.
+       Isso permite testar tudo com PCs simulados, em qualquer SO do CI. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Rkzfps.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Rkzfps.Core.Tests" />
+  </ItemGroup>
+</Project>

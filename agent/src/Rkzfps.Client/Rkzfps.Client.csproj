@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Camada compartilhada entre o CLI e o app desktop: licenca assinada,
+       identidade do PC, cliente da API, overrides do catalogo e telemetria. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RootNamespace>Rkzfps.Client</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rkzfps.Core\Rkzfps.Core.csproj" />
+    <ProjectReference Include="..\Rkzfps.Windows\Rkzfps.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Rkzfps.Client.Tests" />
+  </ItemGroup>
+</Project>

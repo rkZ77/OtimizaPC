@@ -1,6 +1,6 @@
 """Simulacao de ataques contra a API, rodando a cada teste.
 
-Cada teste e' um ataque real e conhecido, com o resultado que o FPSX tem que
+Cada teste e' um ataque real e conhecido, com o resultado que o RKZFPS tem que
 dar. Os que precisam de banco (SQL injection de verdade, IDOR entre contas)
 estao em test_integration_db.py.
 """
@@ -16,7 +16,7 @@ from app import auth, settings
 from app.main import app
 from app.security_headers import build_csp, inline_script_hashes
 
-USER = {"id": 7, "email": "cliente@fpsx.app", "name": "Cliente", "role": "user", "active": True, "password_changed_at": None}
+USER = {"id": 7, "email": "cliente@rkzfps.app", "name": "Cliente", "role": "user", "active": True, "password_changed_at": None}
 
 
 @pytest.fixture
@@ -112,7 +112,7 @@ def test_login_nao_revela_se_o_email_existe(client, monkeypatch):
 
 # ─── entrada maliciosa ──────────────────────────────────────────────────
 
-@pytest.mark.parametrize("email", ["' OR 1=1 --", "admin@fpsx.app' --", "a@b.com\"; DROP TABLE users; --"])
+@pytest.mark.parametrize("email", ["' OR 1=1 --", "admin@rkzfps.app' --", "a@b.com\"; DROP TABLE users; --"])
 def test_sql_injection_no_login_nem_chega_ao_banco(client, email):
     # E-mail invalido e' recusado na validacao; o SQL e' parametrizado de
     # qualquer forma (conferido com banco real no teste de integracao).

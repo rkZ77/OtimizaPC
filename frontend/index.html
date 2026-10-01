@@ -18,7 +18,7 @@
     <script>
       (function () {
         try {
-          if (localStorage.getItem('fpsx_theme') === 'light') {
+          if ((localStorage.getItem('rkzfps_theme') || localStorage.getItem('fpsx_theme')) === 'light') {
             document.documentElement.dataset.theme = 'light'
           }
         } catch (e) {}
