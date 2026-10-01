@@ -16,7 +16,7 @@ const LINKS: Array<{ label: string; to: string }> = [
   { label: 'Quem somos', to: '/quem-somos' },
   { label: 'Planos', to: '/planos' },
   { label: 'Download', to: '/download' },
-  { label: 'Minha conta', to: '/conta' },
+  { label: 'Minha conta', to: '/painel' },
   { label: 'Termos de uso', to: '/termos' },
   { label: 'Privacidade', to: '/privacidade' },
 ]

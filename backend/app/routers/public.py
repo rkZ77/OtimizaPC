@@ -1,14 +1,16 @@
 import logging
 import re
+from datetime import date
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
-from app import auth, database, settings, signing
+from app import auth, database, email_templates, settings, signing
 
 logger = logging.getLogger("rkzfps")
-from app.services import app_settings, assistant, catalog, gameplay, plans
+from app.services import app_settings, assistant, catalog, emails, gameplay, plans
+from app.services.users import normalize_email
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 
@@ -73,6 +75,38 @@ def _visitor(request: Request) -> str:
     # primeiro endereco do X-Forwarded-For. Serve para limitar custo, nao para autenticar.
     forwarded = request.headers.get("x-forwarded-for", "")
     return forwarded.split(",")[0].strip() or (request.client.host if request.client else "?")
+
+
+class LinkPcIn(BaseModel):
+    email: EmailStr
+    #: De onde veio o pedido (hero, download, barra...), so' para o registro.
+    origem: str = Field(default="", max_length=30)
+
+
+@router.post("/download-link", status_code=202)
+def send_download_link(body: LinkPcIn, request: Request):
+    """Celular: manda o link do instalador para o e-mail, para abrir no PC.
+
+    A maior parte das visitas vem do celular, onde o app de Windows nao roda,
+    e o botao "Baixar" ali era beco sem saida. Isto nao cria conta nem guarda
+    nada alem do registro do envio (email_log, que o admin ja' ve).
+
+    Limite por visitante contra abuso do envio, e um envio por e-mail por dia
+    (dedupe_key): pedir de novo responde igual, mas nao manda outro. A
+    resposta e' a mesma em todo caso, para nao servir de teste de e-mail."""
+    auth.rate_limit("download-link", _visitor(request), limit=5, window_seconds=3600)
+    email = normalize_email(body.email)
+    try:
+        trial = int(app_settings.get("trial_days") or 0)
+    except Exception:  # banco fora do ar: o link sai igual, so' sem a frase do teste
+        trial = 0
+    emails.send_later(
+        "download_link", email,
+        email_templates.link_download(emails.site_url(), trial),
+        dedupe_key=f"download_link:{email}:{date.today().isoformat()}",
+    )
+    logger.info("[DOWNLOAD] link pedido pelo celular (origem=%s)", body.origem or "-")
+    return {"ok": True}
 
 
 class AssistantIn(BaseModel):

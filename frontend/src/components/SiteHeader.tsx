@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Button } from './ui'
 import { cn } from '../lib/cn'
+import { instalaAqui } from '../lib/dispositivo'
 import ThemeToggle from './ThemeToggle'
 import Logo from './Logo'
 import MenuLateral, { BotaoMenu } from './MenuLateral'
@@ -31,6 +32,7 @@ export default function SiteHeader() {
   const [menu, setMenu] = useState(false)
   const fechar = useCallback(() => setMenu(false), [])
   const { user } = useAuth()
+  const aqui = instalaAqui()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -69,13 +71,15 @@ export default function SiteHeader() {
         <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle className="-ml-1" />
           {user ? (
-            <Button to="/conta" size="sm">Minha conta</Button>
+            <Button to="/painel" size="sm">Minha conta</Button>
           ) : (
             <>
               <Button to="/entrar" variant="link" size="sm" className="hidden sm:inline-flex">Entrar</Button>
-              <Button to="/download" size="sm">
-                <span className="hidden sm:inline">Analisar meu PC</span>
-                <span className="sm:hidden">Baixar grátis</span>
+              {/* Fora do Windows o topo leva ao cadastro: o download nao roda
+                  ali, e a conta criada no celular ja' guarda o teste. */}
+              <Button to={aqui ? '/download' : '/cadastro'} size="sm">
+                <span className="hidden sm:inline">{aqui ? 'Analisar meu PC' : 'Criar conta grátis'}</span>
+                <span className="sm:hidden">{aqui ? 'Baixar grátis' : 'Criar conta'}</span>
               </Button>
             </>
           )}

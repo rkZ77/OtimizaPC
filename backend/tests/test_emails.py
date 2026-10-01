@@ -37,7 +37,53 @@ def _todos():
         email_templates.aviso_plano("Ana", "Pro", "29/09/2026", 3, False, "https://x"),
         email_templates.aviso_plano("Ana", "Pro", "25/09/2026", 0, True, "https://x"),
         email_templates.teste("https://x"),
+        email_templates.link_download("https://x", 1),
+        email_templates.link_download("https://x", 0),
     ]
+
+
+def test_cabecalho_do_email_tem_a_marca_atual():
+    # O logo antigo "FPSX" em menta ficou no cabecalho depois da troca de marca.
+    html = email_templates.teste("https://x").html
+    assert "RKZ<span" in html and "FPS<span" not in html
+
+
+def test_link_do_download_aponta_para_o_download_do_site():
+    e = email_templates.link_download("https://rkzfps.com.br", 1)
+    assert "https://rkzfps.com.br/download?origem=email" in e.html
+    assert "https://rkzfps.com.br/download?origem=email" in e.text
+    assert "1 dia," in e.text
+    assert "Pro" not in email_templates.link_download("https://x", 0).text
+
+
+def test_pedir_link_pelo_celular_manda_um_por_dia(client, sent, monkeypatch):
+    from app.services import app_settings
+    monkeypatch.setattr(app_settings, "get", lambda key: 3)
+    r = client.post("/api/public/download-link", json={"email": " Ana@Gmail.com ", "origem": "hero"})
+    assert r.status_code == 202 and r.json() == {"ok": True}
+    kind, to, email, kw = sent[0]
+    assert (kind, to) == ("download_link", "ana@gmail.com")
+    # A chave de dedupe e' o que segura um envio por e-mail por dia.
+    assert kw["dedupe_key"].startswith("download_link:ana@gmail.com:")
+    assert "3 dias" in email.text
+
+
+def test_pedir_link_sem_banco_ainda_envia(client, sent, monkeypatch):
+    from app.services import app_settings
+
+    def _quebra(key):
+        raise RuntimeError("banco fora")
+    monkeypatch.setattr(app_settings, "get", _quebra)
+    assert client.post("/api/public/download-link", json={"email": "a@b.com"}).status_code == 202
+    assert len(sent) == 1
+
+
+def test_pedir_link_recusa_email_invalido_e_tem_limite(client, sent, monkeypatch):
+    from app.services import app_settings
+    monkeypatch.setattr(app_settings, "get", lambda key: 0)
+    assert client.post("/api/public/download-link", json={"email": "nao-e-email"}).status_code == 422
+    codes = [client.post("/api/public/download-link", json={"email": f"p{i}@b.com"}).status_code for i in range(6)]
+    assert codes[:5] == [202] * 5 and codes[5] == 429
 
 
 def test_todo_email_tem_texto_puro_e_segue_a_regra_de_texto():

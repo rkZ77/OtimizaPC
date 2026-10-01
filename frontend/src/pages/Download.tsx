@@ -8,8 +8,10 @@ import api, { type Release } from '../services/api'
 import PageShell from '../components/PageShell'
 import { Alert, Button, SectionHead, SkeletonText } from '../components/ui'
 import { LogoMark } from '../components/Logo'
+import MandarParaPC from '../components/MandarParaPC'
 import { date } from '../lib/format'
 import { evento } from '../lib/analytics'
+import { instalaAqui } from '../lib/dispositivo'
 
 /*
  * Download com cara de loja de app: o icone da marca (o mesmo do app e do
@@ -36,6 +38,7 @@ const PASSOS: { Icon: LucideIcon; t: string; d: string }[] = [
 export default function Download() {
   const [release, setRelease] = useState<Release | null | undefined>(undefined)
   const [versions, setVersions] = useState<Version[]>([])
+  const aqui = instalaAqui()
 
   useEffect(() => {
     api.get<{ releases: Release[] }>('/public/releases')
@@ -72,9 +75,19 @@ export default function Download() {
           )}
           {release && (
             <>
-              {/* Passa pelo servidor, que conta o clique (sem dado pessoal) e manda para o instalador. */}
-              <Button className="mt-6" size="lg" Icon={DownloadIcon} href="/api/public/download"
-                      onClick={() => evento('file_download', { file_name: `RKZFPS-${release.version}.exe` })}>Baixar para Windows</Button>
+              {/* Passa pelo servidor, que conta o clique (sem dado pessoal) e manda para o instalador.
+                  Fora do Windows o .exe nao abre: a acao principal vira mandar o link
+                  para o PC, e o download direto fica como opcao discreta. */}
+              {aqui ? (
+                <Button className="mt-6" size="lg" Icon={DownloadIcon} href="/api/public/download"
+                        onClick={() => evento('file_download', { file_name: `RKZFPS-${release.version}.exe` })}>Baixar para Windows</Button>
+              ) : (
+                <>
+                  <MandarParaPC origem="download" className="mt-6" />
+                  <Button className="mt-2" variant="link" size="sm" Icon={DownloadIcon} href="/api/public/download"
+                          onClick={() => evento('file_download', { file_name: `RKZFPS-${release.version}.exe`, origem: 'fora_do_windows' })}>Baixar o instalador mesmo assim</Button>
+                </>
+              )}
               {release.notes && <p className="mt-4 whitespace-pre-line text-sm text-ink-2">{release.notes}</p>}
               {release.sha256 && (
                 <p className="mt-4 flex items-start gap-2 break-all font-mono text-[11px] text-ink-4">

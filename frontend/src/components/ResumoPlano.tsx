@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Copy, Gauge, Gift, Wrench } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Copy, Gauge, Gift, Lock, Wrench } from 'lucide-react'
 import api from '../services/api'
 import { Button, StatTile } from './ui'
 import { gameName } from './Vitrine'
@@ -16,6 +17,8 @@ interface Recap {
   matches: number
   hours: number
   games: { game_id: string; matches_before: number; matches_after: number; avg_fps_before: number; avg_fps_after: number; low1_fps_before: number; low1_fps_after: number }[]
+  /** O antes e depois por jogo e' do Pro: abaixo dele o servidor nem manda os jogos. */
+  comparison_locked?: boolean
 }
 
 interface Referral { code: string; reward_days: number; signups: number; rewarded: number; days_earned: number }
@@ -48,9 +51,16 @@ export function OQueFoiFeito() {
           ))}
         </ul>
       ) : null}
-      <p className="mt-4 text-xs text-ink-3">
-        Mediana das partidas antes e depois da primeira correção, com pelo menos 3 de cada lado. Só entram PCs com o envio de dados de uso ligado no app.
-      </p>
+      {r.comparison_locked ? (
+        <p className="mt-4 flex items-start gap-2 text-sm text-ink-3">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>O antes e depois do FPS em cada jogo é do plano Pro. <Link to="/planos" className="font-semibold text-accent-ink">Ver planos</Link></span>
+        </p>
+      ) : (
+        <p className="mt-4 text-xs text-ink-3">
+          Mediana das partidas antes e depois da primeira correção, com pelo menos 3 de cada lado. Só entram PCs com o envio de dados de uso ligado no app.
+        </p>
+      )}
     </div>
   )
 }

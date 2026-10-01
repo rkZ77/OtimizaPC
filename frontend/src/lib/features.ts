@@ -26,3 +26,13 @@ export const FEATURES: { label: string; plan: (typeof PLAN_ORDER)[number] }[] = 
 export function includes(plan: string, feature: (typeof PLAN_ORDER)[number]): boolean {
   return PLAN_ORDER.indexOf(plan as (typeof PLAN_ORDER)[number]) >= PLAN_ORDER.indexOf(feature)
 }
+
+/**
+ * O plano QUE VALE AGORA libera isto? Vencido ou bloqueado vale como Free, e
+ * custom como o topo. Para a area logada nao mostrar a quem assinou o Basico
+ * algo do Pro como se fosse dele (o servidor tambem nao manda o dado).
+ */
+export function libera(lic: { tier: string; status: string }, feature: (typeof PLAN_ORDER)[number]): boolean {
+  if (lic.status !== 'active' && lic.status !== 'trial') return feature === 'free'
+  return includes(lic.tier === 'custom' ? 'ultimate' : lic.tier, feature)
+}

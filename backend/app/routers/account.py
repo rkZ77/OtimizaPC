@@ -53,9 +53,22 @@ def my_payments(user: dict = Depends(auth.current_user)):
     return {"payments": payments.list_for_user(user["id"])}
 
 
+def _tem_pro(user_id: int) -> bool:
+    """Plano que vale agora libera o que e' do Pro (antes e depois, benchmark)?
+
+    Espelho de PlanFeatures.cs: "Antes e depois do FPS nas suas partidas" e
+    "RKZFPS Benchmark e relatorios" sao do Pro. A regra vale aqui no servidor,
+    e nao so' na tela: quem assinou o Basico nao recebe a comparacao nem pela
+    API. O teste gratis e' do Pro, entao conta como Pro enquanto durar."""
+    lic = licenses.current(user_id)
+    return lic is not None and plans.rank(lic["tier"]) >= plans.rank("pro")
+
+
 @router.get("/benchmarks")
 def my_benchmarks(user: dict = Depends(auth.current_user)):
-    return {"benchmarks": telemetry.benchmarks_for_user(user["id"])}
+    if not _tem_pro(user["id"]):
+        return {"benchmarks": [], "locked": True}
+    return {"benchmarks": telemetry.benchmarks_for_user(user["id"]), "locked": False}
 
 
 @router.get("/history")
@@ -65,8 +78,15 @@ def my_history(user: dict = Depends(auth.current_user)):
 
 @router.get("/recap")
 def my_recap(user: dict = Depends(auth.current_user)):
-    """O que o RKZFPS fez e mediu nos PCs da pessoa (so' com telemetria ligada no app)."""
-    return gameplay.recap_for_user(user["id"])
+    """O que o RKZFPS fez e mediu nos PCs da pessoa (so' com telemetria ligada no app).
+
+    Contagens (correcoes, partidas, horas) valem para todo plano: medir o FPS
+    e' do Free. O antes e depois por jogo e' do Pro e so' sai para quem tem."""
+    recap = gameplay.recap_for_user(user["id"])
+    liberado = _tem_pro(user["id"])
+    if not liberado:
+        recap = {**recap, "games": []}
+    return {**recap, "comparison_locked": not liberado}
 
 
 @router.get("/referral")

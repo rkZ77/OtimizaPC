@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  BookOpen, Crown, Download, FileText, Gamepad2, Headphones, HelpCircle, Home, Info, LogIn,
+  BookOpen, Crown, Download, FileText, Gamepad2, Headphones, HelpCircle, Home, Info, Laptop, LogIn,
   Menu as MenuIcon, Receipt, Settings, ShieldCheck, Sparkles, User, X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -123,7 +123,7 @@ export default function MenuLateral({ open, onClose }: { open: boolean; onClose:
               <Secao titulo="Menu">
                 {MENU.map((item) => <ItemDaGaveta key={item.label} {...item} ativo={pathname === item.to} onClick={onClose} />)}
                 <Link
-                  to={user ? '/conta' : '/entrar'} onClick={onClose}
+                  to={user ? '/painel' : '/entrar'} onClick={onClose}
                   className="mt-2 flex items-center gap-3 px-3 min-h-[44px] rounded-md border border-line-strong bg-surface-1 text-sm font-semibold text-ink-1 hover:bg-surface-2 transition-colors duration-1 ease-smooth"
                 >
                   {user ? <User className="w-[18px] h-[18px] shrink-0 text-ink-2" aria-hidden /> : <LogIn className="w-[18px] h-[18px] shrink-0 text-ink-2" aria-hidden />}
@@ -133,8 +133,11 @@ export default function MenuLateral({ open, onClose }: { open: boolean; onClose:
 
               {user && (
                 <Secao titulo="Sua conta">
+                  <ItemDaGaveta label="Início da conta" Icon={Home} to="/painel" ativo={pathname === '/painel'} onClick={onClose} />
                   <ItemDaGaveta label="Meu plano" Icon={Crown} to="/meu-plano" ativo={pathname === '/meu-plano'} onClick={onClose} />
+                  <ItemDaGaveta label="PCs e medições" Icon={Laptop} to="/conta" ativo={pathname === '/conta'} onClick={onClose} />
                   <ItemDaGaveta label="Pagamentos" Icon={Receipt} to="/meu-plano#pagamentos" onClick={onClose} />
+                  {/* So' para admin: usuario comum nao ve nem o item (e a rota recusa). */}
                   {user.role === 'admin' && <ItemDaGaveta label="Admin" Icon={Settings} to="/admin" onClick={onClose} />}
                 </Secao>
               )}

@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, BadgeCheck, CircleSlash, Download } from 'lucide-react'
+import { Navigate, useLocation } from 'react-router-dom'
+import { ArrowRight, BadgeCheck, CircleSlash, Download, UserPlus } from 'lucide-react'
 import api from '../services/api'
 import PageShell from '../components/PageShell'
 import SiteHeader from '../components/SiteHeader'
 import PlansGrid from '../components/PlansGrid'
+import MandarParaPC from '../components/MandarParaPC'
+import BarraCelular from '../components/BarraCelular'
 import { Faq, Garantias, PERGUNTAS } from '../components/Confianca'
 import { Button } from '../components/ui'
 import { GAMES, GameGrid, Row, ScreenTour } from '../components/Vitrine'
+import { useAuth } from '../context/AuthContext'
 import { usePlanos } from '../hooks/usePlanos'
+import { instalaAqui } from '../lib/dispositivo'
 import { date } from '../lib/format'
 
 /*
@@ -54,6 +59,13 @@ export default function Home() {
     stats?.matches != null && { v: inteiro(stats.matches), t: 'partidas medidas com o app aberto' },
     stats?.hours != null && { v: `${inteiro(stats.hours)} h`, t: 'de jogo medidas, antes e depois' },
   ].filter((p): p is { v: string; t: string } => Boolean(p))
+  const { user } = useAuth()
+  const { hash } = useLocation()
+  const aqui = instalaAqui()
+
+  // Logado, o "inicio" e' o painel da conta, nao a pagina de venda. Com ancora
+  // (/#faq, vindo do menu) a pessoa quer a secao, entao a Home continua.
+  if (user && !hash) return <Navigate to="/painel" replace />
 
   return (
     <PageShell nav={<SiteHeader />} width="wide" mainClassName="!max-w-none !px-0 !py-0" revelacao={false}>
@@ -68,10 +80,22 @@ export default function Home() {
               O RKZFPS analisa o Windows e o hardware do seu PC, corrige só o que encontrar de errado e mede o FPS
               das suas partidas antes e depois. Toda alteração tem backup e pode ser desfeita.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button to="/download" size="lg" Icon={Download}>Baixar grátis para Windows</Button>
-              <Button to="/planos" size="lg" variant="ghost">Ver planos</Button>
-            </div>
+            {aqui ? (
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Button to="/download" size="lg" Icon={Download}>Baixar grátis para Windows</Button>
+                <Button to="/planos" size="lg" variant="ghost">Ver planos</Button>
+              </div>
+            ) : (
+              /* Fora do Windows (celular, quase sempre) o .exe nao abre: a acao
+                 vira levar o link para o PC, e criar a conta ja' garante o teste. */
+              <div className="mt-8">
+                <MandarParaPC origem="hero" />
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Button to="/cadastro" variant="ghost" Icon={UserPlus}>Criar conta e garantir o teste</Button>
+                  <Button to="/planos" variant="link">Ver planos</Button>
+                </div>
+              </div>
+            )}
             {trial > 0 && (
               <p className="mt-5 inline-flex items-start gap-2 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-ink-1">
                 <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" aria-hidden />
@@ -129,6 +153,20 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Planos logo depois de ver o produto funcionando: no celular, la' no
+          fim da pagina, eles ficavam a dez telas de distancia e quase ninguem
+          chegava. */}
+      <section id="planos" className="scroll-mt-16 border-t border-line">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+          <div className="max-w-2xl">
+            <h2 className="font-display text-3xl font-bold text-ink-1">Planos</h2>
+            <p className="mt-3 text-ink-3">Comece grátis para ver o diagnóstico do seu PC. Assine quando quiser que o RKZFPS corrija.</p>
+          </div>
+          <div className="mt-10"><PlansGrid /></div>
+          <div className="mt-6"><Button variant="ghost" to="/planos" IconRight={ArrowRight}>Comparar os planos em detalhe</Button></div>
+        </div>
+      </section>
+
       {/* Jogos */}
       <section id="jogos" className="scroll-mt-16 border-y border-line bg-surface-1/50">
         <div className="mx-auto max-w-6xl px-4 py-14">
@@ -156,9 +194,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sempre atualizado: versoes reais publicadas */}
+      {/* Sempre atualizado: versoes reais publicadas. Fica de fora no celular,
+          onde a pagina ja' e' longa: la' a lista de versoes vive no Download. */}
       {versions.length > 0 && (
-        <section className="border-y border-line bg-surface-1/50">
+        <section className="hidden border-y border-line bg-surface-1/50 sm:block">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <h2 className="font-display text-2xl font-bold text-ink-1">Sempre atualizado</h2>
@@ -175,18 +214,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
-      {/* Planos */}
-      <section id="planos" className="scroll-mt-16">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <div className="max-w-2xl">
-            <h2 className="font-display text-3xl font-bold text-ink-1">Planos</h2>
-            <p className="mt-3 text-ink-3">Comece grátis para ver o diagnóstico do seu PC. Assine quando quiser que o RKZFPS corrija.</p>
-          </div>
-          <div className="mt-10"><PlansGrid /></div>
-          <div className="mt-6"><Button variant="ghost" to="/planos" IconRight={ArrowRight}>Comparar os planos em detalhe</Button></div>
-        </div>
-      </section>
 
       {/* Perguntas */}
       <section id="faq" className="scroll-mt-16 border-t border-line">
@@ -205,9 +232,13 @@ export default function Home() {
             <h2 className="font-display text-2xl font-bold text-ink-1">Veja o que está pesando no seu PC.</h2>
             <p className="mt-2 text-ink-3">{trial > 0 ? `Diagnóstico grátis e ${trialTexto} do Pro para testar, sem cartão.` : 'Grátis, em poucos minutos, sem mudar nada.'}</p>
           </div>
-          <Button to="/download" size="lg" Icon={Download}>Baixar grátis</Button>
+          {aqui
+            ? <Button to="/download" size="lg" Icon={Download}>Baixar grátis</Button>
+            : <Button to="/cadastro" size="lg" Icon={UserPlus}>Criar conta grátis</Button>}
         </div>
       </section>
+
+      <BarraCelular origem="home" />
     </PageShell>
   )
 }

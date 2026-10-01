@@ -91,7 +91,7 @@ NAV = [("/", "Início"), ("/como-funciona", "Como funciona"), ("/planos", "Plano
 
 # Rotas do SPA que existem mas nao devem entrar no indice (tela de conta,
 # login, link de indicacao). Respondem 200 com noindex.
-PRIVADAS = {"/entrar", "/cadastro", "/esqueci-senha", "/redefinir-senha", "/conta", "/meu-plano", "/pagamento", "/admin"}
+PRIVADAS = {"/entrar", "/cadastro", "/esqueci-senha", "/redefinir-senha", "/painel", "/conta", "/meu-plano", "/pagamento", "/admin"}
 _INDICACAO = re.compile(r"^/r/[^/]+$")
 
 
@@ -372,7 +372,7 @@ def robots_txt(indexable: bool) -> str:
         "Disallow: /api/",
         # O link do instalador conta cliques: robo seguindo o link inflaria o numero.
         "Disallow: /api/public/download",
-        *[f"Disallow: {p}" for p in ("/conta", "/meu-plano", "/pagamento", "/admin", "/r/")],
+        *[f"Disallow: {p}" for p in ("/painel", "/conta", "/meu-plano", "/pagamento", "/admin", "/r/")],
         "",
         f"Sitemap: {SITE}/sitemap.xml",
         "",

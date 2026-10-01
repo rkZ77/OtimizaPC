@@ -28,7 +28,10 @@ TEXTO_1 = "#fafafa"
 TEXTO_2 = "#c7c7cf"
 TEXTO_3 = "#94949e"
 TEXTO_4 = "#75757f"
-MENTA = "#3ddc97"
+#: Ciano da marca RKZFPS (o --accent do site). O cabecalho ainda trazia o
+#: logo antigo "FPSX" em menta, e e-mail com marca diferente da do site e do
+#: app parece golpe para quem acabou de se cadastrar.
+CIANO = "#19d3f2"
 ALERTA = "#f5a524"
 
 ASSINATURA = "RKZFPS. Otimização de PC com diagnóstico, backup e desfazer."
@@ -46,8 +49,8 @@ def primeiro_nome(nome: str | None) -> str:
 
 
 def _botao(url: str, rotulo: str) -> str:
-    # Texto escuro sobre a menta: branco sobre #3ddc97 fica abaixo de 2:1.
-    return (f'<a href="{escape(url, quote=True)}" style="display:inline-block;background:{MENTA};color:{FUNDO};'
+    # Texto escuro sobre o ciano da marca: branco sobre #19d3f2 fica abaixo de 2:1.
+    return (f'<a href="{escape(url, quote=True)}" style="display:inline-block;background:{CIANO};color:{FUNDO};'
             f'text-decoration:none;font-weight:800;font-size:15px;padding:14px 36px;border-radius:10px;">{escape(rotulo)}</a>')
 
 
@@ -67,7 +70,7 @@ def casca(conteudo: str, nota_rodape: str = "") -> str:
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:{CARTAO};border:1px solid {BORDA};border-radius:16px;overflow:hidden;max-width:560px;width:100%;">
         <tr><td style="background:{CARTAO};border-bottom:1px solid {BORDA};padding:22px 36px;">
-          <span style="color:{TEXTO_1};font-size:22px;font-weight:900;letter-spacing:-0.5px;">FPS<span style="color:{MENTA};">X</span></span>
+          <span style="color:{TEXTO_1};font-size:22px;font-weight:900;font-style:italic;letter-spacing:-0.5px;">RKZ<span style="color:{CIANO};">FPS</span></span>
         </td></tr>
         <tr><td style="background:{CARTAO};padding:32px 36px;">
 {conteudo}
@@ -103,7 +106,7 @@ def _quadro(linhas: list[tuple[str, str]]) -> str:
 
 def boas_vindas(nome: str, site_url: str, trial_days: int) -> Email:
     n = primeiro_nome(nome)
-    teste = (f"Sua conta já tem <strong style=\"color:{MENTA};\">{trial_days} dias de teste do plano Pro</strong> em 1 PC, sem cartão."
+    teste = (f"Sua conta já tem <strong style=\"color:{CIANO};\">{trial_days} dias de teste do plano Pro</strong> em 1 PC, sem cartão."
              if trial_days > 0 else "Sua conta está pronta.")
     corpo = [
         teste,
@@ -174,11 +177,11 @@ def pagamento_aprovado(nome: str, plano: str, vence_em: str, valor: str, site_ur
         + _paragrafos(["O plano já está ativo na sua conta. No app, abra <strong>Conta</strong> e clique em "
                        "<strong>Sincronizar</strong>, ou apenas reabra o RKZFPS."])
         + _quadro([("Plano", plano), ("Valor", valor), ("Válido até", vence_em)])
-        + _botao(f"{site_url}/conta", "Ver minha conta"),
+        + _botao(f"{site_url}/painel", "Ver minha conta"),
         nota_rodape="Guarde este e-mail como comprovante. O desfazer continua liberado em qualquer plano.",
     )
     text = (f"Olá {n},\n\nSeu pagamento foi confirmado.\n\nPlano: {plano}\nValor: {valor}\nVálido até: {vence_em}\n\n"
-            f"No app, abra Conta e clique em Sincronizar, ou reabra o RKZFPS.\nSua conta: {site_url}/conta\n\nEquipe RKZFPS")
+            f"No app, abra Conta e clique em Sincronizar, ou reabra o RKZFPS.\nSua conta: {site_url}/painel\n\nEquipe RKZFPS")
     return Email(f"Pagamento confirmado: RKZFPS {plano}", text, html)
 
 
@@ -212,7 +215,34 @@ def aviso_plano(nome: str, plano: str, vence_em: str, dias: int, trial: bool, si
     return Email(subject, text, html)
 
 
-# ─── 5. teste do admin ──────────────────────────────────────────────────
+# ─── 5. link do download pedido pelo celular ───────────────────────────
+# Quem chega pelo celular nao consegue instalar um app de Windows ali. Em vez
+# de perder a visita, o site manda o link para a pessoa abrir no PC. O e-mail
+# e' curto de proposito: ele so' precisa ser achado e clicado no computador.
+
+def link_download(site_url: str, trial_days: int) -> Email:
+    destino = f"{site_url}/download?origem=email"
+    teste = (f" Criando a conta no app, você testa o plano Pro por {trial_days} {'dia' if trial_days == 1 else 'dias'}, sem cartão."
+             if trial_days > 0 else "")
+    html = casca(
+        _titulo("Seu link", "Abra este e-mail no seu PC")
+        + _paragrafos([
+            "Você pediu o link do RKZFPS pelo celular. No computador, clique no botão abaixo para baixar o app para Windows.",
+            "O diagnóstico é grátis e não muda nada no PC: ele mostra o que está pesando nos seus jogos e por quê."
+            + escape(teste),
+        ])
+        + f'<div style="margin-top:10px;">{_botao(destino, "Baixar o RKZFPS no PC")}</div>'
+        + f'<p style="margin:22px 0 0;color:{TEXTO_3};font-size:13px;line-height:1.6;">Ou digite no navegador do PC: '
+          f'<strong style="color:{TEXTO_2};">{escape(site_url.replace("https://", ""))}/download</strong></p>',
+        nota_rodape="Você recebeu este e-mail porque alguém pediu o link do RKZFPS com este endereço. "
+                    "Não foi você? Pode ignorar: nada é cadastrado só por este pedido.",
+    )
+    text = (f"Você pediu o link do RKZFPS pelo celular.\n\nNo PC, abra: {destino}\n\n"
+            f"O diagnóstico é grátis e não muda nada no PC.{teste}\n\nEquipe RKZFPS")
+    return Email("Seu link para baixar o RKZFPS no PC", text, html)
+
+
+# ─── 6. teste do admin ──────────────────────────────────────────────────
 
 def teste(site_url: str) -> Email:
     html = casca(

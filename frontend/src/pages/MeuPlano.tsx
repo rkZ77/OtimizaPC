@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { ArrowRight, CalendarClock, Check, Crown, Laptop, Lock, Receipt, RotateCcw } from 'lucide-react'
 import api, { errorMessage, type Overview, type Plan, type PlansResponse } from '../services/api'
 import PageShell from '../components/PageShell'
+import AreaConta from '../components/AreaConta'
 import { Indique, OQueFoiFeito } from '../components/ResumoPlano'
 import {
   Alert, Badge, Button, EmptyState, ErrorState, PlanBadge, SkeletonRows, StatTile, Table,
@@ -50,8 +51,8 @@ export default function MeuPlano() {
 
   if (!data) {
     return (
-      <PageShell title="Meu plano" noindex width="wide" bar={bar}>
-        {error ? <ErrorState description={error} onRetry={load} /> : <SkeletonRows rows={4} />}
+      <PageShell title="Meu plano" noindex width="wide" bar={bar} beforeMain={<AreaConta />}>
+        {error ?<ErrorState description={error} onRetry={load} /> : <SkeletonRows rows={4} />}
       </PageShell>
     )
   }
@@ -75,7 +76,7 @@ export default function MeuPlano() {
   const pagamento = params.get('pagamento')
 
   return (
-    <PageShell title="Meu plano" noindex width="wide" bar={bar}>
+    <PageShell title="Meu plano" noindex width="wide" bar={bar} beforeMain={<AreaConta />}>
       <div className="space-y-3 mb-6">
         {pagamento === 'aprovado' && <Alert tone="ok">Pagamento aprovado. Seu plano já está ativo: no app, abra Conta e toque em Sincronizar.</Alert>}
         {pagamento === 'pendente' && <Alert tone="warn">Pagamento em processamento. Assim que o Mercado Pago confirmar, seu plano é ativado sozinho e você recebe um e-mail.</Alert>}

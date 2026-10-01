@@ -32,11 +32,14 @@ export default function PublicNav({
         <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle className="-ml-1" />
           {acoes ?? (user ? (
-            <Button to="/conta" size="sm">Minha conta</Button>
+            <Button to="/painel" size="sm">Minha conta</Button>
           ) : (
             <>
               <Button to="/entrar" variant="link" size="sm">Entrar</Button>
               <Button to="/download" size="sm" className="hidden sm:inline-flex">Analisar meu PC</Button>
+              {/* No celular a barra so' tinha "Entrar": quem ainda nao tem conta
+                  ficava sem saida no topo de planos, download e como funciona. */}
+              <Button to="/cadastro" size="sm" className="sm:hidden">Criar conta</Button>
             </>
           ))}
         </div>

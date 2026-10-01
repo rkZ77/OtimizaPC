@@ -14,6 +14,7 @@ import ComoFunciona from './pages/ComoFunciona'
 import Pagamento from './pages/Pagamento'
 import MeuPlano from './pages/MeuPlano'
 import Conta from './pages/Conta'
+import Painel from './pages/Painel'
 import Admin from './pages/admin/Admin'
 import { Cadastro, Entrar, RecuperarSenha } from './pages/Auth'
 import { NotFound, Privacidade, Termos } from './pages/Legal'
@@ -39,7 +40,7 @@ function RequireAuth({ children, admin }: { children: React.ReactNode; admin?: b
   const location = useLocation()
   if (loading) return <SpinnerBlock />
   if (!user) return <Navigate to={`/entrar?voltar=${encodeURIComponent(location.pathname + location.search)}`} replace />
-  if (admin && user.role !== 'admin') return <Navigate to="/conta" replace />
+  if (admin && user.role !== 'admin') return <Navigate to="/painel" replace />
   return <>{children}</>
 }
 
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/r/:code" element={<Indicacao />} />
         <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/termos" element={<Termos />} />
+        <Route path="/painel" element={<RequireAuth><Painel /></RequireAuth>} />
         <Route path="/conta" element={<RequireAuth><Conta /></RequireAuth>} />
         <Route path="/meu-plano" element={<RequireAuth><MeuPlano /></RequireAuth>} />
         <Route path="/pagamento" element={<RequireAuth><Pagamento /></RequireAuth>} />

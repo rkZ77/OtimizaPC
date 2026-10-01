@@ -1,7 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { KeyRound, Lock, Mail, User } from 'lucide-react'
+import { Check, KeyRound, Lock, Mail, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { usePlanos } from '../hooks/usePlanos'
 import api, { errorMessage } from '../services/api'
 import PageShell from '../components/PageShell'
 import PublicNav from '../components/PublicNav'
@@ -65,7 +66,7 @@ export function Entrar() {
     setError('')
     try {
       const user = await login(email, password)
-      navigate(safeReturn(params.get('voltar'), user.role === 'admin' ? '/admin' : '/conta'))
+      navigate(safeReturn(params.get('voltar'), user.role === 'admin' ? '/admin' : '/painel'))
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -189,9 +190,10 @@ export function Cadastro() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [accepted, setAccepted] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const { data: planos } = usePlanos()
+  const trial = planos?.trial_days ?? 0
   const plan = params.get('plano')
   const ref = params.get('ref') ?? lerIndicacao()
 
@@ -207,7 +209,7 @@ export function Cadastro() {
       await register(name, email, password, ref)
       evento('sign_up', { method: ref ? 'indicacao' : 'email' })
       limparIndicacao()
-      navigate(plan ? `/pagamento?plano=${encodeURIComponent(plan)}` : '/conta?bemvindo=1')
+      navigate(plan ? `/pagamento?plano=${encodeURIComponent(plan)}` : '/painel?bemvindo=1')
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -218,19 +220,31 @@ export function Cadastro() {
   return (
     <TelaDeConta title="Criar conta">
       <h1 className="font-display text-2xl font-bold text-ink-1">Criar conta</h1>
-      <p className="mt-1 text-ink-3">Conta nova ganha um período de teste do plano Pro em 1 PC, sem cartão.</p>
+      <p className="mt-1 text-ink-3">Leva menos de um minuto. Dá para criar pelo celular e instalar no PC depois.</p>
       {ref && <p className="mt-2 text-sm text-accent-ink">Você chegou por indicação de um amigo.</p>}
+      {/* O que a pessoa ganha, antes do formulario: e' isso que faz preencher. */}
+      <ul className="mt-4 space-y-1.5 text-sm text-ink-2">
+        {[
+          trial > 0 ? `Teste do plano Pro por ${trial === 1 ? '1 dia' : `${trial} dias`} em 1 PC, sem cartão` : 'Diagnóstico completo do PC, grátis',
+          'O diagnóstico não muda nada no PC',
+          'Toda correção tem backup e pode ser desfeita',
+        ].map((t) => (
+          <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-ink" aria-hidden />{t}</li>
+        ))}
+      </ul>
       <Card className="mt-6 p-6">
         <form onSubmit={submit} className="space-y-4">
           {error && <Alert>{error}</Alert>}
-          <Input label="Nome" name="name" Icon={User} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input label="E-mail" name="email" type="email" Icon={Mail} autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input label="E-mail" name="email" type="email" Icon={Mail} autoComplete="email" inputMode="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label="Senha" name="password" type="password" Icon={Lock} autoComplete="new-password" required hint="Pelo menos 8 caracteres." value={password} onChange={(e) => setPassword(e.target.value)} />
-          <label className="flex items-start gap-3 text-sm text-ink-3">
-            <input type="checkbox" className="mt-1 h-4 w-4 accent-[rgb(var(--accent))]" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} required />
-            <span>Li e aceito os <Link to="/termos" className="text-accent-ink">termos de uso</Link> e a <Link to="/privacidade" className="text-accent-ink">política de privacidade</Link>.</span>
-          </label>
-          <Button type="submit" block loading={busy} disabled={!accepted}>Criar conta</Button>
+          <Input label="Como quer ser chamado (opcional)" name="name" Icon={User} autoComplete="given-name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Button type="submit" block size="lg" loading={busy}>Criar conta grátis</Button>
+          {/* Aceite no proprio botao, dito antes do clique, no lugar da caixa de
+              marcar: a caixa travava o botao e, no celular, muita gente tocava em
+              "Criar conta" apagado sem entender por que nada acontecia. */}
+          <p className="text-xs text-ink-3">
+            Ao criar a conta, você aceita os <Link to="/termos" className="text-accent-ink">termos de uso</Link> e a <Link to="/privacidade" className="text-accent-ink">política de privacidade</Link>.
+          </p>
         </form>
       </Card>
       <p className="mt-4 text-center text-sm text-ink-3">
