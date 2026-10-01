@@ -7,6 +7,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User>
   register: (name: string, email: string, password: string, ref?: string | null) => Promise<User>
   logout: () => Promise<void>
+  /** Troca o usuario da sessao depois de editar o perfil, sem recarregar a pagina. */
+  atualizar: (user: User) => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -48,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, login, register, logout, atualizar: setUser }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth(): AuthContextType {

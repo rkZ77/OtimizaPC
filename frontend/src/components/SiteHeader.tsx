@@ -7,6 +7,7 @@ import { instalaAqui } from '../lib/dispositivo'
 import ThemeToggle from './ThemeToggle'
 import Logo from './Logo'
 import MenuLateral, { BotaoMenu } from './MenuLateral'
+import MenuUsuario from './MenuUsuario'
 
 /*
  * Cabeçalho da home (padrão do Pickia).
@@ -71,7 +72,7 @@ export default function SiteHeader() {
         <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle className="-ml-1" />
           {user ? (
-            <Button to="/painel" size="sm">Minha conta</Button>
+            <MenuUsuario />
           ) : (
             <>
               <Button to="/entrar" variant="link" size="sm" className="hidden sm:inline-flex">Entrar</Button>

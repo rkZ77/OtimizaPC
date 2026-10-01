@@ -33,6 +33,11 @@ def set_password(user_id: int, password_hash: str) -> int:
         "UPDATE users SET password_hash = %s, password_changed_at = now() WHERE id = %s", (password_hash, user_id))
 
 
+def set_name(user_id: int, name: str) -> dict | None:
+    return database.fetch_one(
+        f"UPDATE users SET name = %s WHERE id = %s RETURNING {_COLUMNS}", (name.strip(), user_id))
+
+
 def search(query: str, limit: int, offset: int) -> list[dict]:
     like = f"%{query.strip().lower()}%"
     return database.fetch_all(

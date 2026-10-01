@@ -51,6 +51,20 @@ def test_pro_ou_acima_recebe_a_comparacao(client, monkeypatch, tier):
     assert client.get("/api/account/benchmarks").json()["benchmarks"] == BENCH
 
 
+def test_editar_perfil_so_troca_o_nome_da_propria_conta(client, monkeypatch):
+    chamadas = []
+
+    def _set_name(uid, name):
+        chamadas.append((uid, name))
+        return {**USER, "name": name}
+    monkeypatch.setattr(account.users, "set_name", _set_name)
+    r = client.patch("/api/account/profile", json={"name": "  Ana   Souza ", "role": "admin", "email": "x@y.com"})
+    # Campo extra (role, email) e' ignorado: nao ha' como virar admin por aqui.
+    assert r.status_code == 200 and r.json()["user"]["role"] == "user"
+    assert chamadas == [(7, "Ana Souza")]
+    assert client.patch("/api/account/profile", json={"name": "x" * 81}).status_code == 422
+
+
 def test_usuario_comum_nao_entra_no_admin(monkeypatch):
     # Sem sobrescrever require_admin: e' a trava real que tem que recusar.
     app.dependency_overrides[auth.current_user] = lambda: USER

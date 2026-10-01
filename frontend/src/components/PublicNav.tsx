@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import Logo from './Logo'
 import MenuLateral, { BotaoMenu } from './MenuLateral'
+import MenuUsuario from './MenuUsuario'
 
 /*
  * Barra das paginas internas (planos, download, conta, admin), no desenho da
@@ -32,7 +33,7 @@ export default function PublicNav({
         <div className="flex items-center gap-2 shrink-0">
           <ThemeToggle className="-ml-1" />
           {acoes ?? (user ? (
-            <Button to="/painel" size="sm">Minha conta</Button>
+            <MenuUsuario />
           ) : (
             <>
               <Button to="/entrar" variant="link" size="sm">Entrar</Button>
