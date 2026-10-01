@@ -27,8 +27,16 @@ export function Privacidade() {
           <li>um resumo do hardware: modelo do processador e da placa de vídeo, quantidade de memória e versão do Windows.</li>
         </ul>
         <p>Com isso o RKZFPS compara o seu PC com PCs parecidos (a comparação só aparece quando o grupo tem pelo menos 5 PCs, para ninguém ser identificado) e descobre, no conjunto, o que de fato melhora o FPS. Nunca enviamos arquivos, nomes de programas, o nome do PC, caminhos de pasta ou conteúdo pessoal. Você pode desligar a qualquer momento em Configurações, e a fila local é apagada.</p>
+        <h2>Recursos com inteligência artificial</h2>
+        <p>Alguns recursos usam a OpenAI para escrever a resposta, e só rodam quando você pede:</p>
+        <ul>
+          <li>o assistente do site recebe as mensagens que você digita no chat;</li>
+          <li>no app, "explicar o diagnóstico", "qual peça trocar" e "dicas por jogo" enviam o resumo do hardware, os itens do diagnóstico e, quando houver, os números medidos nas suas partidas.</li>
+        </ul>
+        <p>Não vão e-mail, nome, nome do PC, arquivos nem nomes de programas. Não digite dados pessoais no chat.</p>
         <h2>Cookies</h2>
-        <p>O site usa só o cookie essencial de sessão (para manter você conectado) e guarda no navegador a sua escolha de tema.</p>
+        <p>O site usa o cookie essencial de sessão (para manter você conectado) e guarda no navegador a sua escolha de tema e a sua resposta sobre cookies.</p>
+        <p>Se você tocar em "Aceitar todos", o site também usa o Google Analytics para contar visitas e saber quais páginas ajudam mais. Ele recebe as páginas visitadas, a origem da visita e dados do navegador e do aparelho, sem seu e-mail ou nome. Em "Só essenciais", nada vai para o Google. Para mudar a resposta, limpe os dados do site no navegador e escolha de novo.</p>
         <h2>Seus direitos</h2>
         <p>Você pode pedir acesso, correção ou exclusão dos seus dados pelo suporte. Ao excluir a conta, as licenças e os PCs vinculados são removidos.</p>
       </Prose>

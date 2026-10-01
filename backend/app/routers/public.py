@@ -1,7 +1,13 @@
+import logging
+import re
+
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 
-from app import auth, settings, signing
+from app import auth, database, settings, signing
+
+logger = logging.getLogger("fpsx")
 from app.services import app_settings, assistant, catalog, gameplay, plans
 
 router = APIRouter(prefix="/api/public", tags=["public"])
@@ -28,6 +34,28 @@ def stats():
 @router.get("/releases")
 def releases():
     return {"releases": catalog.latest_releases()}
+
+
+_ROBO = re.compile(r"bot|crawl|spider|preview|facebookexternalhit|whatsapp|slurp", re.I)
+
+
+@router.get("/download", include_in_schema=False)
+def download(request: Request):
+    """Botao "Baixar para Windows": conta o clique e manda para o instalador.
+
+    A contagem nunca segura o download: banco fora do ar, o arquivo sai igual.
+    Robo de busca e previa de link nao contam."""
+    release = next((r for r in catalog.latest_releases() if r["component"] == "agent" and r.get("url")), None)
+    if release is None:
+        return RedirectResponse("/download", status_code=302)
+    if not _ROBO.search(request.headers.get("user-agent", "")):
+        try:
+            database.execute(
+                """INSERT INTO download_clicks (day, version, n) VALUES (current_date, %s, 1)
+                   ON CONFLICT (day, version) DO UPDATE SET n = download_clicks.n + 1""", (release["version"],))
+        except Exception as e:
+            logger.warning("[DOWNLOAD] contagem falhou: %s", e)
+    return RedirectResponse(release["url"], status_code=302)
 
 
 @router.get("/changelog")

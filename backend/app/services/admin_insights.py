@@ -163,7 +163,11 @@ def funnel(days: int) -> dict:
           AND NOT EXISTS (SELECT 1 FROM devices d WHERE d.user_id = u.id)
         ORDER BY u.created_at DESC LIMIT 50
     """, (days,))
-    return {"days": days, **(row or {}), "never_activated_users": stuck}
+    # Cliques em "Baixar" no site no mesmo periodo. Nao e' coorte (o clique nao
+    # tem conta), entao fica ao lado do funil, nao dentro dele.
+    dl = database.fetch_one(
+        "SELECT coalesce(sum(n), 0) AS n FROM download_clicks WHERE day > current_date - %s", (days,))
+    return {"days": days, **(row or {}), "downloads": int(dl["n"]) if dl else 0, "never_activated_users": stuck}
 
 
 def engagement() -> dict:

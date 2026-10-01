@@ -5,6 +5,7 @@ import api, { errorMessage, type Overview, type Plan, type PlansResponse } from 
 import PageShell from '../components/PageShell'
 import { Alert, Button, EmptyState, SkeletonCard } from '../components/ui'
 import { cn } from '../lib/cn'
+import { evento } from '../lib/analytics'
 import { money, PERIOD_LABEL, TIER_LABEL } from '../lib/format'
 
 /*
@@ -71,7 +72,9 @@ export default function Pagamento() {
     setBusy(true)
     setError('')
     try {
-      const { data } = await api.post<{ checkout_url: string }>('/payments/checkout', { plan_key: plan.key, coupon: quote?.coupon ?? null })
+      const { data } = await api.post<{ checkout_url: string; amount_cents: number }>('/payments/checkout', { plan_key: plan.key, coupon: quote?.coupon ?? null })
+      // Valor que o servidor devolveu, nao calculado aqui (regra do projeto).
+      evento('begin_checkout', { currency: 'BRL', value: data.amount_cents / 100, item_id: plan.key })
       window.location.href = data.checkout_url
     } catch (e) {
       setError(errorMessage(e))

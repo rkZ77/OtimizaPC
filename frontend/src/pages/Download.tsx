@@ -9,6 +9,7 @@ import PageShell from '../components/PageShell'
 import { Alert, Button, SectionHead, SkeletonText } from '../components/ui'
 import { LogoMark } from '../components/Logo'
 import { date } from '../lib/format'
+import { evento } from '../lib/analytics'
 
 /*
  * Download com cara de loja de app: o icone da marca (o mesmo do app e do
@@ -71,7 +72,9 @@ export default function Download() {
           )}
           {release && (
             <>
-              <Button className="mt-6" size="lg" Icon={DownloadIcon} href={release.url}>Baixar para Windows</Button>
+              {/* Passa pelo servidor, que conta o clique (sem dado pessoal) e manda para o instalador. */}
+              <Button className="mt-6" size="lg" Icon={DownloadIcon} href="/api/public/download"
+                      onClick={() => evento('file_download', { file_name: `RKZFPS-${release.version}.exe` })}>Baixar para Windows</Button>
               {release.notes && <p className="mt-4 whitespace-pre-line text-sm text-ink-2">{release.notes}</p>}
               {release.sha256 && (
                 <p className="mt-4 flex items-start gap-2 break-all font-mono text-[11px] text-ink-4">

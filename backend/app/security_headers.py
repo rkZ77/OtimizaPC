@@ -31,15 +31,21 @@ def inline_script_hashes(index_html: str) -> list[str]:
             for body in _INLINE_SCRIPT.findall(index_html)]
 
 
-def build_csp(script_hashes: list[str]) -> str:
+# Dominios do Google Analytics 4 (lista do guia de CSP do Google). Entram so'
+# com GA_MEASUREMENT_ID configurado; sem ele, o site nao fala com o Google.
+_GA_SCRIPT = "https://www.googletagmanager.com"
+_GA_REDE = "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com"
+
+
+def build_csp(script_hashes: list[str], analytics: bool = False) -> str:
     return "; ".join([
         "default-src 'self'",
-        "script-src 'self' " + " ".join(script_hashes),
+        "script-src 'self' " + " ".join(script_hashes) + (f" {_GA_SCRIPT}" if analytics else ""),
         # Estilo inline vem das animacoes (style="transform..."), nao de dado do usuario.
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data:",
+        "img-src 'self' data:" + (f" {_GA_REDE}" if analytics else ""),
         "font-src 'self'",
-        "connect-src 'self'",
+        "connect-src 'self'" + (f" {_GA_REDE}" if analytics else ""),
         "frame-ancestors 'none'",
         "base-uri 'self'",
         # Formulario so' posta no proprio site; o checkout abre o Mercado Pago por navegacao.
@@ -51,7 +57,7 @@ def build_csp(script_hashes: list[str]) -> str:
 def _csp_for_dist() -> str:
     index = Path(__file__).resolve().parent.parent / "dist" / "index.html"
     hashes = inline_script_hashes(index.read_text(encoding="utf-8")) if index.exists() else []
-    return build_csp(hashes)
+    return build_csp(hashes, analytics=bool(settings.GA_MEASUREMENT_ID))
 
 
 class SecurityHeaders(BaseHTTPMiddleware):

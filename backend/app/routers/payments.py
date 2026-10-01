@@ -14,6 +14,9 @@ class CheckoutIn(BaseModel):
 
 @router.post("/quote")
 def quote(body: CheckoutIn, user: dict = Depends(auth.current_user)):
+    # A cotacao diz se um cupom existe: sem teto, uma conta testaria codigos
+    # curtos sem parar ate' achar um de 100%. 60 em 10 minutos sobra para a tela.
+    auth.rate_limit("quote", str(user["id"]), limit=60, window_seconds=600)
     try:
         q = payments.quote(body.plan_key, body.coupon)
     except ValueError as e:

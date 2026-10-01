@@ -5,6 +5,7 @@ ADMIN muda (precos, trial_days, planos) NAO fica aqui: fica no banco, na
 tabela `settings`, e e' editado pelo painel.
 """
 import os
+import re
 import warnings
 
 from dotenv import find_dotenv, load_dotenv
@@ -42,6 +43,18 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 #: Endereco que recebe as respostas ("Responder" no e-mail). Opcional.
 EMAIL_REPLY_TO = os.getenv("EMAIL_REPLY_TO", "")
+
+#: Google Analytics 4 do site (G-XXXXXXXX). Vazio = sem Analytics, e o CSP
+#: continua fechado para o Google. Formato conferido: vai para o HTML e o CSP.
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "").strip()
+if not re.fullmatch(r"G-[A-Z0-9]{4,12}", GA_MEASUREMENT_ID):
+    GA_MEASUREMENT_ID = ""
+
+#: Codigo da meta "google-site-verification" do Search Console. Opcional:
+#: verificar pelo DNS (registro TXT) tambem funciona e cobre www e http.
+GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION", "").strip()
+if not re.fullmatch(r"[A-Za-z0-9_-]{10,100}", GOOGLE_SITE_VERIFICATION):
+    GOOGLE_SITE_VERIFICATION = ""
 
 #: Aplica as migrations no startup. Ligado no deploy, desligado quando
 #: alguem quer subir a API sem tocar no schema.

@@ -8,6 +8,7 @@ import PublicNav from '../components/PublicNav'
 import { LogoMark, Wordmark } from '../components/Logo'
 import { Alert, Button, Card, Input } from '../components/ui'
 import { lerIndicacao, limparIndicacao } from '../lib/indicacao'
+import { evento } from '../lib/analytics'
 
 // So' aceita caminho interno: um ?voltar=https://site-falso nao vira redirect aberto.
 // Barra invertida e caractere de controle ficam de fora: o navegador trata
@@ -204,6 +205,7 @@ export function Cadastro() {
     setError('')
     try {
       await register(name, email, password, ref)
+      evento('sign_up', { method: ref ? 'indicacao' : 'email' })
       limparIndicacao()
       navigate(plan ? `/pagamento?plano=${encodeURIComponent(plan)}` : '/conta?bemvindo=1')
     } catch (err) {

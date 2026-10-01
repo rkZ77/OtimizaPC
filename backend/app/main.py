@@ -2,12 +2,12 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app import database, settings
+from app import database, seo, settings
 from app.routers import account, admin, agent, auth, payments, public
 from app.security_headers import SecurityHeaders
 from app.services import emails
@@ -46,7 +46,12 @@ async def lifespan(_app: FastAPI):
         scheduler.stop()
 
 
-app = FastAPI(title="RKZFPS API", version="0.1.0", lifespan=lifespan, docs_url="/api/docs" if not settings.IS_PRODUCTION else None)
+# Sem docs E sem /openapi.json em producao: so' tirar o docs_url deixava o
+# esquema inteiro (rotas do admin inclusive) publico em /openapi.json.
+app = FastAPI(title="RKZFPS API", version="0.1.0", lifespan=lifespan,
+              docs_url="/api/docs" if not settings.IS_PRODUCTION else None,
+              redoc_url=None,
+              openapi_url="/openapi.json" if not settings.IS_PRODUCTION else None)
 
 app.add_middleware(SecurityHeaders)
 app.add_middleware(
@@ -73,6 +78,27 @@ def health():
     return {"ok": True}
 
 
+# ─── arquivos para robos de busca e de IA (ver app/seo.py) ──────────────
+# Antes caiam no SPA e voltavam o index.html: o Google nao tinha robots nem
+# sitemap, e as IAs nao tinham o resumo do produto.
+_CACHE_ROBOS = {"Cache-Control": "public, max-age=3600"}
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots(request: Request):
+    return PlainTextResponse(seo.robots_txt(seo.indexable_host(request.url.hostname)), headers=_CACHE_ROBOS)
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap():
+    return Response(seo.sitemap_xml(), media_type="application/xml", headers=_CACHE_ROBOS)
+
+
+@app.get("/llms.txt", include_in_schema=False)
+def llms():
+    return PlainTextResponse(seo.llms_txt(), headers=_CACHE_ROBOS)
+
+
 # ─── site (build do Vite) ────────────────────────────────────────────────
 # Mesmo desenho do Pickia: uma imagem so' serve API e SPA. A pasta existe na
 # imagem Docker (copiada do estagio de build do frontend).
@@ -81,12 +107,20 @@ if _dist.exists():
     if (_dist / "assets").exists():
         app.mount("/assets", StaticFiles(directory=_dist / "assets"), name="assets")
 
+    _index_html = (_dist / "index.html").read_text(encoding="utf-8")
+
     @app.get("/{full_path:path}", include_in_schema=False)
-    def spa(full_path: str):
+    def spa(full_path: str, request: Request):
         if full_path.startswith("api/"):
             raise HTTPException(404, "Rota não encontrada.")
         candidate = (_dist / full_path).resolve()
         # resolve() + is_relative_to: bloqueia ../ para fora do dist.
         if full_path and candidate.is_file() and candidate.is_relative_to(_dist):
             return FileResponse(candidate)
-        return FileResponse(_dist / "index.html")
+        # Cada rota sai com o titulo, a descricao e o texto dela, e rota que
+        # nao existe responde 404 (o React mostra a tela de nao encontrado).
+        path = "/" + full_path.strip("/")
+        planos = seo._planos() if path in ("/", "/planos") else []
+        page = seo.page_for(path, planos)
+        html = seo.render(_index_html, page, seo.indexable_host(request.url.hostname), planos)
+        return HTMLResponse(html, status_code=page.status)

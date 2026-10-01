@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [main, dev]
 
+# Token do GitHub so' com leitura: nenhum job publica nada no repositorio.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true

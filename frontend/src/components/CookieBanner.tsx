@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { gaId, iniciarAnalytics, precisaPerguntar, responder } from '../lib/analytics'
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false)
+  // Com o Analytics configurado o aviso vira pergunta (LGPD): aceitar ou so' o essencial.
+  const comAnalytics = gaId() !== null
 
   useEffect(() => {
-    if (!localStorage.getItem('cookie_consent')) setVisible(true)
+    iniciarAnalytics()
+    if (precisaPerguntar()) setVisible(true)
   }, [])
 
-  const accept = () => {
-    localStorage.setItem('cookie_consent', '1')
+  const escolher = (valor: 'todos' | 'essenciais') => {
+    responder(valor)
     setVisible(false)
-    window.dispatchEvent(new Event('cookie-consent-accepted'))
   }
 
   return (
@@ -40,8 +43,9 @@ export default function CookieBanner() {
               do botao de baixar. Frase curta e botoes lado a lado. */}
           <div className="max-w-5xl mx-auto flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 sm:gap-6">
             <p className="text-xs text-ink-2 basis-full sm:basis-auto flex-1 leading-relaxed">
-              Usamos só cookies essenciais, para login e funcionamento do site.
-              Ao continuar, você concorda com a Política de Privacidade.
+              {comAnalytics
+                ? 'Usamos cookies essenciais para login e, se você permitir, o Google Analytics para saber quais páginas ajudam mais.'
+                : 'Usamos só cookies essenciais, para login e funcionamento do site. Ao continuar, você concorda com a Política de Privacidade.'}
             </p>
             {/* A política saiu de dentro da frase e virou botão ao lado do
                 "Entendi": ler antes de aceitar é uma escolha, não uma nota de
@@ -52,12 +56,23 @@ export default function CookieBanner() {
             >
               Ler a política
             </a>
+            {/* "Só essenciais" com o mesmo peso visual de "Ler a política":
+                recusar tem que ser tão fácil quanto aceitar. */}
+            {comAnalytics && (
+              <button
+                type="button"
+                onClick={() => escolher('essenciais')}
+                className="shrink-0 inline-flex items-center justify-center text-xs font-bold text-ink-2 hover:text-ink-1 border border-line-strong hover:border-ink-4 px-4 py-2 rounded-lg min-h-[36px] transition-colors"
+              >
+                Só essenciais
+              </button>
+            )}
             <motion.button
               whileTap={{ scale: 0.96 }}
-              onClick={accept}
+              onClick={() => escolher('todos')}
               className="shrink-0 bg-accent hover:bg-accent-hover active:bg-accent-press text-black text-xs font-black px-5 py-2 rounded-lg transition-colors"
             >
-              Entendi
+              {comAnalytics ? 'Aceitar todos' : 'Entendi'}
             </motion.button>
           </div>
         </motion.div>

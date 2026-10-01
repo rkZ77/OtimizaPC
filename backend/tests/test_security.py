@@ -88,6 +88,20 @@ def test_forca_bruta_de_senha_e_barrada(client, monkeypatch):
     assert 429 in codes
 
 
+def test_chute_de_cupom_na_cotacao_e_barrado(client, monkeypatch):
+    from app.services import payments, users
+    monkeypatch.setattr(users, "get_by_id", lambda uid: USER)
+
+    def _cupom_invalido(plan_key, coupon):
+        raise ValueError("Cupom inválido ou expirado.")
+
+    monkeypatch.setattr(payments, "quote", _cupom_invalido)
+    token = auth.create_access_token(7, "user")
+    codes = [client.post("/api/payments/quote", json={"plan_key": "pro", "coupon": f"C{i:03d}"},
+                         headers={"Authorization": f"Bearer {token}"}).status_code for i in range(61)]
+    assert codes[0] == 400 and codes[-1] == 429
+
+
 def test_login_nao_revela_se_o_email_existe(client, monkeypatch):
     from app.services import users
     monkeypatch.setattr(users, "get_with_password", lambda e: {**USER, "password_hash": auth.hash_password("a-certa-123")} if e == USER["email"] else None)

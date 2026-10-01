@@ -15,7 +15,7 @@ import { date, dateTime, TIER_LABEL } from '../../lib/format'
  */
 
 interface Funil {
-  days: number; signed_up: number; activated_pc: number; used_trial: number; paid: number; never_activated: number
+  days: number; downloads: number; signed_up: number; activated_pc: number; used_trial: number; paid: number; never_activated: number
   never_activated_users: { id: number; email: string; name: string; created_at: string }[]
 }
 
@@ -52,7 +52,8 @@ export default function AdminFunil() {
             options={[{ value: '7', label: '7 dias' }, { value: '30', label: '30 dias' }, { value: '90', label: '90 dias' }]} />
         </div>
         {!f ? <SkeletonRows rows={2} className="mt-4" /> : (
-          <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-5">
+            <StatTile label="Baixaram o app" value={f.downloads} hint="cliques em Baixar no site" />
             <StatTile label="Criaram conta" value={f.signed_up} />
             <StatTile label="Ativaram o app no PC" value={f.activated_pc} hint={`${pct(f.activated_pc, f.signed_up)} das contas`} />
             <StatTile label="Usaram o teste" value={f.used_trial} hint={`${pct(f.used_trial, f.activated_pc)} de quem ativou`} />

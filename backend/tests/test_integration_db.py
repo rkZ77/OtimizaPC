@@ -315,6 +315,39 @@ def test_ataques_com_banco_real_idor_e_sql_injection(api, db):
     r = api.post("/api/auth/register", json={"email": "xss@fpsx.app", "password": "senha-forte-1", "name": xss})
     assert r.json()["user"]["name"] == xss
 
+
+def test_botao_baixar_conta_o_clique_e_aparece_no_funil(api, db):
+    # Sem versao publicada, volta para a pagina de download em vez de quebrar.
+    # (as migrations publicam versoes reais: tira todas do ar para este caso)
+    db.execute("UPDATE releases SET active = FALSE")
+    r = api.get("/api/public/download", follow_redirects=False)
+    assert r.status_code == 302 and r.headers["location"] == "/download"
+
+    url = "https://github.com/rkZ77/OtimizaPC/releases/download/v9.9.9/RKZFPS-Setup-9.9.9.exe"
+    db.execute("INSERT INTO releases (component, version, url, sha256, notes) VALUES ('agent', '9.9.9', %s, '', '')", (url,))
+    for _ in range(3):
+        r = api.get("/api/public/download", follow_redirects=False, headers={"User-Agent": "Mozilla/5.0 Chrome"})
+        assert r.status_code == 302 and r.headers["location"] == url
+    # Robo de busca e previa de link seguem o link, mas nao contam.
+    api.get("/api/public/download", follow_redirects=False, headers={"User-Agent": "Googlebot/2.1"})
+    api.get("/api/public/download", follow_redirects=False, headers={"User-Agent": "WhatsApp/2.23"})
+    assert db.fetch_one("SELECT n FROM download_clicks WHERE version = '9.9.9'")["n"] == 3
+
+    admin = _register(api, "dono@fpsx.app")
+    db.execute("UPDATE users SET role = 'admin' WHERE email = 'dono@fpsx.app'")
+    assert api.get("/api/admin/funnel?days=7", headers=admin).json()["downloads"] == 3
+
+
+def test_toda_tabela_nasce_com_rls(db):
+    """No Supabase, tabela do schema public sem RLS fica legivel pela API REST
+    publica. A 0003 cobre as tabelas da epoca e cada migration seguinte liga
+    o RLS das suas (0004, 0010); migration nova que esquecer quebra aqui."""
+    sem_rls = db.fetch_all(
+        """SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity ORDER BY 1""")
+    assert sem_rls == []
+
+
 def test_partidas_sobem_comparam_com_pcs_parecidos_e_aparecem_no_admin(api, db):
     from datetime import datetime, timedelta, timezone
 
