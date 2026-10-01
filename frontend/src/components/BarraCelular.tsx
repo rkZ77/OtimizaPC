@@ -30,7 +30,7 @@ export default function BarraCelular({ origem, depoisDe = 560 }: { origem: strin
     return () => window.removeEventListener('scroll', onScroll)
   }, [depoisDe])
 
-  useEffect(() => () => document.documentElement.style.removeProperty('--barra-fixa'), [])
+  useEffect(() => () => { document.documentElement.style.removeProperty('--barra-fixa') }, [])
 
   return (
     <>
