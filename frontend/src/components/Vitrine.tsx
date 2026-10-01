@@ -83,10 +83,12 @@ export function GameGrid() {
  * o mouse esta' em cima ou quando o sistema pede menos movimento.
  */
 const TOUR: { src: string; t: string; alt: string }[] = [
-  { src: '/img/app-dashboard.png', t: 'Diagnóstico', alt: 'Tela inicial do RKZFPS com o diagnóstico do PC' },
-  { src: '/img/app-otimizacoes.png', t: 'Correções', alt: 'Tela de otimizações do RKZFPS, com o motivo de cada uma' },
-  { src: '/img/app-jogos.png', t: 'Jogos', alt: 'Tela de jogos do RKZFPS' },
-  { src: '/img/app-partidas.png', t: 'Partidas', alt: 'Tela de partidas do RKZFPS com o FPS medido' },
+  // O "-v2" no nome e' de proposito: com o mesmo nome, o navegador de quem ja
+  // visitou o site seguia mostrando o print antigo guardado em cache.
+  { src: '/img/app-dashboard-v2.png', t: 'Diagnóstico', alt: 'Tela inicial do RKZFPS com o diagnóstico do PC' },
+  { src: '/img/app-otimizacoes-v2.png', t: 'Correções', alt: 'Tela de otimizações do RKZFPS, com o motivo de cada uma' },
+  { src: '/img/app-jogos-v2.png', t: 'Jogos', alt: 'Tela de jogos do RKZFPS' },
+  { src: '/img/app-partidas-v2.png', t: 'Partidas', alt: 'Tela de partidas do RKZFPS com o FPS medido' },
 ]
 
 const TOUR_MS = 4500

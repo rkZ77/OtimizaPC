@@ -27,7 +27,7 @@ SITE_HOST = "rkzfps.com.br"
 NOME = "RKZFPS"
 INSTAGRAM = "https://www.instagram.com/rkzfps.br"
 #: Print real do app: previa no WhatsApp, Discord e resultado de busca.
-OG_IMAGE = f"{SITE}/img/app-dashboard.png"
+OG_IMAGE = f"{SITE}/img/app-dashboard-v2.png"
 DESCRICAO_PADRAO = ("O RKZFPS analisa seu PC Windows e aplica só otimizações compatíveis, com backup, "
                     "desfazer e medição antes e depois. Sem tweak placebo, sem promessa de FPS.")
 

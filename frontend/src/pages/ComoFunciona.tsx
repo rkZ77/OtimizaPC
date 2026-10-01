@@ -89,19 +89,19 @@ export default function ComoFunciona() {
       </ol>
 
       <div className="mt-20 space-y-20">
-        <Row title="Um diagnóstico que não chuta" img="/img/app-dashboard.png" alt="Tela inicial do RKZFPS com o diagnóstico do PC">
+        <Row title="Um diagnóstico que não chuta" img="/img/app-dashboard-v2.png" alt="Tela inicial do RKZFPS com o diagnóstico do PC">
           <p>Ao abrir, o RKZFPS lê o hardware e o Windows e mostra o que encontrou, com o efeito esperado no jogo.</p>
           <p>Cada ponto diz o que foi encontrado e por que importa. Se o PC já está bem configurado, ele diz isso, e não inventa trabalho.</p>
         </Row>
-        <Row flip title="Correção com motivo e com volta" img="/img/app-otimizacoes.png" alt="Tela de otimizações do RKZFPS">
+        <Row flip title="Correção com motivo e com volta" img="/img/app-otimizacoes-v2.png" alt="Tela de otimizações do RKZFPS">
           <p>Cada otimização mostra o que muda, o risco e o efeito esperado naquele PC. Você escolhe o que aplicar.</p>
           <p>Antes de mudar, o app guarda o estado anterior. Depois, confere se a mudança pegou.</p>
         </Row>
-        <Row title="Ajuste por jogo, no nível do seu PC" img="/img/app-jogos.png" alt="Tela de jogos do RKZFPS">
+        <Row title="Ajuste por jogo, no nível do seu PC" img="/img/app-jogos-v2.png" alt="Tela de jogos do RKZFPS">
           <p>No CS2, no Fortnite e no Minecraft o RKZFPS ajusta o arquivo de vídeo sozinho, com o jogo fechado e com backup.</p>
           <p>Em PC fraco, oferece uma configuração leve que só reduz o que está pesado.</p>
         </Row>
-        <Row flip title="Prova de resultado nas suas partidas" img="/img/app-partidas.png" alt="Tela de partidas do RKZFPS">
+        <Row flip title="Prova de resultado nas suas partidas" img="/img/app-partidas-v2.png" alt="Tela de partidas do RKZFPS">
           <p>Com o app aberto, cada partida é medida sozinha: FPS médio, 1% low e travadas por minuto, com o que estava pesando em cada queda.</p>
           <p>A medição usa o registro de quadros do próprio Windows e não injeta nada no jogo: funciona com anti-cheat.</p>
         </Row>

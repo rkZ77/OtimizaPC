@@ -113,15 +113,15 @@ export default function Home() {
             <h2 className="font-display text-3xl font-bold text-ink-1">Como funciona</h2>
             <p className="mt-3 text-ink-3">Analisar, corrigir o que estiver errado e provar o resultado. Nessa ordem.</p>
           </div>
-          <Row step={1} title="Um diagnóstico que não chuta" img="/img/app-otimizacoes.png" alt="Tela de otimizações do RKZFPS, com o motivo de cada uma">
+          <Row step={1} title="Um diagnóstico que não chuta" img="/img/app-otimizacoes-v2.png" alt="Tela de otimizações do RKZFPS, com o motivo de cada uma">
             <p>Ao abrir, o RKZFPS lê processador, placa de vídeo, memória, discos, energia, monitor, rede, inicialização e os jogos instalados. Só leitura: nada muda nessa etapa.</p>
             <p>Cada ponto diz o que foi encontrado e por que importa. Se o PC já está bem configurado, ele diz isso, e não inventa trabalho.</p>
           </Row>
-          <Row step={2} flip title="Ajuste por jogo, no nível do seu PC" img="/img/app-jogos.png" alt="Tela de jogos do RKZFPS">
+          <Row step={2} flip title="Ajuste por jogo, no nível do seu PC" img="/img/app-jogos-v2.png" alt="Tela de jogos do RKZFPS">
             <p>O RKZFPS reconhece {GAMES.length} jogos e sabe o que pesa em cada um. No CS2, no Fortnite e no Minecraft ele corrige o arquivo de vídeo sozinho, com o jogo fechado e com backup.</p>
             <p>Em PC fraco, oferece uma configuração leve que só reduz o que está pesado: nunca deixa pior o que você já tinha ajustado.</p>
           </Row>
-          <Row step={3} title="Prova de resultado nas suas partidas" img="/img/app-partidas.png" alt="Tela de partidas do RKZFPS">
+          <Row step={3} title="Prova de resultado nas suas partidas" img="/img/app-partidas-v2.png" alt="Tela de partidas do RKZFPS">
             <p>Com o RKZFPS aberto (pode ser perto do relógio), cada partida é medida sozinha: FPS médio, 1% low e travadas por minuto. Só entram os minutos com o jogo na tela.</p>
             <p>Depois de otimizar, o app compara as partidas de antes e de depois. Se a diferença estiver dentro da variação normal, ele diz que não houve ganho.</p>
           </Row>
