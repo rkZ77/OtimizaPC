@@ -6,21 +6,22 @@
             <DockPanel Margin="0,0,0,18">
                 <Button DockPanel.Dock="Right" Content="Procurar jogos" Command="{Binding ScanCommand}" VerticalAlignment="Top" />
                 <StackPanel>
-                    <TextBlock Text="Jogos" Style="{StaticResource H1}" />
-                    <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,0"
-                               Text="Cada jogo recebe a configuração certa para o nível do seu PC: leve em PC de entrada, equilibrada em intermediário e só correções de atraso em PC forte. Um clique otimiza, outro volta como era." />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Jogos" Style="{StaticResource H1}" />
+                        <TextBlock Style="{StaticResource InfoTip}" FontSize="16" Margin="10,6,0,0"
+                                   ToolTip="Cada jogo recebe a configuração certa para o nível do seu PC e para o seu perfil: leve em PC de entrada, equilibrada em intermediário e só correções de atraso em PC forte. Um clique otimiza, outro volta como era." />
+                    </StackPanel>
+                    <!-- Nível do PC em uma linha; o motivo fica na dica. -->
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0" Visibility="{Binding TierTitle, Converter={StaticResource Visible}}">
+                        <TextBlock Text="{Binding TierTitle}" Style="{StaticResource MutedText}" FontSize="14" />
+                        <TextBlock Style="{StaticResource InfoTip}" ToolTip="{Binding TierDetail}" />
+                    </StackPanel>
                 </StackPanel>
             </DockPanel>
             <TextBlock Text="{Binding Progress}" Foreground="{DynamicResource Accent}" Margin="0,0,0,10"
                        Visibility="{Binding IsBusy, Converter={StaticResource Visible}}" />
             <Border Style="{StaticResource Card}" Background="{DynamicResource Surface2}" Visibility="{Binding PlanNote, Converter={StaticResource Visible}}">
                 <TextBlock Text="{Binding PlanNote}" />
-            </Border>
-            <Border Style="{StaticResource Card}" Visibility="{Binding TierTitle, Converter={StaticResource Visible}}">
-                <StackPanel>
-                    <TextBlock Text="{Binding TierTitle}" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding TierDetail}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
-                </StackPanel>
             </Border>
 
             <TextBlock Text="Nenhum jogo com perfil encontrado neste PC ainda." Style="{StaticResource MutedText}" Margin="0,0,0,12"
@@ -35,24 +36,33 @@
                                                     VerticalAlignment="Center" Margin="0,0,12,0" Focusable="False" />
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{Binding Name}" Style="{StaticResource H2}" Margin="0" />
-                                        <TextBlock Text="{Binding Status}" Style="{StaticResource MutedText}" />
+                                        <TextBlock Text="{Binding Status}" Style="{StaticResource MutedText}" ToolTip="{Binding InstallPath}" />
                                     </StackPanel>
                                 </DockPanel>
-                                <TextBlock Text="{Binding InstallPath}" Style="{StaticResource MutedText}" FontSize="12"
-                                           Visibility="{Binding InstallPath, Converter={StaticResource Visible}}" />
 
-                                <ItemsControl ItemsSource="{Binding Findings}" Margin="0,12,0,0">
+                                <!-- Só o que precisa de atenção: o "tudo certo" já aparece no quadro de status abaixo. -->
+                                <ItemsControl ItemsSource="{Binding Findings}" Margin="0,8,0,0">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel Margin="0,6">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding StatusLabel}" Value="OK">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Border Style="{StaticResource Chip}" Background="{Binding StatusBrush}">
                                                         <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource OnFill}" />
                                                     </Border>
                                                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                                    <TextBlock Style="{StaticResource InfoTip}" ToolTip="{Binding Detail}"
+                                                               Visibility="{Binding Detail, Converter={StaticResource Visible}}" />
                                                 </StackPanel>
-                                                <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" Margin="0,4,0,0" />
-                                                <TextBlock Text="{Binding Recommendation}" Foreground="{DynamicResource Info}" FontSize="13"
+                                                <TextBlock Text="{Binding Recommendation}" Foreground="{DynamicResource Info}" FontSize="13" Margin="0,4,0,0"
                                                            Visibility="{Binding Recommendation, Converter={StaticResource Visible}}" />
                                             </StackPanel>
                                         </DataTemplate>
@@ -83,21 +93,13 @@
                                 <TextBlock Text="{Binding ManualNote}" Style="{StaticResource MutedText}" Margin="0,12,0,0"
                                            Visibility="{Binding ManualNote, Converter={StaticResource Visible}}" />
 
-                                <!-- Dicas da IA para este jogo: o que baixar primeiro no menu de vídeo, neste PC. -->
-                                <StackPanel Margin="0,14,0,0">
-                                    <Button Content="Dicas da IA para este jogo" HorizontalAlignment="Left" CommandParameter="{Binding}"
-                                            Command="{Binding DataContext.TipsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                                    <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="14,12" Margin="0,10,0,0"
-                                            Visibility="{Binding TipsText, Converter={StaticResource Visible}}">
-                                        <TextBlock Text="{Binding TipsText}" TextWrapping="Wrap" LineHeight="21" />
-                                    </Border>
-                                </StackPanel>
-
                                 <!-- Perfil de gráficos: a pessoa escolhe entre mais FPS e mais imagem, jogo a jogo. -->
                                 <StackPanel Margin="0,14,0,0" Visibility="{Binding HasProfiles, Converter={StaticResource Visible}}">
-                                    <TextBlock Text="Perfil de gráficos" FontWeight="SemiBold" />
-                                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,2,0,8"
-                                               Text="Máximo FPS baixa sombras, efeitos e texturas. Equilibrado devolve imagem onde custa pouco FPS. Feche o jogo antes." />
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <TextBlock Text="Perfil de gráficos" FontWeight="SemiBold" />
+                                        <TextBlock Style="{StaticResource InfoTip}"
+                                                   ToolTip="Máximo FPS baixa sombras, efeitos e texturas. Equilibrado devolve imagem onde custa pouco FPS. Feche o jogo antes de trocar." />
+                                    </StackPanel>
                                     <ItemsControl ItemsSource="{Binding Profiles}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
@@ -129,15 +131,25 @@
                                                Visibility="{Binding DataContext.PlanNote, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Visible}}" />
                                 </StackPanel>
 
-                                <WrapPanel Margin="0,12,0,0" Visibility="{Binding HasShaderCache, Converter={StaticResource Visible}}">
+                                <!-- Ações secundárias numa linha só. -->
+                                <WrapPanel Margin="0,12,0,0">
+                                    <Button Content="Dicas da IA para este jogo" Margin="0,0,8,8" CommandParameter="{Binding}"
+                                            ToolTip="O que baixar primeiro no menu de vídeo deste jogo, neste PC e no seu perfil."
+                                            Command="{Binding DataContext.TipsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                                     <Button Content="Limpar cache de shaders" Margin="0,0,8,8"
-                                            ToolTip="Só para stutter anormal ou erro gráfico depois de atualização. Não aumenta FPS."
+                                            ToolTip="Só para travadas fora do normal ou erro gráfico depois de atualização. Não aumenta FPS."
                                             Command="{Binding DataContext.ShaderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             Visibility="{Binding HasShaderCache, Converter={StaticResource Visible}}" />
                                 </WrapPanel>
+                                <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="14,12" Margin="0,4,0,8"
+                                        Visibility="{Binding TipsText, Converter={StaticResource Visible}}">
+                                    <TextBlock Text="{Binding TipsText}" TextWrapping="Wrap" LineHeight="21" />
+                                </Border>
 
-                                <TextBlock Text="O que mais pesa neste jogo" FontWeight="SemiBold" Margin="0,16,0,6" />
-                                <ItemsControl ItemsSource="{Binding Recommended}">
+                                <ToggleButton x:Name="more" Style="{StaticResource Disclosure}" Content="Ajustes recomendados neste jogo" Margin="0,6,0,0"
+                                              Visibility="{Binding Recommended.Count, Converter={StaticResource Visible}}" />
+                                <ItemsControl ItemsSource="{Binding Recommended}" Margin="18,6,0,0"
+                                              Visibility="{Binding IsChecked, ElementName=more, Converter={StaticResource Visible}}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Style="{StaticResource MutedText}" Margin="0,2">
@@ -153,8 +165,10 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <TextBlock Text="{Binding OtherGames}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,0"
-                       Visibility="{Binding OtherGames, Converter={StaticResource Visible}}" />
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" Visibility="{Binding OtherGames, Converter={StaticResource Visible}}">
+                <TextBlock Text="{Binding OtherGamesTitle}" Style="{StaticResource MutedText}" />
+                <TextBlock Style="{StaticResource InfoTip}" ToolTip="{Binding OtherGames}" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

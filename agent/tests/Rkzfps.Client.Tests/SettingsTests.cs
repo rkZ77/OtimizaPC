@@ -44,6 +44,34 @@ public class SettingsTests
     }
 
     [Fact]
+    public void Configuracao_antiga_nao_tem_preferencias_e_as_novas_voltam_iguais()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "rkzfps-settings-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "settings.json"), "{ \"profile\": \"streaming\", \"tutorial_done\": true }");
+
+        var storage = new ClientStorage(dir);
+        var old = storage.LoadSettings();
+        // Quem atualiza continua no perfil que tinha, e não vê as perguntas.
+        Assert.Null(old.Preferences);
+        Assert.Equal("streaming", old.Profile);
+        Assert.False(old.NeedsOnboarding);
+
+        var prefs = new Rkzfps.Core.Engine.UserPreferences
+        {
+            Choice = Rkzfps.Core.Engine.ProfileChoice.Performance,
+            Goal = Rkzfps.Core.Engine.Goal.LowerLatency,
+            Power = Rkzfps.Core.Engine.PowerPreference.Battery,
+        };
+        storage.SaveSettings(old with { Preferences = prefs });
+        Assert.Equal(prefs, storage.LoadSettings().Preferences);
+        Assert.Contains("\"LOWER_LATENCY\"", File.ReadAllText(Path.Combine(dir, "settings.json")));
+        // Instalação nova vê as perguntas.
+        Assert.True(new ClientSettings().NeedsOnboarding);
+        Assert.False((new ClientSettings() with { Preferences = new() }).NeedsOnboarding);
+    }
+
+    [Fact]
     public void Partida_so_sobe_com_o_consentimento_que_fala_de_partidas()
     {
         Assert.False(new ClientSettings { TelemetryConsent = true, TelemetryConsentVersion = 1 }.GameplayConsent);

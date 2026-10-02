@@ -127,7 +127,7 @@ public static class ElevatedHelper
             // Kit de drivers: confere a pasta de novo aqui dentro antes de a proposta existir.
             if (request.Folder is { } kit && request.Ids.Contains("driver-kit-install") && DriverBackup.Check(kit) is null)
                 snapshot = snapshot with { DriverKitFolder = kit };
-            var scan = new DecisionEngine(ctx.Catalog, ctx.GameProfiles).Evaluate(snapshot, ctx.Settings.Profile, ctx.License().Plan);
+            var scan = ctx.Evaluate(snapshot, ctx.License().Plan);
             session = new OptimizationEngine(system, ctx.Store).Apply(scan, request.Ids, new ApplyOptions
             {
                 AllowExperimental = request.Experimental,

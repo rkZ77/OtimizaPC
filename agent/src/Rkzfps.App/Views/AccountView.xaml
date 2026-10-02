@@ -57,14 +57,14 @@
                                 <DockPanel Margin="0,5">
                                     <TextBlock DockPanel.Dock="Right" Style="{StaticResource MutedText}"
                                                Text="{Binding Plan, StringFormat=a partir do {0}}" />
-                                    <TextBlock DockPanel.Dock="Left" Width="30" FontWeight="Bold">
+                                    <TextBlock DockPanel.Dock="Left" Width="30" FontFamily="Segoe MDL2 Assets" FontSize="13" VerticalAlignment="Center">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                                                <Setter Property="Text" Value="—" />
+                                                <Setter Property="Text" Value="&#xE711;" />
                                                 <Setter Property="Foreground" Value="{DynamicResource Muted}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Included}" Value="True">
-                                                        <Setter Property="Text" Value="✓" />
+                                                        <Setter Property="Text" Value="&#xE73E;" />
                                                         <Setter Property="Foreground" Value="{DynamicResource Accent}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>

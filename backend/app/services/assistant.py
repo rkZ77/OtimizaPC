@@ -200,6 +200,9 @@ para a que menos, cada uma com o valor sugerido e, em poucas palavras, o que mud
 como aparecem no menu do jogo. Se vier medicao: quedas com a placa de video no limite pedem opcoes graficas (sombras,
 resolucao, efeitos); quedas com o processador no limite pedem opcoes que pesam na CPU (distancia de visao, jogadores,
 fisica); FPS medio bem acima da taxa do monitor permite limitar o FPS perto da taxa para ficar mais estavel.
+Se vier PERFIL, ele ja' foi decidido pelo app e manda: graphics_tradeoff=None significa NAO sugerir baixar a qualidade
+de imagem (foque em latencia, limite de FPS, V-Sync e Reflex); latency_priority=High pede latencia primeiro;
+objective=Smoothness pede estabilidade (limite de FPS, menos travadas) antes de FPS medio.
 Regras: nunca prometa numero de FPS. Nao sugira programa externo, mod, editar arquivo a mao nem overclock. Nao use
 emoji, nem o travessao (—), nem o caractere ponto do meio (·). Use pontuacao normal.
 """
@@ -264,8 +267,26 @@ def upgrade(hardware: dict, setup: list, games: list, verdict: str, verdict_text
     return _chat("upgrade", UPGRADE, user, 550)
 
 
-def game_tips(game: str, hardware: dict, tier: str, measured: dict | None) -> str:
-    """O que ajustar primeiro no menu de video do jogo, para este PC."""
+# Campos do perfil que mudam a dica, com valores fechados vindos do
+# ProfileResolver do app. Qualquer outra chave ou valor fora do formato e'
+# descartado: o texto vira chave de cache e nao pode carregar texto livre.
+_PERFIL_CAMPOS = ("objective", "graphics_tradeoff", "latency_priority", "prefer_battery")
+_PERFIL_VALOR = re.compile(r"^[A-Za-z]{1,24}$")
+
+
+def _perfil_txt(profile: dict | None) -> str | None:
+    if not isinstance(profile, dict):
+        return None
+    campos = [f"{c}={profile[c]}" for c in _PERFIL_CAMPOS
+              if isinstance(profile.get(c), str) and _PERFIL_VALOR.match(profile[c])]
+    return ", ".join(campos) or None
+
+
+def game_tips(game: str, hardware: dict, tier: str, measured: dict | None, profile: dict | None = None) -> str:
+    """O que ajustar primeiro no menu de video do jogo, para este PC e para o perfil decidido no app."""
     medido = _jogo_txt(measured) if isinstance(measured, dict) else "(sem partida medida deste jogo)"
     user = f"JOGO: {_texto(game, 60)}\nNIVEL DO PC: {_texto(tier, 40)}\nHARDWARE: {_hardware_txt(hardware, _HW_JOGO)}\nMEDICAO: {medido}"
+    # Sem perfil (app antigo), o texto fica identico ao de antes.
+    if perfil := _perfil_txt(profile):
+        user += f"\nPERFIL: {perfil}"
     return _chat("game_tips", GAME_TIPS, user, 450)

@@ -90,13 +90,14 @@
             <!-- Drivers: onde atualizar cada um, sempre pela fonte oficial. O app não baixa driver. -->
             <Border Style="{StaticResource Card}" Visibility="{Binding HasScan, Converter={StaticResource Visible}}">
                 <StackPanel>
-                    <TextBlock Text="Drivers do PC" Style="{StaticResource H2}" Margin="0" />
-                    <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0"
-                               Text="O de vídeo é o que mais pesa nos jogos. Na página Drivers e reparo o RKZFPS procura driver novo no Windows Update e instala com ponto de restauração antes; os botões abaixo abrem o site oficial do fabricante." />
-                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Content="Procurar drivers novos" Style="{StaticResource Secondary}" Command="{Binding DriverSearchCommand}" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Drivers do PC" Style="{StaticResource H2}" Margin="0" />
+                        <TextBlock Style="{StaticResource InfoTip}"
+                                   ToolTip="O driver de vídeo é o que mais pesa nos jogos. Procurar busca driver novo no Windows Update e instala com ponto de restauração antes. Os outros botões abrem o site oficial do fabricante." />
                     </StackPanel>
-                    <ItemsControl ItemsSource="{Binding DriverLinks}" Margin="0,8,0,0">
+                    <WrapPanel Margin="0,6,0,0">
+                        <Button Content="Procurar drivers novos" Style="{StaticResource Secondary}" Command="{Binding DriverSearchCommand}" Margin="0,6,8,0" />
+                    <ItemsControl ItemsSource="{Binding DriverLinks}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel />
@@ -109,6 +110,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    </WrapPanel>
                 </StackPanel>
             </Border>
 
@@ -118,10 +120,12 @@
                     <DockPanel>
                         <Button DockPanel.Dock="Right" Content="Sugestão com IA" Style="{StaticResource Secondary}" Command="{Binding UpgradeCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
                         <StackPanel>
-                            <TextBlock Text="Qual peça trocar para ganhar mais FPS" Style="{StaticResource H2}" Margin="0" />
-                            <TextBlock Text="{Binding UpgradeVerdict}" TextWrapping="Wrap" Margin="0,4,0,0" />
-                            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12"
-                                       Text="A IA usa o seu hardware e o que foi medido nas suas partidas: primeiro o que resolve sem gastar, depois a peça e o que conferir antes de comprar. Sem promessa de número." />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Qual peça trocar para ganhar mais FPS" Style="{StaticResource H2}" Margin="0" />
+                                <TextBlock Style="{StaticResource InfoTip}"
+                                           ToolTip="A IA usa o seu hardware e o que foi medido nas suas partidas: primeiro o que resolve sem gastar, depois a peça e o que conferir antes de comprar. Sem promessa de número." />
+                            </StackPanel>
+                            <TextBlock Text="{Binding UpgradeVerdict}" Style="{StaticResource MutedText}" FontSize="14" TextWrapping="Wrap" Margin="0,4,0,0" />
                         </StackPanel>
                     </DockPanel>
                     <Border Background="{DynamicResource Surface2}" CornerRadius="8" Padding="14,12" Margin="0,12,0,0"
@@ -134,8 +138,11 @@
             <!-- Abertos agora e pesando (todo usuário): o que fechar antes de jogar -->
             <Border Style="{StaticResource Card}" Visibility="{Binding OpenApps.Count, Converter={StaticResource Visible}}">
                 <StackPanel>
-                    <TextBlock Text="Abertos agora e pesando" Style="{StaticResource H2}" Margin="0" />
-                    <TextBlock Text="Programas e jogos abertos que disputam o PC com o jogo. Fechar o que você não está usando libera processador e memória." Style="{StaticResource MutedText}" Margin="0,4,0,8" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Abertos agora e pesando" Style="{StaticResource H2}" Margin="0" />
+                        <TextBlock Style="{StaticResource InfoTip}"
+                                   ToolTip="Programas e jogos abertos que disputam o PC com o jogo. Fechar o que você não está usando libera processador e memória." />
+                    </StackPanel>
                     <ItemsControl ItemsSource="{Binding OpenApps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -223,10 +230,11 @@
                                                     <TextBlock Text="{Binding StatusLabel}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource OnFill}" />
                                                 </Border>
                                                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                                <TextBlock Style="{StaticResource InfoTip}" ToolTip="{Binding Detail}"
+                                                           Visibility="{Binding Detail, Converter={StaticResource Visible}}" />
                                             </StackPanel>
                                             <TextBlock Text="{Binding ImpactText}" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" FontSize="13" Margin="0,4,0,0"
                                                        Visibility="{Binding ImpactText, Converter={StaticResource Visible}}" />
-                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                                             <TextBlock Text="{Binding Recommendation}" Foreground="{DynamicResource Info}" FontSize="13" Margin="0,4,0,0"
                                                        Visibility="{Binding Recommendation, Converter={StaticResource Visible}}" />
                                             <TextBlock Text="{Binding FixBlockedReason}" Style="{StaticResource MutedText}" Margin="0,4,0,0"
@@ -285,12 +293,9 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <Button Content="Processadores e BIOS compatíveis" Margin="0,10,0,0" HorizontalAlignment="Left"
-                                ToolTip="Abre o site do fabricante da placa-mãe: a lista oficial de processadores compatíveis e as versões de BIOS"
+                                ToolTip="Abre o site do fabricante da placa-mãe, com a lista oficial de processadores compatíveis e as versões de BIOS. Antes de trocar o processador, confira a revisão impressa na placa (REV) e a BIOS exigida."
                                 CommandParameter="{Binding BoardSupportUrl}" Command="{Binding OpenUrlCommand}"
                                 Visibility="{Binding BoardSupportUrl, Converter={StaticResource Visible}}" />
-                        <TextBlock Style="{StaticResource MutedText}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
-                                   Visibility="{Binding BoardSupportUrl, Converter={StaticResource Visible}}"
-                                   Text="Antes de trocar o processador, confira a revisão impressa na placa (REV) e a BIOS exigida pelo fabricante." />
                     </StackPanel>
                 </Border>
             </Grid>

@@ -12,10 +12,15 @@ public static class GameTuning
 {
     private static readonly string[] Sources = ["game-settings-fix", "game-preset-low-end"];
 
-    /// <summary>Propostas aplicáveis agora para o jogo (pode ser vazio: já está certo).</summary>
-    public static IReadOnlyList<string> ProposalIdsFor(ScanResult scan, string gameId) =>
+    /// <summary>
+    /// Propostas aplicáveis agora para o jogo (pode ser vazio: já está certo).
+    /// Quem pediu para manter a imagem não recebe o preset gráfico no
+    /// "Otimizar este jogo": ele continua na tela como perfil de gráficos, por escolha.
+    /// </summary>
+    public static IReadOnlyList<string> ProposalIdsFor(ScanResult scan, string gameId, OptimizationProfile? tuning = null) =>
         scan.Optimizations
             .Where(o => Sources.Contains(o.Definition.Id))
+            .Where(o => !(o.Definition.Id == "game-preset-low-end" && tuning is { Legacy: false, GraphicsTradeoff: GraphicsTradeoff.None }))
             .SelectMany(o => o.Evaluation.Proposals.Select(p => (o, p)))
             .Where(x => x.p.Id.StartsWith($"{x.o.Definition.Id}:{gameId}:", StringComparison.Ordinal))
             .Select(x => x.p.Id)

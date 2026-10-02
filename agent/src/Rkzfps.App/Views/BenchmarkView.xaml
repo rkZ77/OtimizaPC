@@ -3,9 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer>
         <StackPanel Margin="32,28">
-            <TextBlock Text="RKZFPS Benchmark" Style="{StaticResource H1}" />
-            <TextBlock Style="{StaticResource MutedText}" Margin="0,4,0,18"
-                       Text="Mede FPS médio, 1% low, 0.1% low, frametime e stutter com o PresentMon. Capture antes e depois de otimizar, no mesmo cenário. Se a diferença estiver dentro da variação normal, o RKZFPS diz que não houve ganho." />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="RKZFPS Benchmark" Style="{StaticResource H1}" />
+                <TextBlock Style="{StaticResource InfoTip}" FontSize="16" Margin="10,6,0,0"
+                           ToolTip="Mede FPS médio, 1% low, 0.1% low, frametime e stutter com o PresentMon. Se a diferença estiver dentro da variação normal, o RKZFPS diz que não houve ganho." />
+            </StackPanel>
+            <TextBlock Style="{StaticResource MutedText}" FontSize="14" Margin="0,6,0,18" Text="Capture antes e depois de otimizar, no mesmo cenário." />
 
             <Border Style="{StaticResource Card}" Background="{DynamicResource Surface2}" Visibility="{Binding Allowed, Converter={StaticResource Hidden}}">
                 <TextBlock Text="{Binding PlanNote}" />
@@ -13,8 +16,10 @@
 
             <Border Style="{StaticResource Card}" Visibility="{Binding Allowed, Converter={StaticResource Visible}}">
                 <StackPanel>
-                    <TextBlock Text="Nova captura" Style="{StaticResource H2}" />
-                    <TextBlock Text="{Binding Method}" Style="{StaticResource MutedText}" Margin="0,0,0,12" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock Text="Nova captura" Style="{StaticResource H2}" Margin="0" />
+                        <TextBlock Style="{StaticResource InfoTip}" ToolTip="{Binding Method}" />
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <StackPanel Margin="0,0,16,0">
                             <TextBlock Text="Rótulo" FontSize="13" Margin="0,0,0,4" />

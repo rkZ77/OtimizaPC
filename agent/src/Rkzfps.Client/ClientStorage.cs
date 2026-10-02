@@ -35,7 +35,24 @@ public sealed record ClientSettings
     [System.Text.Json.Serialization.JsonIgnore]
     public bool GameplayConsent => TelemetryConsent == true && TelemetryConsentVersion >= CurrentConsentVersion;
 
+    /// <summary>
+    /// Perfil interno do catálogo. Com <see cref="Preferences"/> preenchido, só
+    /// vale quando a escolha é Avançado (ex.: streaming); sem ele, é o perfil
+    /// de sempre, e quem atualiza o app continua exatamente como estava.
+    /// </summary>
     public string Profile { get; init; } = "gaming";
+
+    /// <summary>
+    /// Respostas das perguntas da primeira abertura e o perfil da tela. null =
+    /// nunca respondeu nem pulou (instalação antiga). Pular grava um
+    /// UserPreferences vazio, que é o Automático. Nunca sai do PC.
+    /// </summary>
+    public Rkzfps.Core.Engine.UserPreferences? Preferences { get; init; }
+
+    /// <summary>Perguntas só em instalação nova: quem já usava o app segue com o perfil que tinha.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool NeedsOnboarding => Preferences is null && !TutorialDone;
+
     public string? PresentMonPath { get; init; }
 
     /// <summary>Medir o FPS das partidas sozinho, com o app aberto ou na bandeja.</summary>

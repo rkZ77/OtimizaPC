@@ -33,9 +33,13 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Text="Como o RKZFPS se atualiza" Style="{StaticResource H2}" />
-                    <TextBlock Text="{Binding AutoInfo}" Style="{StaticResource MutedText}" TextWrapping="Wrap" />
-                    <Button Content="Ver todas as versões no site" Command="{Binding AllVersionsCommand}" HorizontalAlignment="Left" Margin="0,12,0,0" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Ver todas as versões no site" Command="{Binding AllVersionsCommand}" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Como o RKZFPS se atualiza" Style="{StaticResource H2}" Margin="0" />
+                            <TextBlock Style="{StaticResource InfoTip}" ToolTip="{Binding AutoInfo}" />
+                        </StackPanel>
+                    </DockPanel>
                 </StackPanel>
             </Border>
         </StackPanel>

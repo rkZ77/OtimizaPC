@@ -203,6 +203,8 @@ class GameTipsIn(BaseModel):
     hardware: dict = Field(default_factory=dict)
     tier: str = Field(default="", max_length=40)
     measured: dict | None = None
+    #: Perfil ja' decidido no app (ProfileResolver). Versao antiga do app nao manda.
+    profile: dict[str, str] | None = None
 
 
 @router.post("/game-tips")
@@ -211,7 +213,7 @@ def game_tips(body: GameTipsIn, ctx=Depends(device_context)):
     _, device = ctx
     auth.rate_limit("game-tips", str(device["id"]), limit=20, window_seconds=86400)
     try:
-        return {"text": assistant.game_tips(body.game, body.hardware, body.tier, body.measured)}
+        return {"text": assistant.game_tips(body.game, body.hardware, body.tier, body.measured, body.profile)}
     except assistant.AssistantUnavailable as e:
         raise HTTPException(503, str(e)) from e
 

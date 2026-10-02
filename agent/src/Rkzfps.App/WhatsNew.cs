@@ -10,16 +10,11 @@ public static class WhatsNew
 {
     // Atualizar junto com a versão do Directory.Build.props e com a nota do admin.
     private const string Notes =
-        "O que limitou a partida: com o jogo aberto, o RKZFPS lê uso por núcleo, clocks, temperatura da placa de vídeo, memória de vídeo, RAM e disco, " +
-        "e diz se o FPS foi segurado pelo processador, placa de vídeo, memória, temperatura, disco ou configuração. Cada conclusão mostra os números que a sustentam, " +
-        "e o que não deu para ler aparece como não disponível, nunca inventado.\n\n" +
-        "Placa de vídeo do jogo: em PC com vídeo integrado e placa dedicada, o RKZFPS avisa quando o jogo rodou na placa errada e mostra como corrigir.\n\n" +
-        "Modo Gaming: no Automático, o RKZFPS aplica ao abrir o jogo só o que você autorizou e desfaz quando ele fecha. No Manual, nada muda sozinho. Escolha na tela FPS Boost.\n\n" +
-        "Histórico por jogo: filtre as partidas por jogo, defina uma meta de FPS e veja em quantas partidas ela foi batida. Exporte tudo em planilha.\n\n" +
-        "Painel por cima do jogo: Ctrl+Shift+F mostra FPS, pior quadro, CPU e GPU no canto da tela, sem mexer no jogo.\n\n" +
-        "Resumo da partida: quando o jogo fecha, o aviso traz o FPS, a meta e o que limitou.\n\n" +
-        "Tema claro: troque pelo sol ou pela lua no alto da janela, ou em Configurações.\n\n" +
-        "Visual: chaves de ligar e desligar novas e avisos sem a barra branca do Windows.\n\n" +
+        "Perfis novos: Automático, Desempenho, Equilibrado, Qualidade e Personalizado. O RKZFPS junta o que você escolheu com o seu hardware: " +
+        "em PC forte, pedir mais FPS não piora a imagem do jogo; em PC de entrada, traz a configuração leve, sempre com sua confirmação. " +
+        "Seu perfil de antes continua valendo. Para trocar, ou responder as perguntas rápidas, vá em Configurações.\n\n" +
+        "Telas mais limpas: cada cartão mostra o essencial. A explicação completa está no ícone de informação ao lado do título.\n\n" +
+        "Dicas da IA por jogo levam em conta o seu perfil.\n\n" +
         "Novidades e dicas no Instagram @rkzfps.br.";
 
     public static void ShowIfUpdated()
