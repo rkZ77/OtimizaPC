@@ -10,11 +10,11 @@ public static class WhatsNew
 {
     // Atualizar junto com a versão do Directory.Build.props e com a nota do admin.
     private const string Notes =
-        "Perfis novos: Automático, Desempenho, Equilibrado, Qualidade e Personalizado. O RKZFPS junta o que você escolheu com o seu hardware: " +
-        "em PC forte, pedir mais FPS não piora a imagem do jogo; em PC de entrada, traz a configuração leve, sempre com sua confirmação. " +
-        "Seu perfil de antes continua valendo. Para trocar, ou responder as perguntas rápidas, vá em Configurações.\n\n" +
-        "Telas mais limpas: cada cartão mostra o essencial. A explicação completa está no ícone de informação ao lado do título.\n\n" +
-        "Dicas da IA por jogo levam em conta o seu perfil.\n\n" +
+        "Dicas para cada jogo, na hora: em Jogos, o RKZFPS mostra o que ajustar no menu de vídeo para o seu PC e o seu perfil, sem esperar a IA. " +
+        "Vale para CS2, Valorant, League of Legends, Fortnite, Overwatch 2 e Free Fire no emulador. A IA continua em Mais dicas com IA.\n\n" +
+        "Sua placa reconhecida pelo modelo: o RKZFPS sabe se ela tem Reflex ou DLSS e acerta melhor o nível do PC.\n\n" +
+        "Jogos novos: Overwatch 2 e Free Fire pelo emulador (BlueStacks, MSI App Player, LDPlayer, MEmu e MuMu), com o FPS medido nas partidas. " +
+        "No League of Legends, o RKZFPS também confere a configuração de vídeo.\n\n" +
         "Novidades e dicas no Instagram @rkzfps.br.";
 
     public static void ShowIfUpdated()
