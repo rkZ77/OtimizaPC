@@ -19,12 +19,29 @@ interface Uso {
   benchmarks_30d: { runs: number; devices: number }
 }
 
+// Cache da IA: cada chamada paga vira uma linha; cada resposta reaproveitada
+// e' uma chamada que nao precisou acontecer. E' o numero que mostra se o custo
+// de IA cresce com os usuarios ou so' com as combinacoes novas de PC e jogo.
+interface CacheIa {
+  days: number
+  calls: number
+  hits: number
+  reuse_percent: number
+  kinds: { kind: string; label: string; calls: number; hits: number; reuse_percent: number }[]
+}
+
 const soma = (xs: Uso['daily'], k: 'scans' | 'applied' | 'failed' | 'rollbacks') => xs.reduce((s, d) => s + d[k], 0)
 
 export default function AdminUso() {
   const [u, setU] = useState<Uso | null>(null)
+  const [ia, setIa] = useState<CacheIa | null>(null)
   const [error, setError] = useState('')
-  const load = () => { setError(''); api.get<Uso>('/admin/usage').then(({ data }) => setU(data)).catch((e) => setError(errorMessage(e))) }
+  const load = () => {
+    setError('')
+    api.get<Uso>('/admin/usage').then(({ data }) => setU(data)).catch((e) => setError(errorMessage(e)))
+    // Falha aqui nao derruba a pagina: o cache e' um quadro a mais.
+    api.get<CacheIa>('/admin/ai-cache').then(({ data }) => setIa(data)).catch(() => setIa(null))
+  }
   useEffect(load, [])
 
   if (error) return <ErrorState description={error} onRetry={load} />
@@ -41,6 +58,28 @@ export default function AdminUso() {
         <StatTile label="Benchmarks" value={u.benchmarks_30d.runs} hint={`${u.benchmarks_30d.devices} PCs`} />
       </div>
       {u.daily.length === 0 && <Alert tone="info">Sem telemetria nos últimos 30 dias. Ela só chega de quem permitiu o envio de dados no app.</Alert>}
+
+      {ia && (
+        <div>
+          <AdminHead title="Cache da IA" sub={`Últimos ${ia.days} dias. Resposta reaproveitada não gera chamada paga.`} />
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 mb-4">
+            <StatTile label="Chamadas pagas" value={ia.calls} />
+            <StatTile label="Respostas reaproveitadas" value={ia.hits} tone="green" />
+            <StatTile label="Reaproveitamento" value={`${ia.reuse_percent}%`} />
+          </div>
+          <Table<CacheIa['kinds'][number]>
+            rows={ia.kinds}
+            rowKey={(r) => r.kind}
+            minWidth={420}
+            columns={[
+              { key: 'k', header: 'Uso', cell: (r) => <span className="text-ink-1">{r.label}</span> },
+              { key: 'c', header: 'Pagas', align: 'right', cell: (r) => <span className="font-mono">{r.calls}</span> },
+              { key: 'h', header: 'Reaproveitadas', align: 'right', cell: (r) => <span className="font-mono text-accent-ink">{r.hits}</span> },
+              { key: 'p', header: '%', align: 'right', cell: (r) => <span className="font-mono">{r.reuse_percent}%</span> },
+            ]}
+          />
+        </div>
+      )}
 
       <div>
         <AdminHead title="Por otimização" sub="Muitas desfeitas indicam recomendação que não ajudou." />

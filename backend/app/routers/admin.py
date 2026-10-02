@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app import auth, database, email_templates, settings
-from app.services import admin_insights, app_settings, catalog, emails, gameplay, licenses, payments, plans, telemetry, users
+from app.services import admin_insights, ai_cache, app_settings, catalog, emails, gameplay, licenses, payments, plans, telemetry, users
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(auth.require_admin)])
 
@@ -74,6 +74,12 @@ def engagement():
 @router.get("/usage")
 def usage():
     return admin_insights.usage()
+
+
+@router.get("/ai-cache")
+def ai_cache_stats(days: int = Query(30, ge=1, le=365)):
+    """Quanto o cache da IA economizou: chamadas pagas e respostas reaproveitadas."""
+    return ai_cache.stats(days)
 
 
 class ActiveIn(BaseModel):

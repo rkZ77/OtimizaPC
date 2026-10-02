@@ -55,6 +55,31 @@ def get(kind: str, cache_key: str) -> str | None:
     return row["response"] if row else None
 
 
+KIND_LABELS = {"explain": "Explicar diagnóstico", "upgrade": "Qual peça trocar", "game_tips": "Dicas por jogo", "site_chat": "Chat do site"}
+
+
+def summarize(rows: list[dict]) -> dict:
+    """Puro: cada linha nova do cache e' uma chamada paga; cada hit, uma que
+    nao precisou acontecer. O reaproveitamento e' hits / (hits + chamadas)."""
+    kinds = []
+    for r in rows:
+        calls, hits = int(r.get("calls") or 0), int(r.get("hits") or 0)
+        kinds.append({"kind": r["kind"], "label": KIND_LABELS.get(r["kind"], r["kind"]), "calls": calls, "hits": hits,
+                      "reuse_percent": round(100 * hits / (hits + calls)) if hits + calls else 0})
+    calls = sum(k["calls"] for k in kinds)
+    hits = sum(k["hits"] for k in kinds)
+    return {"calls": calls, "hits": hits, "reuse_percent": round(100 * hits / (hits + calls)) if hits + calls else 0,
+            "kinds": sorted(kinds, key=lambda k: -(k["calls"] + k["hits"]))}
+
+
+def stats(days: int = 30) -> dict:
+    """Para o admin: chamadas feitas e reaproveitadas no periodo, por tipo."""
+    rows = database.fetch_all(
+        """SELECT kind, count(*) AS calls, coalesce(sum(hits), 0) AS hits
+           FROM ai_cache WHERE created_at > now() - make_interval(days => %s) GROUP BY kind""", (days,))
+    return {"days": days, **summarize(rows)}
+
+
 def put(kind: str, cache_key: str, response: str) -> None:
     global _puts
     if not response.strip():

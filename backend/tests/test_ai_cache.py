@@ -118,6 +118,23 @@ def test_rota_de_dicas_aceita_o_perfil(monkeypatch):
     assert "PERFIL: objective=MaximumPerformance" in sent[0]["json"]["messages"][1]["content"]
 
 
+def test_resumo_do_admin_conta_chamadas_e_reaproveitamento():
+    r = ai_cache.summarize([{"kind": "game_tips", "calls": 10, "hits": 30}, {"kind": "explain", "calls": 5, "hits": 0},
+                            {"kind": "novo", "calls": 0, "hits": 0}])
+    assert r["calls"] == 15 and r["hits"] == 30 and r["reuse_percent"] == 67
+    tips = r["kinds"][0]
+    assert tips["kind"] == "game_tips" and tips["label"] == "Dicas por jogo" and tips["reuse_percent"] == 75
+    assert next(k for k in r["kinds"] if k["kind"] == "novo")["reuse_percent"] == 0
+    assert ai_cache.summarize([]) == {"calls": 0, "hits": 0, "reuse_percent": 0, "kinds": []}
+
+
+def test_rota_do_admin_exige_admin(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+    assert TestClient(app).get("/api/admin/ai-cache").status_code in (401, 403)
+
+
 def test_placa_mae_conta_so_na_troca_de_peca(ia):
     _, sent = ia
     args = ([], [], "gpu", "Placa de vídeo no limite.")
