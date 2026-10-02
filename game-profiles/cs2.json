@@ -98,6 +98,31 @@
     "recommended_runs": 3,
     "method": "Use sempre o mesmo cenário: mapa de benchmark da Oficina (ex.: 'CS2 FPS BENCHMARK'), mesma resolução e mesmas opções de vídeo. Inicie a captura quando o percurso começar."
   },
+  // Dicas por regra (sem IA), pelo nivel do PC, pela placa e pelo perfil da
+  // pessoa. Nomes como no menu do CS2 em portugues. Sem Anti-Lag da AMD: o
+  // Anti-Lag+ chegou a causar banimento pelo VAC no CS2.
+  "tips": [
+    { "id": "vsync", "setting": "Esperar pela sincronização vertical", "value": "Desativado", "priority": 1, "tags": ["latency"],
+      "why": "O V-Sync segura cada quadro até a próxima atualização da tela e soma atraso na mira." },
+    { "id": "reflex", "setting": "NVIDIA Reflex Low Latency", "value": "Ativado", "priority": 2, "tags": ["latency"],
+      "why": "Encurta a fila de quadros quando a placa de vídeo está no limite.", "when": { "gpu_feature": "reflex" } },
+    { "id": "hz", "setting": "Taxa de atualização (Vídeo > Modo de exibição)", "value": "{hz} Hz", "priority": 2, "tags": ["latency"],
+      "why": "Em tela cheia o CS2 usa a taxa dele, não a do Windows. Abaixo do monitor, a tela mostra menos quadros.", "when": { "min_hz": 75 } },
+    { "id": "contrast", "setting": "Aumentar contraste do jogador", "value": "Ativado", "priority": 4, "tags": ["image"],
+      "why": "Destaca os jogadores no cenário e custa pouco FPS." },
+    { "id": "ao", "setting": "Oclusão de ambiente", "value": "Desativado", "priority": 3, "tags": ["fps"],
+      "why": "Pesa bastante e quase não aparece em partida.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "msaa-light", "setting": "Antisserrilhado multiamostragem", "value": "2x MSAA", "priority": 3, "tags": ["fps"],
+      "why": "Tira serrilhado com custo menor que 4x ou 8x.", "when": { "tradeoff": ["LIGHT"] } },
+    { "id": "msaa-medium", "setting": "Antisserrilhado multiamostragem", "value": "CMAA2 ou Nenhum", "priority": 3, "tags": ["fps"],
+      "why": "O MSAA é das opções que mais custam FPS em placa de entrada.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "shadows", "setting": "Qualidade global das sombras", "value": "Baixa", "priority": 4, "tags": ["fps"],
+      "why": "Baixa ainda mostra a sombra dos jogadores e alivia a placa de vídeo.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "particles", "setting": "Detalhe de partículas", "value": "Baixo", "priority": 5, "tags": ["fps"],
+      "why": "Granadas e fumaças pesam menos nas trocas de tiro.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "fps-cap", "setting": "Máx. de quadros por segundo no jogo", "value": "{hz_cap} com G-Sync ou FreeSync; sem eles, 0 ou um valor que o PC sustente", "priority": 6, "tags": ["stability"],
+      "why": "FPS estável dá movimento mais uniforme do que FPS alto que oscila." }
+  ],
   "recommended_settings": {
     "mat_vsync": "0 (desligado): menor latência de entrada",
     "r_low_latency": "1 (Reflex ligado) em GPU NVIDIA",

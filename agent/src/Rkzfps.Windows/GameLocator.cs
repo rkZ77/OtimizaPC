@@ -15,8 +15,32 @@ public static class GameLocator
         "steam_userdata" => SteamLocator.FindUserdataFile(source.RelativePath),
         "local_appdata" => Inside(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), source.RelativePath),
         "roaming_appdata" => Inside(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), source.RelativePath),
+        "riot_lol" => LolInstall() is { } lol ? Inside(lol, source.RelativePath) : null,
         _ => null,
     };
+
+    /// <summary>
+    /// Pasta do League of Legends: a que o instalador da Riot registra no
+    /// Windows, ou a padrão. Só leitura de registro, nada é gravado.
+    /// </summary>
+    private static string? LolInstall()
+    {
+        const string uninstall = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\Riot Game league_of_legends.live";
+        foreach (var hive in new[] { Microsoft.Win32.Registry.CurrentUser, Microsoft.Win32.Registry.LocalMachine })
+        {
+            try
+            {
+                using var key = hive.OpenSubKey(uninstall);
+                if (key?.GetValue("InstallLocation") is string path && Directory.Exists(path))
+                    return path;
+            }
+            catch (System.Security.SecurityException)
+            {
+            }
+        }
+        const string fallback = @"C:\Riot Games\League of Legends";
+        return Directory.Exists(fallback) ? fallback : null;
+    }
 
     private static string? Inside(string root, string relative)
     {

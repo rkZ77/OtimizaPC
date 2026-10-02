@@ -1,0 +1,52 @@
+{
+  // Free Fire no PC, pelo emulador Android (BlueStacks, MSI App Player,
+  // LDPlayer, MEmu, MuMu). O RKZFPS mede o FPS do emulador e da' as dicas do
+  // emulador e do jogo. Nao mexe no emulador nem no Free Fire: as opcoes ficam
+  // dentro deles, e o jogo tem anti-cheat proprio.
+  "id": "freefire-emulador",
+  "name": "Free Fire (emulador)",
+  "version": "2026.10.1",
+  "detect": {
+    "processes": ["HD-Player.exe", "dnplayer.exe", "MEmu.exe", "MuMuPlayer.exe"]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "tips": [
+    { "id": "vt", "setting": "Virtualização (VT-x ou AMD-V) na BIOS", "value": "Ativada", "priority": 1, "tags": ["fps", "stability"],
+      "why": "Sem ela o emulador roda bem mais lento. O próprio emulador avisa quando está desligada." },
+    { "id": "cores", "setting": "Núcleos de processador do emulador", "value": "4", "priority": 2, "tags": ["fps", "stability"],
+      "why": "O Free Fire roda bem com 4 núcleos, e o resto fica para o Windows.", "when": { "min_threads": 8 } },
+    { "id": "cores-low", "setting": "Núcleos de processador do emulador", "value": "2", "priority": 2, "tags": ["fps", "stability"],
+      "why": "Em processador de até 6 threads, dar mais que 2 ao emulador trava o Windows junto.", "when": { "max_threads": 7 } },
+    { "id": "ram", "setting": "Memória do emulador", "value": "4 GB", "priority": 2, "tags": ["stability"],
+      "why": "O Free Fire roda bem com 4 GB. Mais que isso tira memória do Windows sem ganho.", "when": { "min_ram_gb": 12 } },
+    { "id": "ram-low", "setting": "Memória do emulador", "value": "2 a 3 GB", "priority": 2, "tags": ["stability"],
+      "why": "Com pouca memória no PC, o emulador não pode ficar com quase tudo.", "when": { "max_ram_gb": 11 } },
+    { "id": "perf-mode", "setting": "Modo de desempenho do emulador", "value": "Alto desempenho", "priority": 3, "tags": ["fps"],
+      "why": "Libera o emulador para usar mais processador durante a partida." },
+    { "id": "fps", "setting": "Taxa de quadros do emulador e Alta taxa de quadros no Free Fire", "value": "60 ou mais, as duas iguais", "priority": 3, "tags": ["fps", "stability"],
+      "why": "Se o emulador estiver em 30, o jogo não passa disso, mesmo com a opção ligada nele." },
+    { "id": "gfx-low", "setting": "Gráficos no Free Fire", "value": "Suave", "priority": 4, "tags": ["fps"],
+      "why": "Em PC de entrada, é o que mais segura o FPS nas lutas.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "gfx-mid", "setting": "Gráficos no Free Fire", "value": "Padrão", "priority": 4, "tags": ["fps"],
+      "why": "Equilibra imagem e FPS em PC intermediário.", "when": { "tradeoff": ["LIGHT"] } }
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "HD-Player.exe",
+    "processes": ["HD-Player", "dnplayer", "MEmu", "MuMuPlayer"],
+    "method": "Modo treino do Free Fire, sempre o mesmo percurso por 60 segundos, com as mesmas opções no emulador e no jogo."
+  },
+  "recommended_settings": {
+    "Virtualização na BIOS": "Ativada.",
+    "Núcleos e memória do emulador": "4 núcleos e 4 GB quando o PC tem folga.",
+    "Taxa de quadros": "Igual no emulador e no Free Fire, 60 ou mais."
+  }
+}

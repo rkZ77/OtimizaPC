@@ -1,12 +1,22 @@
 {
-  // Perfil de medicao: o RKZFPS mede o FPS das partidas e mostra as opcoes que mais pesam, sem editar arquivo do jogo. Medicao por ETW (rastreamento de quadros do Windows), sem injetar nada no processo: nao conflita com anti-cheat.
+  // League of Legends. O RKZFPS mede o FPS das partidas e LE o Config\game.cfg
+  // para o diagnostico, mas nunca grava: a Riot sincroniza as opcoes com a
+  // conta e pode desfazer ou estranhar uma edicao feita por fora. Na duvida,
+  // diagnosticar em vez de alterar. Medicao por ETW, sem injetar nada no jogo.
   "id": "lol",
   "name": "League of Legends",
-  "version": "2026.09.1",
+  "version": "2026.10.1",
   "detect": {
     "processes": [
       "League of Legends.exe"
-    ]
+    ],
+    "by_config_file": true
+  },
+  "config": {
+    "source": "riot_lol",
+    "relative_path": "Config/game.cfg",
+    "format": "ini",
+    "read_only": true
   },
   "optimizations": [
     "game-mode-enable",
@@ -15,6 +25,33 @@
     "game-capture-background-recording-disable",
     "background-process-close",
     "game-gpu-high-performance"
+  ],
+  // So' recomendacao (sem fix_value): o ajuste e' pelo menu do jogo.
+  "setting_checks": [
+    {
+      "key": "General|WaitForVerticalSync",
+      "expect_any": ["0", "false"],
+      "severity": "ATTENTION",
+      "title": "V-Sync ligado",
+      "why": "Com o V-Sync, cada quadro espera a próxima atualização da tela. No LoL isso atrasa o clique de habilidade e de movimento.",
+      "recommendation": "No LoL: Configurações > Vídeo > Esperar sincronização vertical: desmarcado."
+    }
+  ],
+  "tips": [
+    { "id": "vsync", "setting": "Esperar sincronização vertical", "value": "Desmarcado", "priority": 1, "tags": ["latency"],
+      "why": "Tira o atraso entre o clique e a ação na tela." },
+    { "id": "fps-cap", "setting": "Limite de taxa de quadros", "value": "O valor mais perto de {hz}", "priority": 2, "tags": ["stability"],
+      "why": "Sem limite o LoL chega a centenas de FPS nos menus e esquenta o PC à toa. Perto da taxa do monitor fica estável." },
+    { "id": "shadows-off", "setting": "Qualidade das sombras", "value": "Desligada", "priority": 3, "tags": ["fps"],
+      "why": "É o que mais pesa em luta de equipe, quando o FPS mais cai.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "shadows-low", "setting": "Qualidade das sombras", "value": "Baixa", "priority": 3, "tags": ["fps"],
+      "why": "Alivia as lutas de equipe sem mudar o resto da imagem.", "when": { "tradeoff": ["LIGHT"] } },
+    { "id": "effects", "setting": "Qualidade de efeitos", "value": "Baixa", "priority": 4, "tags": ["fps"],
+      "why": "Habilidades com muitos efeitos derrubam o FPS em PC de entrada.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "env", "setting": "Qualidade de ambiente e de personagens", "value": "Baixa", "priority": 5, "tags": ["fps"],
+      "why": "Pouca diferença na visão de cima e alivia o PC fraco.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "aa", "setting": "Anti-aliasing", "value": "Desmarcado", "priority": 5, "tags": ["fps"],
+      "why": "Custa FPS e quase não aparece com a câmera de cima.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } }
   ],
   "benchmark": {
     "duration_seconds": 60,

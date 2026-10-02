@@ -49,6 +49,13 @@ public sealed class GameCard : ObservableObject
 
     /// <summary>Jogo só com medição: o ajuste é pelo menu dele, com as dicas abaixo.</summary>
     public string ManualNote { get; init; } = "";
+
+    /// <summary>Dicas do menu de vídeo por regra, para este PC e este perfil. Sem IA.</summary>
+    public IReadOnlyList<Rkzfps.Core.Games.TipResult> Tips { get; init; } = [];
+    public bool HasTips => Tips.Count > 0;
+
+    /// <summary>Com dicas por regra, a IA vira complemento; sem elas, é a fonte das dicas.</summary>
+    public string AiButton => HasTips ? "Mais dicas com IA" : "Dicas da IA para este jogo";
 }
 
 /// <summary>
@@ -167,6 +174,7 @@ public sealed class GamesViewModel : PageViewModel
         var tier = scan is null ? HardwareTier.Unknown : HardwareTierClassifier.Assess(scan.Snapshot).Tier;
         var tuning = _host.Tuning;
         var keepImage = tuning is { Legacy: false, GraphicsTradeoff: GraphicsTradeoff.None };
+        var known = scan is null ? Rkzfps.Core.Hardware.KnownHardware.None : Rkzfps.Core.Hardware.HardwareCatalog.Default.Recognize(scan.Snapshot);
         var sessions = _host.Ctx.Store.All();
 
         // Só os jogos deste PC (instalados ou já jogados com o RKZFPS aberto):
@@ -187,7 +195,8 @@ public sealed class GamesViewModel : PageViewModel
                 ? []
                 : scan.Findings.Where(f => f.DiagnosticId == "game-settings" && f.Title.StartsWith(profile.Name, StringComparison.Ordinal))
                     .Select(f => new FindingItem(f, scan)).ToList();
-            var tunable = profile.Config is not null && install?.Config.Count > 0;
+            // Perfil só de leitura (LoL) aparece no diagnóstico, mas não ganha "Otimizar este jogo".
+            var tunable = profile.Config is { ReadOnly: false } && install?.Config.Count > 0;
             var pending = scan is null || !tunable ? [] : GameTuning.ProposalIdsFor(scan, profile.Id, tuning);
             var applied = GameTuning.AppliedChanges(sessions, profile.Id);
             var changes = scan is null ? 0 : pending.Sum(id => scan.FindProposal(id)?.Proposal.Changes.Count ?? 0);
@@ -247,9 +256,10 @@ public sealed class GamesViewModel : PageViewModel
                 TuneBrush = brush,
                 CanOptimize = pending.Count > 0,
                 CanRevert = applied.Count > 0,
-                ManualNote = tunable ? "" : profile.Config is null
-                    ? "Neste jogo o RKZFPS mede o FPS e mostra o que mais pesa. O ajuste é pelo menu de vídeo do próprio jogo, com as dicas abaixo."
+                ManualNote = tunable ? "" : profile.Config is null or { ReadOnly: true }
+                    ? "O ajuste deste jogo é pelo menu de vídeo dele, com as dicas abaixo."
                     : "Abra o jogo uma vez para ele criar o arquivo de configuração. Depois o RKZFPS consegue otimizar.",
+                Tips = scan is null || tuning is null ? [] : Rkzfps.Core.Games.GameTips.For(profile, scan.Snapshot, tuning, known),
             });
         }
 

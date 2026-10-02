@@ -37,6 +37,13 @@ public sealed record GameConfigSource
 
     /// <summary>valve_kv ("chave" "valor"), ini ("Seção|chave"), colon_kv (chave:valor).</summary>
     public string Format { get; init; } = "";
+
+    /// <summary>
+    /// Só leitura: o RKZFPS lê para o diagnóstico e nunca grava. Para jogo que
+    /// sincroniza a configuração com a conta (Riot) e pode desfazer ou estranhar
+    /// uma edição feita por fora: na dúvida, diagnosticar em vez de alterar.
+    /// </summary>
+    public bool ReadOnly { get; init; }
 }
 
 /// <summary>
@@ -154,6 +161,9 @@ public sealed record GameProfile
     public GameBenchmarkSpec Benchmark { get; init; } = new();
     public IReadOnlyDictionary<string, string> RecommendedSettings { get; init; } = new Dictionary<string, string>();
     public IReadOnlyList<GamePreset> Presets { get; init; } = [];
+
+    /// <summary>Dicas do menu de vídeo por regra (ver GameTips). Vazio = só a IA, a pedido.</summary>
+    public IReadOnlyList<GameTip> Tips { get; init; } = [];
 
     /// <summary>
     /// Chaves de configuração que o perfil conhece (recomendadas, presets,

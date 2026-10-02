@@ -22,6 +22,27 @@
     "process": "VALORANT-Win64-Shipping.exe",
     "method": "Campo de treino, sempre o mesmo percurso por 60 segundos, com as mesmas opções de vídeo."
   },
+  // Dicas por regra (sem IA). Nomes como no menu do Valorant em portugues.
+  "tips": [
+    { "id": "vsync", "setting": "Sincronização vertical", "value": "Desligada", "priority": 1, "tags": ["latency"],
+      "why": "O V-Sync segura cada quadro até a próxima atualização da tela e soma atraso na mira." },
+    { "id": "reflex", "setting": "Modo NVIDIA Reflex Low Latency", "value": "Ativado", "priority": 2, "tags": ["latency"],
+      "why": "Encurta a fila de quadros quando a placa de vídeo está no limite.", "when": { "gpu_feature": "reflex" } },
+    { "id": "multithread", "setting": "Renderização multithread", "value": "Ativada", "priority": 2, "tags": ["fps"],
+      "why": "Divide o trabalho entre os núcleos do processador, que é quem mais segura o FPS no Valorant.", "when": { "min_threads": 4 } },
+    { "id": "vignette", "setting": "Vinheta", "value": "Desligada", "priority": 5, "tags": ["image"],
+      "why": "Escurece as bordas da tela sem ganho para o jogo." },
+    { "id": "detail", "setting": "Qualidade de detalhe", "value": "Baixa", "priority": 3, "tags": ["fps"],
+      "why": "Tira enfeites do cenário que custam FPS e não ajudam a ver o inimigo.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "material", "setting": "Qualidade de material e de textura", "value": "Baixa", "priority": 3, "tags": ["fps"],
+      "why": "Em PC de entrada, é das opções que mais aliviam a placa de vídeo.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "aa", "setting": "Anti-aliasing", "value": "FXAA ou MSAA 2x", "priority": 4, "tags": ["fps"],
+      "why": "Mais leves que MSAA 4x, com pouca diferença em partida.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "shadows", "setting": "Sombras", "value": "Desligadas", "priority": 4, "tags": ["fps"],
+      "why": "Alivia a placa de vídeo em PC de entrada.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "fps-cap", "setting": "Limitar FPS sempre", "value": "Ativado, em {hz_cap} com G-Sync ou FreeSync", "priority": 6, "tags": ["stability"],
+      "why": "FPS estável dá movimento mais uniforme e a placa não esquenta à toa nos menus." }
+  ],
   "recommended_settings": {
     "Renderização multithread": "Ligada: divide o trabalho entre os núcleos do processador.",
     "Qualidade de material, textura e detalhe": "Baixa em PC fraco. Pouca diferença visual em partida.",

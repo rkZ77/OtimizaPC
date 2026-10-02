@@ -138,6 +138,10 @@ public sealed class WindowsSystemAccess(IReadOnlyList<GameProfile>? gameProfiles
 
     public void WriteGameConfig(string gameId, string key, string value)
     {
+        // Perfil só de leitura (ex.: LoL, que sincroniza com a conta Riot) nunca
+        // é gravado, mesmo que alguma regra futura gere a alteração.
+        if (Profile(gameId).Config is { ReadOnly: true })
+            throw new InvalidOperationException("O RKZFPS só lê a configuração deste jogo. Ajuste pelo menu do próprio jogo.");
         var (path, format) = GameConfig(gameId);
         if (path is null)
             throw new InvalidOperationException("Arquivo de configuração do jogo não encontrado.");

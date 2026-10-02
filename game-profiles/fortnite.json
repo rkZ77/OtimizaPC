@@ -72,6 +72,27 @@
       }
     }
   ],
+  // Dicas por regra (sem IA). Nomes como no menu do Fortnite em portugues.
+  "tips": [
+    { "id": "vsync", "setting": "Sincronização vertical", "value": "Desligada", "priority": 1, "tags": ["latency"],
+      "why": "O V-Sync segura cada quadro até a próxima atualização da tela e atrasa mira e construção." },
+    { "id": "reflex", "setting": "NVIDIA Reflex Low Latency", "value": "Ativado", "priority": 2, "tags": ["latency"],
+      "why": "Encurta a fila de quadros quando a placa de vídeo está no limite.", "when": { "gpu_feature": "reflex" } },
+    { "id": "fps-cap", "setting": "Limite de taxa de quadros", "value": "{hz} FPS, ou um valor que o PC sustente", "priority": 3, "tags": ["stability"],
+      "why": "FPS estável dá movimento mais uniforme do que FPS alto que oscila." },
+    { "id": "view", "setting": "Distância de visão", "value": "Média ou maior", "priority": 4, "tags": ["image"],
+      "why": "Abaixo disso, jogadores e construções distantes somem." },
+    { "id": "render-mode", "setting": "Modo de renderização", "value": "Desempenho", "priority": 2, "tags": ["fps"],
+      "why": "Feito para PC de entrada: bem mais leve, com imagem simplificada. Pede reiniciar o jogo.", "when": { "tiers": ["LOW"], "tradeoff": ["MEDIUM"] } },
+    { "id": "dlss", "setting": "NVIDIA DLSS", "value": "Qualidade", "priority": 3, "tags": ["fps"],
+      "why": "Renderiza menor e reconstrói a imagem: mais FPS com pouca perda de nitidez.", "when": { "gpu_feature": "dlss", "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "shadows", "setting": "Sombras", "value": "Desligadas", "priority": 3, "tags": ["fps"],
+      "why": "É das opções que mais pesam no Fortnite.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "gi", "setting": "Iluminação global e reflexos", "value": "Desligados", "priority": 4, "tags": ["fps"],
+      "why": "Muito pesados e não ajudam a ver o adversário.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "effects", "setting": "Efeitos e pós-processamento", "value": "Baixo", "priority": 5, "tags": ["fps"],
+      "why": "Explosões e fumaça pesam menos nas trocas de tiro.", "when": { "tradeoff": ["MEDIUM"] } }
+  ],
   "benchmark": {
     "process": "FortniteClient-Win64-Shipping.exe",
     "processes": ["FortniteClient-Win64-Shipping.exe"],

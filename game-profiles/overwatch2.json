@@ -1,0 +1,51 @@
+{
+  // Overwatch 2 (Battle.net/Steam). Perfil de medicao e dicas: o RKZFPS mede o
+  // FPS das partidas e mostra o que ajustar no menu, sem editar arquivo do jogo.
+  // Medicao por ETW, sem injetar nada no processo.
+  "id": "overwatch2",
+  "name": "Overwatch 2",
+  "version": "2026.10.1",
+  "detect": {
+    "processes": ["Overwatch.exe"]
+  },
+  "optimizations": [
+    "game-mode-enable",
+    "power-plan-leave-power-saver",
+    "display-refresh-rate-max",
+    "game-capture-background-recording-disable",
+    "background-process-close",
+    "game-gpu-high-performance"
+  ],
+  "tips": [
+    { "id": "display", "setting": "Modo de exibição", "value": "Tela cheia", "priority": 1, "tags": ["latency"],
+      "why": "Em tela cheia o jogo tem prioridade na tela, com menos atraso que em janela." },
+    { "id": "vsync", "setting": "Sincronização vertical", "value": "Desligada", "priority": 1, "tags": ["latency"],
+      "why": "O V-Sync segura cada quadro até a próxima atualização da tela e atrasa a mira." },
+    { "id": "reflex", "setting": "NVIDIA Reflex Low Latency", "value": "Ativado", "priority": 2, "tags": ["latency"],
+      "why": "Encurta a fila de quadros quando a placa de vídeo está no limite.", "when": { "gpu_feature": "reflex" } },
+    { "id": "fps-cap", "setting": "Limitar FPS", "value": "Personalizado, em {hz_cap} com G-Sync ou FreeSync", "priority": 3, "tags": ["stability"],
+      "why": "FPS estável dá movimento mais uniforme do que FPS alto que oscila." },
+    { "id": "render-scale", "setting": "Escala de renderização", "value": "100%", "priority": 4, "tags": ["image"],
+      "why": "Abaixo de 100% a imagem fica borrada e atrapalha ver alvos distantes.", "when": { "tradeoff": ["NONE", "LIGHT"] } },
+    { "id": "shadows", "setting": "Detalhe de sombras", "value": "Baixo", "priority": 3, "tags": ["fps"],
+      "why": "Das opções que mais custam FPS, com pouca diferença em luta.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "ao", "setting": "Oclusão de ambiente local", "value": "Desligada", "priority": 4, "tags": ["fps"],
+      "why": "Pesa e quase não aparece em partida.", "when": { "tradeoff": ["LIGHT", "MEDIUM"] } },
+    { "id": "effects", "setting": "Detalhe de efeitos", "value": "Baixo", "priority": 4, "tags": ["fps"],
+      "why": "Habilidades com muitos efeitos derrubam o FPS e escondem o adversário.", "when": { "tradeoff": ["MEDIUM"] } },
+    { "id": "preset", "setting": "Qualidade gráfica", "value": "Baixa", "priority": 2, "tags": ["fps"],
+      "why": "Em PC de entrada, é o ajuste de maior efeito. Depois, suba só o que fizer falta.", "when": { "tiers": ["LOW"], "tradeoff": ["MEDIUM"] } }
+  ],
+  "benchmark": {
+    "duration_seconds": 60,
+    "recommended_runs": 3,
+    "process": "Overwatch.exe",
+    "method": "Campo de treino, sempre o mesmo percurso por 60 segundos, com as mesmas opções de vídeo."
+  },
+  "recommended_settings": {
+    "Sincronização vertical": "Desligada: menor atraso.",
+    "NVIDIA Reflex": "Ativado em placa NVIDIA.",
+    "Limitar FPS": "Personalizado, perto da taxa do monitor.",
+    "Escala de renderização": "100%, para a imagem não ficar borrada."
+  }
+}
