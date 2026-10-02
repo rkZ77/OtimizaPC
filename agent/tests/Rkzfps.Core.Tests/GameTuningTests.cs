@@ -10,7 +10,7 @@ public class GameTuningTests
     /// <summary>PC intermediário (16 GB, placa de 4 GB, 8 threads) com CS2 pesado e V-Sync ligado.</summary>
     private static SystemSnapshot MidPcWithCs2() => Pc.WithCs2(Pc.Healthy() with
     {
-        Gpus = [new GpuInfo { Name = "GTX 1650", Vendor = GpuVendor.Nvidia, VramBytes = 4 * Gb }],
+        Gpus = [new GpuInfo { Name = "GPU intermediária", Vendor = GpuVendor.Nvidia, VramBytes = 4 * Gb }],
         Cpu = Pc.Healthy().Cpu! with { Threads = 8 },
     }, new Dictionary<string, string>
     {

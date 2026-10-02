@@ -1,0 +1,36 @@
+{
+  // Modelos de placa de video e processador que o RKZFPS reconhece pelo nome.
+  // Serve para duas coisas: saber o que a placa suporta (Reflex, DLSS, Anti-Lag,
+  // XeSS, geracao de quadros) e corrigir o nivel do PC quando o Windows le mal a
+  // memoria de video (o WMI para em 4 GB). Modelo fora da lista: o RKZFPS usa
+  // so' a leitura do Windows, como antes. Nada aqui e' numero de FPS.
+  //
+  // match: trechos do nome, comparados como palavra inteira, sem diferenciar
+  // maiuscula. Ganha o trecho mais longo ("rtx 5060 ti" antes de "rtx 5060").
+  // class: LOW (entrada), MID (intermediaria), HIGH (forte), para jogos em 1080p.
+  "version": "2026.10.1",
+  "gpus": [
+    { "match": ["gt 710", "gt 730", "gt 1030"], "name": "GeForce GT de entrada", "vendor": "NVIDIA", "class": "LOW", "features": [] },
+    { "match": ["gtx 750", "gtx 750 ti"], "name": "GeForce GTX 750", "vendor": "NVIDIA", "class": "LOW", "features": [] },
+    { "match": ["gtx 950", "gtx 960", "gtx 1050", "gtx 1050 ti"], "name": "GeForce GTX de entrada", "vendor": "NVIDIA", "class": "LOW", "features": ["reflex"] },
+    { "match": ["gtx 1650", "gtx 1650 super"], "name": "GeForce GTX 1650", "vendor": "NVIDIA", "class": "LOW", "features": ["reflex"] },
+    { "match": ["gtx 970", "gtx 980", "gtx 1060", "gtx 1070", "gtx 1070 ti", "gtx 1080", "gtx 1080 ti", "gtx 1660", "gtx 1660 super", "gtx 1660 ti"], "name": "GeForce GTX intermediária", "vendor": "NVIDIA", "class": "MID", "features": ["reflex"] },
+    { "match": ["rtx 2060", "rtx 2060 super", "rtx 3050"], "name": "GeForce RTX de entrada", "vendor": "NVIDIA", "class": "MID", "features": ["reflex", "dlss"] },
+    { "match": ["rtx 2070", "rtx 2070 super", "rtx 2080", "rtx 2080 super", "rtx 2080 ti", "rtx 3060", "rtx 3060 ti", "rtx 3070", "rtx 3070 ti", "rtx 3080", "rtx 3080 ti", "rtx 3090", "rtx 3090 ti"], "name": "GeForce RTX 20/30", "vendor": "NVIDIA", "class": "HIGH", "features": ["reflex", "dlss"] },
+    { "match": ["rtx 4060", "rtx 4060 ti", "rtx 4070", "rtx 4070 super", "rtx 4070 ti", "rtx 4070 ti super", "rtx 4080", "rtx 4080 super", "rtx 4090"], "name": "GeForce RTX 40", "vendor": "NVIDIA", "class": "HIGH", "features": ["reflex", "dlss", "frame_gen"] },
+    { "match": ["rtx 5050", "rtx 5060", "rtx 5060 ti", "rtx 5070", "rtx 5070 ti", "rtx 5080", "rtx 5090"], "name": "GeForce RTX 50", "vendor": "NVIDIA", "class": "HIGH", "features": ["reflex", "dlss", "frame_gen"] },
+
+    { "match": ["rx 550", "rx 560", "rx 6400", "rx 6500 xt"], "name": "Radeon RX de entrada", "vendor": "AMD", "class": "LOW", "features": ["anti_lag"] },
+    { "match": ["rx 470", "rx 480", "rx 570", "rx 580", "rx 590", "rx 5500 xt", "rx 5600 xt", "rx 5700", "rx 5700 xt", "rx 7400"], "name": "Radeon RX intermediária", "vendor": "AMD", "class": "MID", "features": ["anti_lag"] },
+    { "match": ["rx 6600", "rx 6600 xt", "rx 6650 xt", "rx 6700", "rx 6700 xt", "rx 6750 xt", "rx 6800", "rx 6800 xt", "rx 6900 xt", "rx 6950 xt"], "name": "Radeon RX 6000", "vendor": "AMD", "class": "HIGH", "features": ["anti_lag"] },
+    { "match": ["rx 7600", "rx 7600 xt", "rx 7700 xt", "rx 7800 xt", "rx 7900 gre", "rx 7900 xt", "rx 7900 xtx", "rx 9060 xt", "rx 9070", "rx 9070 xt"], "name": "Radeon RX 7000/9000", "vendor": "AMD", "class": "HIGH", "features": ["anti_lag", "frame_gen"] },
+
+    { "match": ["arc a310", "arc a380"], "name": "Intel Arc de entrada", "vendor": "INTEL", "class": "LOW", "features": ["xess"] },
+    { "match": ["arc a580"], "name": "Intel Arc A580", "vendor": "INTEL", "class": "MID", "features": ["xess"] },
+    { "match": ["arc a750", "arc a770", "arc b570", "arc b580"], "name": "Intel Arc", "vendor": "INTEL", "class": "HIGH", "features": ["xess"] }
+  ],
+  "cpus": [
+    { "match": ["celeron", "pentium", "athlon", "a4", "a6", "a8", "a10", "fx"], "name": "Processador de entrada antigo", "class": "LOW", "features": [] },
+    { "match": ["5600x3d", "5700x3d", "5800x3d", "7600x3d", "7800x3d", "7900x3d", "7950x3d", "9800x3d", "9900x3d", "9950x3d"], "name": "Ryzen X3D", "class": "HIGH", "features": ["x3d"] }
+  ]
+}

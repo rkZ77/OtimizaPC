@@ -130,7 +130,7 @@ public class GamePresetTests
     {
         var weak = WeakWithGames();
         Assert.Equal(Decision.NotApplicable, Eval(weak with { Gpus = Pc.Healthy().Gpus, Memory = Pc.Healthy().Memory }).Decision);
-        var mid = Eval(weak with { Gpus = [new GpuInfo { Name = "GTX 1650", Vendor = GpuVendor.Nvidia, VramBytes = 4 * Gb }], Memory = Pc.Healthy().Memory });
+        var mid = Eval(weak with { Gpus = [new GpuInfo { Name = "GPU intermediária", Vendor = GpuVendor.Nvidia, VramBytes = 4 * Gb }], Memory = Pc.Healthy().Memory });
         Assert.Equal(Decision.Optional, mid.Decision);
         Assert.All(mid.Proposals, p => Assert.EndsWith(":equilibrado", p.Id));
     }

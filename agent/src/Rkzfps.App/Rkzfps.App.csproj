@@ -30,5 +30,6 @@
     <Resource Include="Assets\rkzfps.ico" />
     <Content Include="..\..\..\optimization-engine\catalog\*.json" LinkBase="catalog" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\..\game-profiles\*.json" LinkBase="game-profiles" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\hardware-db\*.json" LinkBase="hardware-db" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

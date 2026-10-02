@@ -35,17 +35,26 @@ public static class HardwareTierClassifier
 {
     private const long Gb = 1024L * 1024 * 1024;
 
-    public static TierAssessment Assess(SystemSnapshot s)
+    public static TierAssessment Assess(SystemSnapshot s) => Assess(s, Hardware.HardwareCatalog.Default);
+
+    public static TierAssessment Assess(SystemSnapshot s, Hardware.HardwareCatalog catalog)
     {
         var ramGb = s.Memory is { TotalBytes: > 0 } m ? m.TotalBytes / (double)Gb : (double?)null;
         var dedicated = s.Gpus.Where(g => !g.LikelyIntegrated).ToList();
         var bestVram = dedicated.Select(g => g.VramBytes ?? 0).DefaultIfEmpty(0).Max();
         var threads = s.Cpu?.Threads ?? 0;
+        var known = catalog.Recognize(s);
 
         if (ramGb is null && s.Gpus.Count == 0 && threads == 0)
             return new TierAssessment(HardwareTier.Unknown, ["Hardware não lido."]);
 
         var low = new List<string>();
+        // Modelo conhecido como de entrada pesa mesmo com memória suficiente:
+        // uma GTX 1650 de 4 GB passa no limite de VRAM, mas é placa de entrada.
+        if (known.Gpu is { Class: HardwareTier.Low } lowGpu)
+            low.Add($"Placa de vídeo de entrada ({lowGpu.Name}).");
+        if (known.Cpu is { Class: HardwareTier.Low } lowCpu)
+            low.Add($"{lowCpu.Name}.");
         // Memória reservada pela placa integrada faz 8 GB virarem ~7,8 no Windows.
         if (ramGb is < 7.5)
             low.Add($"{ramGb:0.#} GB de RAM: jogos atuais pedem 8 GB ou mais.");
@@ -59,8 +68,16 @@ public static class HardwareTierClassifier
             return new TierAssessment(HardwareTier.Low, low);
 
         var specs = $"{ramGb:0} GB de RAM, placa com {(bestVram > 0 ? $"{bestVram / (double)Gb:0.#} GB" : "memória não lida")} e processador com {threads} threads.";
-        // Forte exige os três com folga. Sem VRAM lida, não dá para afirmar.
-        if (ramGb >= 15.5 && bestVram >= 8 * Gb && threads >= 12)
+        // Forte exige os três com folga. Sem VRAM lida, não dá para afirmar,
+        // a não ser que o modelo seja conhecido como forte: o WMI para em 4 GB.
+        // Modelo conhecido como intermediário (RX 580 de 8 GB) não vira forte.
+        var gpuStrong = known.Gpu?.Class switch
+        {
+            HardwareTier.High => true,
+            HardwareTier.Mid => false,
+            _ => bestVram >= 8 * Gb,
+        };
+        if (ramGb >= 15.5 && gpuStrong && threads >= 12)
             return new TierAssessment(HardwareTier.High, [specs]);
 
         return new TierAssessment(HardwareTier.Mid, [specs, "Roda os jogos atuais; nos mais pesados, o ajuste fino é pelo menu de vídeo do jogo."]);

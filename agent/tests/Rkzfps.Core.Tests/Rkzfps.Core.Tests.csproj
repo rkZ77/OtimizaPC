@@ -20,5 +20,6 @@
   <ItemGroup>
     <None Include="..\..\..\optimization-engine\catalog\*.json" LinkBase="catalog" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\..\game-profiles\*.json" LinkBase="game-profiles" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\..\hardware-db\*.json" LinkBase="hardware-db" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
