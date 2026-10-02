@@ -161,6 +161,8 @@ public static class OnboardingWindow
             if (e.PropertyName != nameof(AppHost.Scan))
                 return;
             RenderHardware();
+            if (!saved)
+                Subtitle();
             if (waitingScan && host.Scan is not null)
             {
                 waitingScan = false;
@@ -185,7 +187,11 @@ public static class OnboardingWindow
         };
 
         title.Text = "Vamos descobrir como otimizar seu PC.";
-        subtitle.Text = "Enquanto o RKZFPS analisa o seu hardware, responda rapidinho. Se preferir, pule: ele decide sozinho com segurança.";
+        // A análise pode terminar antes de a janela abrir: a frase acompanha.
+        void Subtitle() => subtitle.Text = host.Scan is null
+            ? "Enquanto o RKZFPS analisa o seu hardware, responda rapidinho. Se preferir, pule: ele decide sozinho com segurança."
+            : "Responda rapidinho para o RKZFPS saber o que você prefere. Se preferir, pule: ele decide sozinho com segurança.";
+        Subtitle();
         RenderHardware();
         Ask(Onboarding.Main);
 

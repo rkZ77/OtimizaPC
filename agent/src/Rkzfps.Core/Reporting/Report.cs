@@ -134,7 +134,9 @@ public static class ReportBuilder
             ["Windows"] = s.Os.Build > 0 ? $"{s.Os.Caption} (build {s.Os.Build})" : "desconhecido",
             ["CPU"] = s.Cpu?.Name ?? "desconhecida",
             ["GPU"] = gpu?.Name ?? "desconhecida",
-            ["RAM"] = s.Memory is { } m ? Fmt.Gb(m.TotalBytes) : "desconhecida",
+            // Arredondada como na caixa do PC: a placa integrada reserva um pouco
+            // e 16 GB apareciam como "15.9 GB", o que parecia defeito.
+            ["RAM"] = s.Memory is { TotalBytes: > 0 } m ? $"{Math.Round(m.TotalBytes / 1024.0 / 1024 / 1024):0} GB" : "desconhecida",
             ["Armazenamento"] = system is null ? "desconhecido" : $"{system.DriveLetter} {(system.Media == MediaKind.Ssd ? "SSD" : system.Media == MediaKind.Hdd ? "HDD" : "")} {system.BusType}".Trim(),
             ["Tipo"] = s.Power is null ? "desconhecido" : s.Power.HasBattery ? "Notebook" : "Desktop",
             ["Placa-mãe"] = s.BoardProduct.Length > 0 ? $"{ShortBrand(s.BoardManufacturer)} {s.BoardProduct}".Trim() : "desconhecida",

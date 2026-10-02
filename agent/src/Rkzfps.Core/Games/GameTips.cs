@@ -83,10 +83,9 @@ public static class GameTips
             && (w.MinRamGb is null || ramGb >= w.MinRamGb)
             && (w.MaxRamGb is null || (ramGb > 0 && ramGb <= w.MaxRamGb));
 
-        // O que o perfil prioriza sobe na lista; o resto segue a prioridade do JSON.
-        var focus = new List<string>();
-        if (tuning.LatencyPriority == Priority.High)
-            focus.Add("latency");
+        // O que o perfil prioriza sobe na lista; o resto segue a prioridade do
+        // JSON. Latência entra sempre: V-Sync e Reflex não custam imagem.
+        var focus = new List<string> { "latency" };
         if (tuning.StabilityPriority == Priority.High)
             focus.Add("stability");
         if (tradeoff != GraphicsTradeoff.None)

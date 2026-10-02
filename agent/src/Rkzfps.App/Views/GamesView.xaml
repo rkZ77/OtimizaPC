@@ -144,11 +144,8 @@
                                                 <DockPanel Margin="0,3" Background="Transparent" ToolTip="{Binding Why}">
                                                     <TextBlock DockPanel.Dock="Left" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                                                Foreground="{DynamicResource Accent}" VerticalAlignment="Top" Margin="0,3,10,0" />
-                                                    <TextBlock TextWrapping="Wrap">
-                                                        <Run Text="{Binding Setting, Mode=OneWay}" Foreground="{DynamicResource Muted}" />
-                                                        <Run Text=": " Foreground="{DynamicResource Muted}" />
-                                                        <Run Text="{Binding Value, Mode=OneWay}" FontWeight="SemiBold" />
-                                                    </TextBlock>
+                                                    <!-- Runs colados: quebra de linha entre eles vira espaço antes dos dois-pontos. -->
+                                                    <TextBlock TextWrapping="Wrap"><Run Text="{Binding Setting, Mode=OneWay}" Foreground="{DynamicResource Muted}" /><Run Text=": " Foreground="{DynamicResource Muted}" /><Run Text="{Binding Value, Mode=OneWay}" FontWeight="SemiBold" /></TextBlock>
                                                 </DockPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

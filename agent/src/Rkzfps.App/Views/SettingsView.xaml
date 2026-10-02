@@ -41,8 +41,10 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
-                    <Button Content="Responder as perguntas de novo" Style="{StaticResource Ghost}" Foreground="{DynamicResource Accent}" HorizontalAlignment="Left" Padding="0,6" Margin="0,8,0,0"
-                            Command="{Binding AskAgainCommand}" />
+                    <!-- Cor no próprio texto: o estilo implícito de TextBlock do tema cobre a cor herdada do botão. -->
+                    <Button Style="{StaticResource Ghost}" HorizontalAlignment="Left" Padding="0,6" Margin="0,8,0,0" Command="{Binding AskAgainCommand}">
+                        <TextBlock Text="Responder as perguntas de novo" Foreground="{DynamicResource Accent}" />
+                    </Button>
 
                     <StackPanel Margin="0,10,0,0" Visibility="{Binding Advanced, Converter={StaticResource Visible}}">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -104,7 +106,9 @@
 
                     <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" />
                     <DockPanel Style="{StaticResource Row}">
-                        <Button DockPanel.Dock="Right" Content="Política de privacidade" Style="{StaticResource Ghost}" VerticalAlignment="Center" Command="{Binding PrivacyCommand}" />
+                        <Button DockPanel.Dock="Right" Style="{StaticResource Ghost}" VerticalAlignment="Center" Command="{Binding PrivacyCommand}">
+                            <TextBlock Text="Política de privacidade" Foreground="{DynamicResource Accent}" />
+                        </Button>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Telemetry}" Content="Enviar dados anônimos de uso" />
                             <TextBlock Style="{StaticResource InfoTip}"
@@ -119,7 +123,9 @@
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Content="Abrir pasta de dados" Command="{Binding OpenDataCommand}"
                                 ToolTip="Backups, histórico e logs ficam neste PC, na pasta de dados do RKZFPS." />
-                        <Button Content="Instagram @rkzfps.br" Style="{StaticResource Ghost}" Margin="10,0,0,0" Command="{Binding InstagramCommand}" />
+                        <Button Style="{StaticResource Ghost}" Margin="10,0,0,0" Command="{Binding InstagramCommand}">
+                            <TextBlock Text="Instagram @rkzfps.br" Foreground="{DynamicResource Accent}" />
+                        </Button>
                     </StackPanel>
                     <TextBlock Text="{Binding Version}" VerticalAlignment="Center" FontWeight="SemiBold" />
                 </DockPanel>
